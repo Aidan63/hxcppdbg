@@ -8,11 +8,17 @@ import hxcppdbg.sourcemap.Sourcemap;
 using Lambda;
 using StringTools;
 
+enum StackFrame {
+    Haxe(file : String, type : String, func : String, line : Int);
+    Native(file : String, type : String, line : Int);
+}
+
 class Stack {
     final sourcemap : Sourcemap;
 
     final gdb : Gdb;
 
+    public var native = false;
 
     public function new(_sourcemap, _gdb) {
         sourcemap = _sourcemap;
@@ -26,7 +32,14 @@ class Stack {
                     if (result.variable == 'frame') {
                         switch result.value {
                             case Tuple(values):
-                                Sys.println(mapNativeFrame(values));
+                                switch mapNativeFrame(values) {
+                                    case Haxe(_, type, func, line):
+                                        Sys.println('$type.$func Line $line');
+                                    case Native(_, type, line) if (native):
+                                        Sys.println('  (native) $type Line $line');
+                                    case _:
+                                        //
+                                }
                             case _:
                                 //
                         }
@@ -57,7 +70,7 @@ class Stack {
 
         return switch sourcemap.files.find(v -> file.endsWith(v.generated)) {
             case null:
-                '  native frame ($func Line $line)';
+                Native(file, func, line);
             case found:
                 final hxExpr  = found.exprs.find(e -> e.cpp.start.line == line);
                 final cppType = func.split('::');
@@ -65,16 +78,16 @@ class Stack {
 
                 switch cppType {
                     // Closure object which contains a haxe anon function.
-                    case [ objName, _, '_hx_run' ]:
-                        '${ found.type }.${ cppType[1] } Line ${ hxExpr.haxe.start.line }';
+                    case [ type, _, '_hx_run' ] if (type == objName):
+                        Haxe(found.haxe, found.type, cppType[1], hxExpr.haxe.start.line);
                     // Standard haxe function.
-                    case [ objName, _ ]:
+                    case [ type, _ ] if (type == objName):
                         final hxFunc = found.functions.find(f -> f.cpp == cppType[1]).haxe;
 
-                        '${ found.type }.${ hxFunc } Line ${ hxExpr.haxe.start.line }';
+                        Haxe(found.haxe, found.type, hxFunc, hxExpr.haxe.start.line);
                     // Something which cannot be mapped back to haxe code.
                     case _:
-                        '  native frame ($func Line $line)';
+                        Native(file, func, line);
                 }
         }
     }
