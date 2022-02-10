@@ -50,6 +50,8 @@ class NameMap {
     public var haxe : String;
 
     public var cpp : String;
+
+    public var type : String;
 }
 
 class Position {

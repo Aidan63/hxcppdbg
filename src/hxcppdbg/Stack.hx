@@ -9,7 +9,7 @@ using Lambda;
 using StringTools;
 
 enum StackFrame {
-    Haxe(file : String, type : String, func : String, line : Int);
+    Haxe(file : String, type : String, func : String, args : Array<String>, line : Int);
     Native(file : String, type : String, line : Int);
 }
 
@@ -33,8 +33,8 @@ class Stack {
                         switch result.value {
                             case Tuple(values):
                                 switch mapNativeFrame(values) {
-                                    case Haxe(_, type, func, line):
-                                        Sys.println('$type.$func Line $line');
+                                    case Haxe(_, type, func, args, line):
+                                        Sys.println('$type.$func(${ args.join(',') }) Line $line');
                                     case Native(_, type, line) if (native):
                                         Sys.println('  (native) $type Line $line');
                                     case _:
@@ -79,12 +79,13 @@ class Stack {
                 switch cppType {
                     // Closure object which contains a haxe anon function.
                     case [ type, _, '_hx_run' ] if (type == objName):
-                        Haxe(found.haxe, found.type, cppType[1], hxExpr.haxe.start.line);
+                        Haxe(found.haxe, found.type, cppType[1], [], hxExpr.haxe.start.line);
                     // Standard haxe function.
                     case [ type, _ ] if (type == objName):
-                        final hxFunc = found.functions.find(f -> f.cpp == cppType[1]).haxe;
+                        final hxFunc = found.functions.find(f -> f.cpp == cppType[1]);
+                        final hxArgs = hxFunc.arguments.map(a -> a.type);
 
-                        Haxe(found.haxe, found.type, hxFunc, hxExpr.haxe.start.line);
+                        Haxe(found.haxe, found.type, hxFunc.haxe, hxArgs, hxExpr.haxe.start.line);
                     // Something which cannot be mapped back to haxe code.
                     case _:
                         Native(file, func, line);

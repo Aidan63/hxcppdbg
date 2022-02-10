@@ -99,17 +99,20 @@
                     "arguments" : [
                         {
                             "haxe" : "_name",
-                            "cpp" : "_name"
+                            "cpp" : "_name",
+                            "type" : "String"
                         }
                     ],
                     "variables" : [
                         {
                             "haxe" : "typeid",
-                            "cpp" : "_hx_typeid"
+                            "cpp" : "_hx_typeid",
+                            "type" : "Int"
                         },
                         {
                             "haxe" : "resname",
-                            "cpp" : "resname"
+                            "cpp" : "resname",
+                            "type" : "String"
                         }
                     ]
                 },
@@ -119,11 +122,13 @@
                     "arguments" : [
                         {
                             "haxe" : "_onCompleted",
-                            "cpp" : "_onCompleted"
+                            "cpp" : "_onCompleted",
+                            "type" : "Void->Void"
                         },
                         {
                             "haxe" : "v",
-                            "cpp" : "v"
+                            "cpp" : "v",
+                            "type" : "Int"
                         }
                     ],
                     "variables" : []
