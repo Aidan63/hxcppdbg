@@ -66,7 +66,8 @@ class Gdb {
 
                     }
                 } catch (_) {
-                    trace(string);
+                    // TODO : Better handle this, seems like stdout doesn't conform to the output spec?
+                    // trace(string);
                 }
             }
         }
@@ -87,8 +88,6 @@ class Gdb {
             } else {
                 final string = buffer.toString();
                 final parser = new MiParser(string);
-
-                trace(string);
 
                 switch parser.parseLine() {
                     case Left(v):

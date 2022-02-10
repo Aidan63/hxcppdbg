@@ -1,6 +1,5 @@
 package hxcppdbg;
 
-import hxcppdbg.gdb.Parser.Value;
 import sys.io.File;
 import sys.thread.EventLoop.EventHandler;
 import sys.thread.Thread;
@@ -70,41 +69,4 @@ class Hxcppdbg {
 
         Sys.exit(0);
     }
-
-    // function readGdbOutput(_input : Input) {
-    //     while (true) {
-    //         final line   = _input.readLine();
-    //         final buffer = new StringBuf();
-    //         buffer.add(line);
-    //         buffer.addChar('\n'.code);
-
-    //         if (StringTools.startsWith(line, '(gdb)')) {
-    //             break;
-    //         } else {
-    //             final string = buffer.toString();
-    //             final parser = new MiParser(string);
-
-    //             switch parser.parseLine() {
-    //                 case Left(v):
-    //                     switch v {
-    //                         case Async(a):
-    //                             switch a.output {
-    //                                 case Exec:
-    //                                     Sys.println('exec : ${ a.cls } ${ a.results }');
-    //                                 case _:
-    //                             }
-    //                         case Stream(s):
-    //                             switch s.output {
-    //                                 case Console:
-    //                                     // Sys.print(s.value);
-    //                                 case _:
-    //                                     //
-    //                             }
-    //                     }
-    //                 case Right(v):
-    //                     Sys.println('result ${ v.cls }-${ v.results }');
-    //             }
-    //         }
-    //     }
-    // }
 }
