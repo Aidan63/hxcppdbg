@@ -19,6 +19,8 @@ class Hxcppdbg {
 
     @:command public final stack : Stack;
 
+    @:command public final locals : Locals;
+
     public function new(_thread, _event) {
         thread = _thread;
         event  = _event;
@@ -27,6 +29,7 @@ class Hxcppdbg {
         gdb         = new Gdb();
         breakpoints = new Breakpoints(sourcemap, gdb);
         stack       = new Stack(sourcemap, gdb);
+        locals      = new Locals(gdb);
 
         gdb.command('-file-exec-and-symbols /mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
     }

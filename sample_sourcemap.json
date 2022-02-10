@@ -102,7 +102,16 @@
                             "cpp" : "_name"
                         }
                     ],
-                    "variables" : []
+                    "variables" : [
+                        {
+                            "haxe" : "typeid",
+                            "cpp" : "_hx_typeid"
+                        },
+                        {
+                            "haxe" : "resname",
+                            "cpp" : "resname"
+                        }
+                    ]
                 },
                 {
                     "haxe" : "subscribe",
@@ -129,16 +138,60 @@
                         },
                         "end" : {
                             "line" : 5,
+                            "col" : 46
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 40,
+                            "col" : 0
+                        },
+                        "end" : {
+                            "line" : 40,
+                            "col" : 0
+                        }
+                    }
+                },
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 6,
+                            "col" : 9
+                        },
+                        "end" : {
+                            "line" : 6,
+                            "col" : 40
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 41,
+                            "col" : 0
+                        },
+                        "end" : {
+                            "line" : 41,
+                            "col" : 0
+                        }
+                    }
+                },
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 8,
+                            "col" : 9
+                        },
+                        "end" : {
+                            "line" : 8,
                             "col" : 33
                         }
                     },
                     "cpp" : {
                         "start" : {
-                            "line" : 36,
+                            "line" : 42,
                             "col" : 21
                         },
                         "end" : {
-                            "line" : 36,
+                            "line" : 42,
                             "col" : 188
                         }
                     }
@@ -146,21 +199,21 @@
                 {
                     "haxe" : {
                         "start" : {
-                            "line" : 7,
+                            "line" : 10,
                             "col" : 9
                         },
                         "end" : {
-                            "line" : 7,
+                            "line" : 10,
                             "col" : 21
                         }
                     },
                     "cpp" : {
                         "start" : {
-                            "line" : 37,
+                            "line" : 43,
                             "col" : 21
                         },
                         "end" : {
-                            "line" : 37,
+                            "line" : 43,
                             "col" : 56
                         }
                     }
@@ -168,21 +221,21 @@
                 {
                     "haxe" : {
                         "start" : {
-                            "line" : 11,
+                            "line" : 14,
                             "col" : 9
                         },
                         "end" : {
-                            "line" : 11,
+                            "line" : 14,
                             "col" : 39
                         }
                     },
                     "cpp" : {
                         "start" : {
-                            "line" : 45,
+                            "line" : 51,
                             "col" : 21
                         },
                         "end" : {
-                            "line" : 45,
+                            "line" : 51,
                             "col" : 200
                         }
                     }
@@ -190,21 +243,21 @@
                 {
                     "haxe" : {
                         "start" : {
-                            "line" : 13,
+                            "line" : 16,
                             "col" : 9
                         },
                         "end" : {
-                            "line" : 13,
+                            "line" : 16,
                             "col" : 24
                         }
                     },
                     "cpp" : {
                         "start" : {
-                            "line" : 46,
+                            "line" : 52,
                             "col" : 21
                         },
                         "end" : {
-                            "line" : 46,
+                            "line" : 52,
                             "col" : 36
                         }
                     }
