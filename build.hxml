@@ -1,0 +1,7 @@
+-p src
+-m Main
+-L tink_cli
+-L hxparse
+-L json2object
+--cpp bin
+--debug
