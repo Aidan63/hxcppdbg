@@ -1,30 +1,59 @@
 package hxcppdbg.sourcemap;
 
 class Sourcemap {
-    public var classes : Array<UserClass>;
+    public var files : Array<GeneratedFile>;
 }
 
-class LineMapping {
-    public var haxe : Int;
+class GeneratedFile {
+    public var generated : String;
 
-    public var cpp : Int;
+    public var haxe : String;
+
+    public var type : String;
+
+    public var closures : Array<Closure>;
+
+    public var functions : Array<Function>;
+
+    public var exprs : Array<ExprMap>;
 }
 
-class UserFunction {
+class Closure {
     public var name : String;
 
-    public var native : String;
-
-    public var mapping : Array<LineMapping>;
+    public var captures : Array<NameMap>;
 }
 
-class UserClass {
-    @:alias('package')
-    public var haxePackage : String;
+class Function {
+    public var haxe : String;
 
-    @:alias('native')
-    public var cppPath : String;
+    public var cpp : String;
 
-    @:alias('functions')
-    public var functions : Array<UserFunction>;
+    public var arguments : Array<NameMap>;
+
+    public var variables : Array<NameMap>;
+}
+
+class ExprMap {
+    public var haxe : ExprRange;
+
+    public var cpp : ExprRange;
+}
+
+class ExprRange {
+    public var start : Position;
+
+    public var end : Position;
+}
+
+class NameMap {
+    public var haxe : String;
+
+    public var cpp : String;
+}
+
+class Position {
+    public var line : Int;
+
+    public var col : Int;
 }

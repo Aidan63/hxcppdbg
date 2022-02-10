@@ -24,7 +24,7 @@ class Hxcppdbg {
         thread = _thread;
         event  = _event;
 
-        sourcemap   = new json2object.JsonParser<Sourcemap>().fromJson(File.getContent('/mnt/d/programming/haxe/hxcppdbg/sourcemap.json'));
+        sourcemap   = new json2object.JsonParser<Sourcemap>().fromJson(File.getContent('/mnt/d/programming/haxe/hxcppdbg/sample_sourcemap.json'));
         gdb         = new Gdb();
         breakpoints = new Breakpoints(sourcemap, gdb);
         stack       = new Stack(sourcemap, gdb);

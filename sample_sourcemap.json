@@ -1,0 +1,215 @@
+{
+    "files" : [
+        {
+            "generated" : "src/Main.cpp",
+            "haxe" : "Main.hx",
+            "type" : "Main",
+            "closures" : [
+                {
+                    "name" : "_hx_Closure_0",
+                    "captures" : []
+                }
+            ],
+            "functions" : [
+                {
+                    "haxe" : "main",
+                    "cpp" : "main",
+                    "arguments" : [],
+                    "variables" : []
+                }
+            ],
+            "exprs" : [
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 5,
+                            "col" : 30
+                        },
+                        "end" : {
+                            "line" : 5,
+                            "col" : 47
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 38,
+                            "col" : 25
+                        },
+                        "end" : {
+                            "line" : 38,
+                            "col" : 172
+                        }
+                    }
+                },
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 3,
+                            "col" : 9
+                        },
+                        "end" : {
+                            "line" : 5,
+                            "col" : 52
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 43,
+                            "col" : 21
+                        },
+                        "end" : {
+                            "line" : 43,
+                            "col" : 130
+                        }
+                    }
+                },
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 7,
+                            "col" : 9
+                        },
+                        "end" : {
+                            "line" : 7,
+                            "col" : 32
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 44,
+                            "col" : 21
+                        },
+                        "end" : {
+                            "line" : 44,
+                            "col" : 173
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "generated" : "src/Resources.cpp",
+            "haxe" : "Resources.hx",
+            "type" : "Resources",
+            "closures" : [],
+            "functions" : [
+                {
+                    "haxe" : "load",
+                    "cpp" : "load",
+                    "arguments" : [
+                        {
+                            "haxe" : "_name",
+                            "cpp" : "_name"
+                        }
+                    ],
+                    "variables" : []
+                },
+                {
+                    "haxe" : "subscribe",
+                    "cpp" : "subscribe",
+                    "arguments" : [
+                        {
+                            "haxe" : "_onCompleted",
+                            "cpp" : "_onCompleted"
+                        },
+                        {
+                            "haxe" : "v",
+                            "cpp" : "v"
+                        }
+                    ],
+                    "variables" : []
+                }
+            ],
+            "exprs" : [
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 5,
+                            "col" : 9
+                        },
+                        "end" : {
+                            "line" : 5,
+                            "col" : 33
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 36,
+                            "col" : 21
+                        },
+                        "end" : {
+                            "line" : 36,
+                            "col" : 188
+                        }
+                    }
+                },
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 7,
+                            "col" : 9
+                        },
+                        "end" : {
+                            "line" : 7,
+                            "col" : 21
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 37,
+                            "col" : 21
+                        },
+                        "end" : {
+                            "line" : 37,
+                            "col" : 56
+                        }
+                    }
+                },
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 11,
+                            "col" : 9
+                        },
+                        "end" : {
+                            "line" : 11,
+                            "col" : 39
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 45,
+                            "col" : 21
+                        },
+                        "end" : {
+                            "line" : 45,
+                            "col" : 200
+                        }
+                    }
+                },
+                {
+                    "haxe" : {
+                        "start" : {
+                            "line" : 13,
+                            "col" : 9
+                        },
+                        "end" : {
+                            "line" : 13,
+                            "col" : 24
+                        }
+                    },
+                    "cpp" : {
+                        "start" : {
+                            "line" : 46,
+                            "col" : 21
+                        },
+                        "end" : {
+                            "line" : 46,
+                            "col" : 36
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
