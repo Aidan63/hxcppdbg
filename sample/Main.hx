@@ -1,6 +1,6 @@
 class Main {
 	static function main() {
-		new Resources()
+		new sub.Resources()
 			.load('')
 			.subscribe(() -> trace('callback'), 0);
 

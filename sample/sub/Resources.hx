@@ -1,3 +1,5 @@
+package sub;
+
 class Resources {
 	public function new() {}
 

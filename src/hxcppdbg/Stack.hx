@@ -27,22 +27,20 @@ class Stack {
 
     @:command public function list() {
         switch gdb.command('-stack-list-frames').results['stack'] {
-            case List(Right(results)):
-                for (result in results) {
-                    if (result.variable == 'frame') {
-                        switch result.value {
-                            case Tuple(values):
-                                switch mapNativeFrame(values) {
-                                    case Haxe(_, type, func, args, line):
-                                        Sys.println('$type.$func(${ args.join(',') }) Line $line');
-                                    case Native(_, type, line) if (native):
-                                        Sys.println('  (native) $type Line $line');
-                                    case _:
-                                        //
-                                }
-                            case _:
-                                //
-                        }
+            case List(Right(frames)):
+                for (frame in frames) {
+                    switch frame.value {
+                        case Tuple(values):
+                            switch mapNativeFrame(values) {
+                                case Haxe(_, type, func, args, line):
+                                    Sys.println('$type.$func(${ args.join(',') }) Line $line');
+                                case Native(_, type, line) if (native):
+                                    Sys.println('  (native) $type Line $line');
+                                case _:
+                                    // Do not print native frames if the native flag is not set.
+                            }
+                        case _:
+                            //
                     }
                 }
             case _:
@@ -80,15 +78,17 @@ class Stack {
                     // Closure object which contains a haxe anon function.
                     case [ type, _, '_hx_run' ] if (type == objName):
                         Haxe(found.haxe, found.type, cppType[1], [], hxExpr.haxe.start.line);
-                    // Standard haxe function.
-                    case [ type, _ ] if (type == objName):
-                        final hxFunc = found.functions.find(f -> f.cpp == cppType[1]);
-                        final hxArgs = hxFunc.arguments.map(a -> a.type);
-
-                        Haxe(found.haxe, found.type, hxFunc.haxe, hxArgs, hxExpr.haxe.start.line);
-                    // Something which cannot be mapped back to haxe code.
                     case _:
-                        Native(file, func, line);
+                        if (cppType.length >= 2 && cppType[cppType.length - 2] == objName) {
+                            // Standard haxe function.
+                            final hxFunc = found.functions.find(f -> f.cpp == cppType[cppType.length - 1]);
+                            final hxArgs = hxFunc.arguments.map(a -> a.type);
+
+                            Haxe(found.haxe, found.type, hxFunc.haxe, hxArgs, hxExpr.haxe.start.line);
+                        } else {
+                            // Something which cannot be mapped back to haxe code.
+                            Native(file, func, line);
+                        }
                 }
         }
     }
