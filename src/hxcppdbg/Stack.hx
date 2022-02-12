@@ -28,14 +28,15 @@ class Stack {
     @:command public function list() {
         switch gdb.command('-stack-list-frames').results['stack'] {
             case List(Right(frames)):
+                Sys.println('stack');
                 for (frame in frames) {
                     switch frame.value {
                         case Tuple(values):
                             switch mapNativeFrame(values) {
                                 case Haxe(_, type, func, args, line):
-                                    Sys.println('$type.$func(${ args.join(',') }) Line $line');
+                                    Sys.println('  $type.$func(${ args.join(',') }) Line $line');
                                 case Native(_, type, line) if (native):
-                                    Sys.println('  (native) $type Line $line');
+                                    Sys.println('    (native) $type Line $line');
                                 case _:
                                     // Do not print native frames if the native flag is not set.
                             }

@@ -1,7 +1,7 @@
 class Main {
 	static function main() {
 		new sub.Resources()
-			.load('')
+			.load('test')
 			.subscribe(() -> trace('callback'), 0);
 
 		trace("Hello, world!");

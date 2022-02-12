@@ -1,4 +1,3 @@
 -m Main
 --debug
 --cpp bin
--D dump=position

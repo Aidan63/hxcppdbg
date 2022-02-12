@@ -29,7 +29,7 @@ class Hxcppdbg {
         gdb         = new Gdb();
         breakpoints = new Breakpoints(sourcemap, gdb);
         stack       = new Stack(sourcemap, gdb);
-        locals      = new Locals(gdb);
+        locals      = new Locals(sourcemap, gdb);
 
         gdb.command('-file-exec-and-symbols /mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
     }

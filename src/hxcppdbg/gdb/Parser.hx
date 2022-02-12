@@ -1,7 +1,6 @@
 package hxcppdbg.gdb;
 
 import haxe.Exception;
-import tink.cli.Result;
 import haxe.ds.Option;
 import haxe.ds.Either;
 import hxparse.Parser.parse as parse;
