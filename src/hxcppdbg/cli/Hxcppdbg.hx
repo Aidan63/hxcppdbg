@@ -1,19 +1,22 @@
-package hxcppdbg;
+package hxcppdbg.cli;
 
+import hxcppdbg.core.drivers.lldb.LLDBProcess;
 import sys.io.File;
 import sys.thread.EventLoop.EventHandler;
 import sys.thread.Thread;
-import hxcppdbg.gdb.Gdb;
-import hxcppdbg.sourcemap.Sourcemap;
+import hxcppdbg.core.sourcemap.Sourcemap;
+import hxcppdbg.core.drivers.lldb.LLDBObjects;
 
 class Hxcppdbg {
     final thread : Thread;
 
     final event : EventHandler;
 
-    final gdb : Gdb;
-
     final sourcemap : Sourcemap;
+
+    final lldb : LLDBObjects;
+
+    final process : LLDBProcess;
 
     @:command public final breakpoints : Breakpoints;
 
@@ -26,34 +29,19 @@ class Hxcppdbg {
         event  = _event;
 
         sourcemap   = new json2object.JsonParser<Sourcemap>().fromJson(File.getContent('/mnt/d/programming/haxe/hxcppdbg/sample_sourcemap.json'));
-        gdb         = new Gdb();
-        breakpoints = new Breakpoints(sourcemap, gdb);
-        stack       = new Stack(sourcemap, gdb);
-        locals      = new Locals(sourcemap, gdb);
-
-        gdb.command('-file-exec-and-symbols /mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
-    }
-
-    @:command public function load() {
-        //
+        lldb        = LLDBObjects.createFromFile('/mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
+        process     = lldb.launch();
+        breakpoints = new Breakpoints(sourcemap, lldb);
+        stack       = new Stack(sourcemap, process);
+        locals      = new Locals(sourcemap, process);
     }
 
     @:command public function start() {
-        gdb.start();
+        process.start(Sys.getCwd());
     }
 
-    @:command public function suspend() {
-        //
-    }
-
-    @:command
-    public function frame() {
-        trace('todo : get the current frame');
-    }
-
-    @:command
-    public function stacktrace() {
-        trace('todo : get the current stacktrace');
+    @:command public function resume() {
+        process.resume();
     }
 
     @:command

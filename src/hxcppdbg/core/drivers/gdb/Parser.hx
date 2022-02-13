@@ -1,4 +1,4 @@
-package hxcppdbg.gdb;
+package hxcppdbg.core.drivers.gdb;
 
 import haxe.Exception;
 import haxe.ds.Option;

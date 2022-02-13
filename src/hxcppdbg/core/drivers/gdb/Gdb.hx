@@ -1,29 +1,16 @@
-package hxcppdbg.gdb;
+package hxcppdbg.core.drivers.gdb;
 
-import hxcppdbg.gdb.Parser.AsyncRecord;
+import hxcppdbg.core.drivers.gdb.Parser.MiParser;
+import hxcppdbg.core.drivers.gdb.Parser.AsyncRecord;
+import hxcppdbg.core.drivers.gdb.Parser.ResultRecord;
 import haxe.Exception;
-import hxcppdbg.gdb.Parser.MiParser;
-import hxcppdbg.gdb.Parser.ResultRecord;
 import sys.io.Process;
-import sys.thread.Thread;
-import sys.thread.EventLoop.EventHandler;
-import sys.thread.Deque;
-import haxe.io.Eof;
 
 class Gdb {
     final proc : Process;
 
-    final result : Deque<ResultRecord>;
-
-    // final thread : Thread;
-
-    // final event : EventHandler;
-
     public function new() {
-        proc   = new Process('gdb --interpreter=mi');
-        result = new Deque();
-        // thread = Thread.createWithEventLoop(processGdbOutput);
-        // event  = thread.events.repeat(processGdbOutput, 0);
+        proc = new Process('gdb --interpreter=mi');
 
         while (!StringTools.startsWith(proc.stdout.readLine(), '(gdb)')) {
             //

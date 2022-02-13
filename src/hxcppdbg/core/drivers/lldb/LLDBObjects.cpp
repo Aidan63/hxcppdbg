@@ -39,27 +39,23 @@ void hxcppdbg::core::drivers::lldb::LLDBObjects::destroy()
     ::lldb::SBDebugger::Destroy(debugger);
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess> hxcppdbg::core::drivers::lldb::LLDBObjects::launch(String cwd)
+void hxcppdbg::core::drivers::lldb::LLDBObjects::setBreakpoint(String cppFile, int cppLine)
 {
-    auto options = target.GetLaunchInfo();
-    options.SetWorkingDirectory(cwd.utf8_str());
-
-    ::lldb::SBError error;
-    auto process = target.Launch(options, error);
-
-    if (!process.IsValid())
+    auto bp = target.BreakpointCreateByLocation(cppFile.utf8_str(), cppLine);
+    if (!bp.IsValid())
     {
-        hx::Throw(HX_CSTRING("Failed to launch process"));
-    }
-    if (error.Fail())
-    {
-        hx::Throw(String(error.GetCString()));
+        hx::Throw(HX_CSTRING("Failed to set breakpoint"));
     }
 
-    auto exitCode   = process.GetExitStatus();
-    auto resultDesc = process.GetExitDescription();
+    auto id = bp.GetID();
+    bp.SetCallback(onBreakpointHit, this);
 
-    auto ptr = new hxcppdbg::core::drivers::lldb::LLDBProcess(process);
+    std::cout << "breakpoint " << id << " set" << std::endl;
+}
+
+hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess> hxcppdbg::core::drivers::lldb::LLDBObjects::launch()
+{
+    auto ptr = new hxcppdbg::core::drivers::lldb::LLDBProcess(target);
 
     return hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess>(ptr);
 }
@@ -77,4 +73,36 @@ int hxcppdbg::core::drivers::lldb::LLDBObjects::__GetType() const
 void hxcppdbg::core::drivers::lldb::LLDBObjects::finalise(::Dynamic obj)
 {
     static_cast<LLDBObjects*>(obj.mPtr)->destroy();
+}
+
+bool hxcppdbg::core::drivers::lldb::LLDBObjects::onBreakpointHit(void *baton, ::lldb::SBProcess &process, ::lldb::SBThread &thread, ::lldb::SBBreakpointLocation &location)
+{
+    hx::ExitGCFreeZone();
+
+    // This callback will be called while this thread is in a GC free zone.
+    // Re-enter a GC zone and then exit before returning as the GC free zone is exited again once control returns from the calling lldb object.
+
+    auto bp  = location.GetBreakpoint().GetID();
+    auto tid = location.GetThreadID();
+
+    auto count  = thread.GetNumFrames();
+    auto frames = Array<hx::Anon>(count, count);
+
+    for (int i = 0; i < count; i++)
+    {
+        auto frame = thread.GetFrameAtIndex(i);
+
+        // file, line, and function.
+        auto lineEntry = frame.GetLineEntry();
+        auto lineNum   = lineEntry.GetLine();
+        auto funcName  = frame.GetFunctionName();
+        auto pivot     = std::string(funcName).find_first_of('(');
+        auto cleaned   = (pivot != std::string::npos) ? String::create(funcName, pivot) : String::create(funcName);
+
+        std::cout << cleaned << " Line " << lineNum << std::endl;
+    }
+
+    hx::EnterGCFreeZone();
+
+    return false;
 }

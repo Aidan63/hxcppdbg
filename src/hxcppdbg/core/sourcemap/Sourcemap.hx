@@ -1,4 +1,4 @@
-package hxcppdbg.sourcemap;
+package hxcppdbg.core.sourcemap;
 
 class Sourcemap {
     public var files : Array<GeneratedFile>;

@@ -6,6 +6,7 @@
 
 #include <SBDebugger.h>
 #include <SBTarget.h>
+#include <SBBreakpointLocation.h>
 #include "LLDBProcess.hpp"
 
 namespace hxcppdbg::core::drivers::lldb
@@ -16,7 +17,8 @@ namespace hxcppdbg::core::drivers::lldb
         LLDBObjects(::lldb::SBDebugger dbg, ::lldb::SBTarget tgt);
         
         void destroy();
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess> launch(String cwd);
+        void setBreakpoint(String cppFile, int cppLine);
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess> launch();
 
         int __GetType() const;
         String toString();
@@ -28,5 +30,6 @@ namespace hxcppdbg::core::drivers::lldb
 
         static int lldbObjectsType;
         static void finalise(Dynamic obj);
+        static bool onBreakpointHit(void *baton, ::lldb::SBProcess &process, ::lldb::SBThread &thread, ::lldb::SBBreakpointLocation &location);
     };
 }

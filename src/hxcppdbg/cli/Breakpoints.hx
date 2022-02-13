@@ -1,8 +1,8 @@
-package hxcppdbg;
+package hxcppdbg.cli;
 
+import hxcppdbg.core.sourcemap.Sourcemap;
+import hxcppdbg.core.drivers.lldb.LLDBObjects;
 import haxe.Exception;
-import hxcppdbg.gdb.Gdb;
-import hxcppdbg.sourcemap.Sourcemap;
 
 using Lambda;
 using StringTools;
@@ -10,7 +10,7 @@ using StringTools;
 class Breakpoints {
     final sourcemap : Sourcemap;
 
-    final gdb : Gdb;
+    final lldb : LLDBObjects;
 
     public var target = '';
 
@@ -19,9 +19,9 @@ class Breakpoints {
     public var column = -1;
 
 
-    public function new(_sourcemap, _gdb) {
+    public function new(_sourcemap, _lldb) {
         sourcemap = _sourcemap;
-        gdb       = _gdb;
+        lldb      = _lldb;
     }
 
     @:command public function add() {
@@ -54,9 +54,7 @@ class Breakpoints {
                     filtered[filtered.length - 1];
                 }
 
-                final r = gdb.command('-break-insert ${ file.generated }:${ mapping.cpp.start.line }');
-                            
-                trace(r.cls, r.results);
+                lldb.setBreakpoint(file.generated, mapping.cpp.start.line);
         }
     }
 

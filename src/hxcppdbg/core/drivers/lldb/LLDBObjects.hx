@@ -7,5 +7,7 @@ extern class LLDBObjects {
     @:native('hxcppdbg::core::drivers::lldb::LLDBObjects::createFromFile')
     static function createFromFile(file : String) : LLDBObjects;
 
-    function launch(cwd : String) : LLDBProcess;
+    function launch() : LLDBProcess;
+
+    function setBreakpoint(cppFile : String, cppLine : Int) : Void;
 }

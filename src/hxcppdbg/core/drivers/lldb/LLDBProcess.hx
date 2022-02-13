@@ -30,6 +30,8 @@ enum abstract ProcessState(Int) {
 extern class LLDBProcess {
     function getState() : ProcessState;
 
+    function start(cwd : String) : Void;
+
     function resume() : Void;
 
     function dump() : Void;
