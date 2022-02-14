@@ -14,17 +14,26 @@ namespace hxcppdbg::core::drivers::lldb
     class LLDBObjects : public hx::Object
     {
     public:
-        LLDBObjects(::lldb::SBDebugger dbg, ::lldb::SBTarget tgt);
-        
+        Dynamic onBreakpointHitCallback;
+
         void destroy();
-        void setBreakpoint(String cppFile, int cppLine);
+
+        hx::Null<int> setBreakpoint(String cppFile, int cppLine);
+        bool removeBreakpoint(int id);
+
         hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess> launch();
 
+        void __Mark(HX_MARK_PARAMS);
+#ifdef HXCPP_VISIT_ALLOCS
+        void __Visit(HX_VISIT_PARAMS);
+#endif
         int __GetType() const;
         String toString();
 
         static hx::ObjectPtr<LLDBObjects> createFromFile(String file);
     private:
+        LLDBObjects(::lldb::SBDebugger dbg, ::lldb::SBTarget tgt);
+
         ::lldb::SBDebugger debugger;
         ::lldb::SBTarget target;
 

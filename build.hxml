@@ -1,5 +1,5 @@
 -p src
--m Main
+-m hxcppdbg.cli.Main
 -L tink_cli
 -L hxparse
 -L json2object

@@ -2,7 +2,7 @@
     "files" : [
         {
             "generated" : "src/Main.cpp",
-            "haxe" : "Main.hx",
+            "haxe" : "/mnt/d/programming/haxe/hxcppdbg/sample/Main.hx",
             "type" : "Main",
             "closures" : [
                 {
@@ -89,7 +89,7 @@
         },
         {
             "generated" : "src/sub/Resources.cpp",
-            "haxe" : "sub/Resources.hx",
+            "haxe" : "/mnt/d/programming/haxe/hxcppdbg/sample/sub/Resources.hx",
             "type" : "Resources",
             "closures" : [],
             "functions" : [

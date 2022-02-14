@@ -7,7 +7,11 @@ extern class LLDBObjects {
     @:native('hxcppdbg::core::drivers::lldb::LLDBObjects::createFromFile')
     static function createFromFile(file : String) : LLDBObjects;
 
+    var onBreakpointHitCallback : (_breakpoint : Int, _thread : Int)->Void;
+
     function launch() : LLDBProcess;
 
-    function setBreakpoint(cppFile : String, cppLine : Int) : Void;
+    function setBreakpoint(cppFile : String, cppLine : Int) : Null<Int>;
+
+    function removeBreakpoint(id : Int) : Bool;
 }

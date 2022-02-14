@@ -39,18 +39,23 @@ void hxcppdbg::core::drivers::lldb::LLDBObjects::destroy()
     ::lldb::SBDebugger::Destroy(debugger);
 }
 
-void hxcppdbg::core::drivers::lldb::LLDBObjects::setBreakpoint(String cppFile, int cppLine)
+hx::Null<int> hxcppdbg::core::drivers::lldb::LLDBObjects::setBreakpoint(String cppFile, int cppLine)
 {
     auto bp = target.BreakpointCreateByLocation(cppFile.utf8_str(), cppLine);
     if (!bp.IsValid())
     {
-        hx::Throw(HX_CSTRING("Failed to set breakpoint"));
+        return hx::Null<int>();
     }
 
     auto id = bp.GetID();
     bp.SetCallback(onBreakpointHit, this);
 
-    std::cout << "breakpoint " << id << " set" << std::endl;
+    return hx::Null<int>(id);
+}
+
+bool hxcppdbg::core::drivers::lldb::LLDBObjects::removeBreakpoint(int id)
+{
+    return target.BreakpointDelete(id);
 }
 
 hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess> hxcppdbg::core::drivers::lldb::LLDBObjects::launch()
@@ -59,6 +64,20 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess> hxcppdbg::core::driver
 
     return hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess>(ptr);
 }
+
+void hxcppdbg::core::drivers::lldb::LLDBObjects::__Mark(HX_MARK_PARAMS)
+{
+	HX_MARK_BEGIN_CLASS(LLDBObjects);
+	HX_MARK_MEMBER_NAME(onBreakpointHitCallback,"onBreakpointHitCallback");
+	HX_MARK_END_CLASS();
+}
+
+#ifdef HXCPP_VISIT_ALLOCS
+void hxcppdbg::core::drivers::lldb::LLDBObjects::__Visit(HX_VISIT_PARAMS)
+{
+    HX_VISIT_MEMBER_NAME(onBreakpointHitCallback,"onBreakpointHitCallback");
+}
+#endif
 
 int hxcppdbg::core::drivers::lldb::LLDBObjects::__GetType() const
 {
@@ -84,25 +103,29 @@ bool hxcppdbg::core::drivers::lldb::LLDBObjects::onBreakpointHit(void *baton, ::
 
     auto bp  = location.GetBreakpoint().GetID();
     auto tid = location.GetThreadID();
+    auto obj = hx::ObjectPtr<LLDBObjects>(static_cast<LLDBObjects*>(baton));
 
-    auto count  = thread.GetNumFrames();
-    auto frames = Array<hx::Anon>(count, count);
-
-    for (int i = 0; i < count; i++)
+    if (obj->onBreakpointHitCallback != null())
     {
-        auto frame = thread.GetFrameAtIndex(i);
-
-        // file, line, and function.
-        auto lineEntry = frame.GetLineEntry();
-        auto lineNum   = lineEntry.GetLine();
-        auto funcName  = frame.GetFunctionName();
-        auto pivot     = std::string(funcName).find_first_of('(');
-        auto cleaned   = (pivot != std::string::npos) ? String::create(funcName, pivot) : String::create(funcName);
-
-        std::cout << cleaned << " Line " << lineNum << std::endl;
+        obj->onBreakpointHitCallback(bp, tid);
     }
+
+    // auto count  = thread.GetNumFrames();
+    // auto frames = Array<hx::Anon>(count, count);
+
+    // for (int i = 0; i < count; i++)
+    // {
+    //     auto frame = thread.GetFrameAtIndex(i);
+
+    //     // file, line, and function.
+    //     auto lineEntry = frame.GetLineEntry();
+    //     auto lineNum   = lineEntry.GetLine();
+    //     auto funcName  = frame.GetFunctionName();
+    //     auto pivot     = std::string(funcName).find_first_of('(');
+    //     auto cleaned   = (pivot != std::string::npos) ? String::create(funcName, pivot) : String::create(funcName);
+    // }
 
     hx::EnterGCFreeZone();
 
-    return false;
+    return true;
 }
