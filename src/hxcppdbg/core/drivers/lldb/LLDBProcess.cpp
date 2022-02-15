@@ -1,5 +1,35 @@
 #include "LLDBProcess.hpp"
 
+// Frame
+
+hxcppdbg::core::drivers::lldb::Frame::Frame(String _file, String _function, String _symbol, int _line)
+    : file(_file), func(_function), line(_line), symbol(_symbol)
+{
+    //
+}
+
+void hxcppdbg::core::drivers::lldb::Frame::__Mark(HX_MARK_PARAMS)
+{
+    HX_MARK_BEGIN_CLASS(Frame);
+	HX_MARK_MEMBER_NAME(file,"file");
+    HX_MARK_MEMBER_NAME(func,"func");
+    HX_MARK_MEMBER_NAME(symbol,"symbol");
+	HX_MARK_END_CLASS();
+}
+
+#if HXCPP_VISIT_ALLOCS
+
+void hxcppdbg::core::drivers::lldb::Frame::__Visit(HX_VISIT_PARAMS)
+{
+    HX_VISIT_MEMBER_NAME(file,"onBreakpointHitCallback");
+    HX_VISIT_MEMBER_NAME(func,"func");
+    HX_VISIT_MEMBER_NAME(symbol,"symbol");
+}
+
+#endif
+
+// LLDBProcess
+
 int hxcppdbg::core::drivers::lldb::LLDBProcess::lldbProcessType = hxcpp_alloc_kind();
 
 void hxcppdbg::core::drivers::lldb::LLDBProcess::finalise(Dynamic obj)
@@ -52,28 +82,37 @@ void hxcppdbg::core::drivers::lldb::LLDBProcess::resume()
     }
 }
 
-void hxcppdbg::core::drivers::lldb::LLDBProcess::dump()
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drivers::lldb::LLDBProcess::getStackFrames(int threadID)
 {
-    if (process.GetState() == ::lldb::StateType::eStateStopped)
+    if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        auto thread = process.GetSelectedThread();
-        auto frames = std::vector<::lldb::SBFrame>(thread.GetNumFrames());
-
-        for (int i = 0; i < frames.size(); i++)
-        {
-            auto f = (frames[i] = thread.GetFrameAtIndex(i));
-
-            // file, line, and function.
-            auto lineEntry = f.GetLineEntry();
-            auto fileName  = lineEntry.GetFileSpec().GetFilename();
-            auto lineNum   = lineEntry.GetLine();
-            auto funcName  = f.GetFunctionName();
-            auto pivot     = std::string(funcName).find_first_of('(');
-            auto cleaned   = (pivot != std::string::npos) ? String(funcName, pivot) : String(funcName);
-
-            std::cout << cleaned.utf8_str() << " Line " << lineNum << std::endl;
-        }
+        return Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>>(0, 0);
     }
+
+    auto thread = process.GetThreadAtIndex(threadID);
+    if (!thread.IsValid()) {
+        hx::Throw(HX_CSTRING("Thread is not valid"));
+    }
+    
+    auto count  = thread.GetNumFrames();
+    auto frames = Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>>(0, count);
+
+    for (int i = 0; i < count; i++)
+    {
+        auto frame = thread.GetFrameAtIndex(i);
+
+        // file, line, and function.
+        auto lineEntry = frame.GetLineEntry();
+        auto fileName  = String::create(lineEntry.GetFileSpec().GetFilename());
+        auto funcName  = String::create(frame.GetFunctionName());
+        auto symName   = String::create(frame.GetSymbol().GetName());
+        auto lineNum   = lineEntry.GetLine();
+        auto ptr       = hx::ObjectPtr<Frame>(new Frame(fileName, funcName, symName, lineNum));
+
+        frames->__SetItem(i, ptr);
+    }
+
+    return frames;
 }
 
 void hxcppdbg::core::drivers::lldb::LLDBProcess::destroy()

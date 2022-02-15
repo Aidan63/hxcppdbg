@@ -18,77 +18,73 @@ class Stack {
 
     public var native = false;
 
+    public var thread = 0;
+
     public function new(_sourcemap, _process) {
         sourcemap = _sourcemap;
         process   = _process;
     }
 
     @:command public function list() {
-        // switch gdb.command('-stack-list-frames').results['stack'] {
-        //     case List(Right(frames)):
-        //         Sys.println('stack');
-        //         for (frame in frames) {
-        //             switch frame.value {
-        //                 case Tuple(values):
-        //                     switch mapNativeFrame(values) {
-        //                         case Haxe(_, type, func, args, line):
-        //                             Sys.println('  $type.$func(${ args.join(',') }) Line $line');
-        //                         case Native(_, type, line) if (native):
-        //                             Sys.println('    (native) $type Line $line');
-        //                         case _:
-        //                             // Do not print native frames if the native flag is not set.
-        //                     }
-        //                 case _:
-        //                     //
-        //             }
-        //         }
-        //     case _:
-        //         'no stack found';
-        // }
+        final frames = process.getStackFrames(thread);
+        
+        var idx = 1;
+        for (frame in frames) {
+            switch mapNativeFrame(frame) {
+                case Haxe(_, type, func, args, line):
+                    Sys.println('\t${ idx++ }: $type.$func(${ args.join(',') }) Line $line');
+                case Native(_, type, line) if (native):
+                    Sys.println('\t${ idx++ }: (native) $type Line $line');
+                case _:
+                    // Do not print native frames if the native flag is not set.
+            }
+        }
     }
 
     @:defaultCommand public function help() {
         //
     }
 
-    // function getConstValue(_value : Value) {
-    //     return switch _value {
-    //         case Const(v):
-    //             v;
-    //         case _:
-    //             throw new Exception('value was not a const');
-    //     }
-    // }
+    function mapNativeFrame(_frame : Frame) {
+        return switch sourcemap.files.find(v -> v.generated.endsWith(_frame.file)) {
+            case null:
+                Native(_frame.file, _frame.func, _frame.line);
+            case found:
+                final hxExpr  = found.exprs.find(e -> e.cpp.start.line == _frame.line);
+                final cppType = constructTypeArray(_frame.symbol);
+                final objName = '${ found.type }_obj';
 
-    // function mapNativeFrame(_values : Map<String, Value>) {
-    //     final line = Std.parseInt(getConstValue(_values['line']));
-    //     final file = getConstValue(_values['file']);
-    //     final func = getConstValue(_values['func']);
+                if (cppType[cppType.length - 1] == '_hx_run') {
+                    final closureName = cppType[cppType.length - 2];
+                    final callingFunc = cppType[cppType.length - 3];
+                    Haxe(found.haxe, found.type, '$callingFunc.$closureName', [], hxExpr.haxe.start.line);
+                } else {                   
+                    if (cppType.length >= 2 && objName.endsWith(cppType[cppType.length - 2])) {
+                        // Standard haxe function.
+                        final hxFunc = found.functions.find(f -> f.cpp == cppType[cppType.length - 1]);
+                        final hxArgs = hxFunc.arguments.map(a -> a.type);
 
-    //     return switch sourcemap.files.find(v -> file.endsWith(v.generated)) {
-    //         case null:
-    //             Native(file, func, line);
-    //         case found:
-    //             final hxExpr  = found.exprs.find(e -> e.cpp.start.line == line);
-    //             final cppType = func.split('::');
-    //             final objName = '${ found.type }_obj';
+                        Haxe(found.haxe, found.type, hxFunc.haxe, hxArgs, hxExpr.haxe.start.line);
+                    } else {
+                        // Something which cannot be mapped back to haxe code.
+                        Native(_frame.file, _frame.func, _frame.line);
+                    }
+                }
+        }
+    }
 
-    //             switch cppType {
-    //                 // Closure object which contains a haxe anon function.
-    //                 case [ type, _, '_hx_run' ] if (type == objName):
-    //                     Haxe(found.haxe, found.type, cppType[1], [], hxExpr.haxe.start.line);
-    //                 case _:
-    //                     if (cppType.length >= 2 && cppType[cppType.length - 2] == objName) {
-    //                         // Standard haxe function.
-    //                         final hxFunc = found.functions.find(f -> f.cpp == cppType[cppType.length - 1]);
-    //                         final hxArgs = hxFunc.arguments.map(a -> a.type);
+    function constructTypeArray(_symbol : String) {
+        final parts = _symbol.split('::');
+        final out = parts.map(f -> {
+            final idx  = f.indexOf('(');
 
-    //                         Haxe(found.haxe, found.type, hxFunc.haxe, hxArgs, hxExpr.haxe.start.line);
-    //                     } else {
-    //                         // Something which cannot be mapped back to haxe code.
-    //                         Native(file, func, line);
-    //                     }
-    //             }
-    //     }
-    // }
+            if (idx != -1) {
+                f.substring(0, idx);
+            } else {
+                f;
+            }
+        });
+
+        return out;
+    }
 }
