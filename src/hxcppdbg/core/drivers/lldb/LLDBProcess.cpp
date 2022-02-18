@@ -123,7 +123,11 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lld
         hx::Throw(HX_CSTRING("Thread is not valid"));
     }
 
+    hx::EnterGCFreeZone();
+
     thread.StepInto();
+
+    hx::ExitGCFreeZone();
 
     return getStackFrame(threadIndex, 0);
 }
@@ -141,8 +145,12 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lld
         hx::Throw(HX_CSTRING("Thread is not valid"));
     }
 
+    hx::EnterGCFreeZone();
+
     ::lldb::SBError error;
     thread.StepOver(::lldb::RunMode::eOnlyDuringStepping, error);
+
+    hx::ExitGCFreeZone();
 
     if (error.Fail())
     {
