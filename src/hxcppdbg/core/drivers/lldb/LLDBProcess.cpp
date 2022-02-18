@@ -110,6 +110,24 @@ void hxcppdbg::core::drivers::lldb::LLDBProcess::resume()
     }
 }
 
+hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lldb::LLDBProcess::stepIn(int threadIndex)
+{
+    if (process.GetState() != ::lldb::StateType::eStateStopped)
+    {
+        return null();
+    }
+
+    auto thread = process.GetThreadAtIndex(threadIndex);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Thread is not valid"));
+    }
+
+    thread.StepInto();
+
+    return getStackFrame(threadIndex, 0);
+}
+
 hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lldb::LLDBProcess::stepOver(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
