@@ -5,6 +5,7 @@
         <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/LLDBBoot.cpp'/>
         <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/LLDBObjects.cpp'/>
         <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/LLDBProcess.cpp'/>
+        <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/TypeConverters.cpp'/>
     </files>
 
     <files id='lldb'>

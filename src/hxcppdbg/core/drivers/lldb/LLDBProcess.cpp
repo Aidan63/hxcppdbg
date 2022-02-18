@@ -28,6 +28,34 @@ void hxcppdbg::core::drivers::lldb::Frame::__Visit(HX_VISIT_PARAMS)
 
 #endif
 
+// Variable
+
+hxcppdbg::core::drivers::lldb::Variable::Variable(String _name, String _value, String _type)
+    : name(_name), value(_value), type(_type)
+{
+    //
+}
+
+void hxcppdbg::core::drivers::lldb::Variable::__Mark(HX_MARK_PARAMS)
+{
+    HX_MARK_BEGIN_CLASS(Frame);
+	HX_MARK_MEMBER_NAME(name,"name");
+    HX_MARK_MEMBER_NAME(value,"value");
+    HX_MARK_MEMBER_NAME(type,"type");
+	HX_MARK_END_CLASS();
+}
+
+#if HXCPP_VISIT_ALLOCS
+
+void hxcppdbg::core::drivers::lldb::Variable::__Visit(HX_VISIT_PARAMS)
+{
+    HX_VISIT_MEMBER_NAME(name,"name");
+    HX_VISIT_MEMBER_NAME(value,"value");
+    HX_VISIT_MEMBER_NAME(type,"type");
+}
+
+#endif
+
 // LLDBProcess
 
 int hxcppdbg::core::drivers::lldb::LLDBProcess::lldbProcessType = hxcpp_alloc_kind();
@@ -90,7 +118,8 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drive
     }
 
     auto thread = process.GetThreadAtIndex(threadID);
-    if (!thread.IsValid()) {
+    if (!thread.IsValid())
+    {
         hx::Throw(HX_CSTRING("Thread is not valid"));
     }
     
@@ -113,6 +142,35 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drive
     }
 
     return frames;
+}
+
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>> hxcppdbg::core::drivers::lldb::LLDBProcess::getStackVariables(int threadIndex, int frameIndex)
+{
+    auto thread    = process.GetThreadAtIndex(threadIndex);
+    auto frame     = thread.GetFrameAtIndex(frameIndex);
+    auto variables = frame.GetVariables(true, true, true, true);
+    auto output    = Array<hx::ObjectPtr<Variable>>(0, variables.GetSize());
+
+    for (int i = 0; i < variables.GetSize(); i++)
+    {
+        auto variable = variables.GetValueAtIndex(i);
+        auto name     = variable.GetName();
+        auto type     = variable.GetTypeName();
+
+        String varValue;
+        if (std::string(type) == std::string("String"))
+        {
+            varValue = hxcppdbg::core::drivers::lldb::extractString(variable);
+        }
+        else
+        {
+            varValue = String::create(variable.GetValue());
+        }
+
+        output->__SetItem(i, hx::ObjectPtr<Variable>(new Variable(String::create(name), varValue, String::create(type))));
+    }
+    
+    return output;
 }
 
 void hxcppdbg::core::drivers::lldb::LLDBProcess::destroy()

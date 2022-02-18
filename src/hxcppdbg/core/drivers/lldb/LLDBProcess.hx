@@ -12,7 +12,9 @@ extern class LLDBProcess {
 
     function dump() : Void;
 
-    function getStackFrames(_threadID : Int) : Array<Frame>;
+    function getStackFrames(_threadIndex : Int) : Array<Frame>;
+
+    function getStackVariables(_threadIndex : Int, _frameIndex : Int) : Array<Variable>;
 }
 
 @:keep
@@ -26,4 +28,15 @@ extern class Frame {
     final symbol : String;
 
     final line : Int;
+}
+
+@:keep
+@:include('LLDBProcess.hpp')
+@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>')
+extern class Variable {
+    final name : String;
+
+    final value : String;
+
+    final type : String;
 }

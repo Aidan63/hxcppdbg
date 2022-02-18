@@ -11,6 +11,7 @@
 #include <SBThread.h>
 #include <SBEvent.h>
 #include <SBSymbol.h>
+#include "TypeConverters.hpp"
 
 namespace hxcppdbg::core::drivers::lldb
 {
@@ -30,6 +31,21 @@ namespace hxcppdbg::core::drivers::lldb
 #endif
     };
 
+    class Variable : public hx::Object
+    {
+    public:
+        String name;
+        String value;
+        String type;
+
+        Variable(String _name, String _value, String _type);
+
+        void __Mark(HX_MARK_PARAMS);
+#if HXCPP_VISIT_ALLOCS
+        void __Visit(HX_VISIT_PARAMS);
+#endif
+    };
+
     class LLDBProcess : public hx::Object
     {
     public:
@@ -41,6 +57,7 @@ namespace hxcppdbg::core::drivers::lldb
         void resume();
 
         Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> getStackFrames(int threadID);
+        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>> getStackVariables(int threadIndex, int frameIndex);
 
         int __GetType() const;
         String toString();

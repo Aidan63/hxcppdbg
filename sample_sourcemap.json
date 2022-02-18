@@ -90,7 +90,7 @@
         {
             "generated" : "src/sub/Resources.cpp",
             "haxe" : "/mnt/d/programming/haxe/hxcppdbg/sample/sub/Resources.hx",
-            "type" : "Resources",
+            "type" : "sub.Resources",
             "closures" : [],
             "functions" : [
                 {
