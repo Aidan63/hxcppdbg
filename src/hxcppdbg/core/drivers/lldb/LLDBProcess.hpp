@@ -58,6 +58,7 @@ namespace hxcppdbg::core::drivers::lldb
 
         hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> stepOver(int threadIndex);
         hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> stepIn(int threadIndex);
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> stepOut(int threadIndex);
 
         hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> getStackFrame(int threadIndex, int frameIndex);
         Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> getStackFrames(int threadIndex);
