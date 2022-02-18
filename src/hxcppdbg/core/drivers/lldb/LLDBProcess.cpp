@@ -110,14 +110,66 @@ void hxcppdbg::core::drivers::lldb::LLDBProcess::resume()
     }
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drivers::lldb::LLDBProcess::getStackFrames(int threadID)
+hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lldb::LLDBProcess::stepOver(int threadIndex)
+{
+    if (process.GetState() != ::lldb::StateType::eStateStopped)
+    {
+        return null();
+    }
+
+    auto thread = process.GetThreadAtIndex(threadIndex);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Thread is not valid"));
+    }
+
+    ::lldb::SBError error;
+    thread.StepOver(::lldb::RunMode::eOnlyDuringStepping, error);
+
+    if (error.Fail())
+    {
+        hx::Throw(String::create(error.GetCString()));
+    }
+
+    return getStackFrame(threadIndex, 0);
+}
+
+hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lldb::LLDBProcess::getStackFrame(int threadIndex, int frameIndex)
+{
+    if (process.GetState() != ::lldb::StateType::eStateStopped)
+    {
+        return null();
+    }
+
+    auto thread = process.GetThreadAtIndex(threadIndex);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Thread is not valid"));
+    }
+
+    auto frame = thread.GetFrameAtIndex(frameIndex);
+    if (!frame.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Unable to get frame 0"));
+    }
+
+    auto lineEntry = frame.GetLineEntry();
+    auto fileName  = String::create(lineEntry.GetFileSpec().GetFilename());
+    auto funcName  = String::create(frame.GetFunctionName());
+    auto symName   = String::create(frame.GetSymbol().GetName());
+    auto lineNum   = lineEntry.GetLine();
+
+    return hx::ObjectPtr<Frame>(new Frame(fileName, funcName, symName, lineNum));
+}
+
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drivers::lldb::LLDBProcess::getStackFrames(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
         return Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>>(0, 0);
     }
 
-    auto thread = process.GetThreadAtIndex(threadID);
+    auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
         hx::Throw(HX_CSTRING("Thread is not valid"));
@@ -128,17 +180,7 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drive
 
     for (int i = 0; i < count; i++)
     {
-        auto frame = thread.GetFrameAtIndex(i);
-
-        // file, line, and function.
-        auto lineEntry = frame.GetLineEntry();
-        auto fileName  = String::create(lineEntry.GetFileSpec().GetFilename());
-        auto funcName  = String::create(frame.GetFunctionName());
-        auto symName   = String::create(frame.GetSymbol().GetName());
-        auto lineNum   = lineEntry.GetLine();
-        auto ptr       = hx::ObjectPtr<Frame>(new Frame(fileName, funcName, symName, lineNum));
-
-        frames->__SetItem(i, ptr);
+        frames->__SetItem(i, getStackFrame(threadIndex, i));
     }
 
     return frames;

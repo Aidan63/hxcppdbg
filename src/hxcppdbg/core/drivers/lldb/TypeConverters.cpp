@@ -8,10 +8,10 @@ String hxcppdbg::core::drivers::lldb::extractString(::lldb::SBValue value)
         return HX_CSTRING("Invalid String (failed to read length)");
     }
 
-    auto length = lengthValue.GetValueAsSigned(-1L);
+    auto length = lengthValue.GetValueAsSigned();
     if (length == 0L)
     {
-        return HX_CSTRING("Invalid String (invalid length)");
+        return HX_CSTRING("");
     }
 
     // utf8_str() is an inline function so can't be called by lldb.

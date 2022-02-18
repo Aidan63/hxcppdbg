@@ -12,6 +12,10 @@ extern class LLDBProcess {
 
     function dump() : Void;
 
+    function getStackFrame(_threadIndex : Int, _frameIndex : Int) : Null<Frame>;
+
+    function stepOver(_threadIndex : Int) : Frame;
+
     function getStackFrames(_threadIndex : Int) : Array<Frame>;
 
     function getStackVariables(_threadIndex : Int, _frameIndex : Int) : Array<Variable>;

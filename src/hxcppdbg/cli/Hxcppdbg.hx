@@ -1,10 +1,10 @@
 package hxcppdbg.cli;
 
-import hxcppdbg.core.drivers.lldb.LLDBProcess;
 import sys.io.File;
-import sys.thread.EventLoop.EventHandler;
 import sys.thread.Thread;
+import sys.thread.EventLoop.EventHandler;
 import hxcppdbg.core.sourcemap.Sourcemap;
+import hxcppdbg.core.drivers.lldb.LLDBProcess;
 import hxcppdbg.core.drivers.lldb.LLDBObjects;
 
 class Hxcppdbg {
@@ -24,6 +24,8 @@ class Hxcppdbg {
 
     @:command public final locals : Locals;
 
+    @:command public final step : Step;
+
     public function new(_thread, _event) {
         thread = _thread;
         event  = _event;
@@ -34,6 +36,7 @@ class Hxcppdbg {
         breakpoints = new Breakpoints(sourcemap, lldb);
         stack       = new Stack(sourcemap, process);
         locals      = new Locals(sourcemap, process);
+        step        = new Step(sourcemap, process);
     }
 
     @:command public function start() {

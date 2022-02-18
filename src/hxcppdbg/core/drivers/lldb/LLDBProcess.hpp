@@ -56,7 +56,9 @@ namespace hxcppdbg::core::drivers::lldb
         void start(String cwd);
         void resume();
 
-        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> getStackFrames(int threadID);
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> stepOver(int threadIndex);
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> getStackFrame(int threadIndex, int frameIndex);
+        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> getStackFrames(int threadIndex);
         Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>> getStackVariables(int threadIndex, int frameIndex);
 
         int __GetType() const;
