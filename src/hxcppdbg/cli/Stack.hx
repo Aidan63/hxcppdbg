@@ -32,7 +32,7 @@ class Stack {
                     switch type {
                         case Left(func):
                             final args = func.arguments.map(a -> a.type).join(',');
-                            final name = func.haxe;
+                            final name = func.name;
                             final cls  = file.type;
                             Sys.println('\t$idx: $cls.$name($args) Line $line');
                         case Right(closure):

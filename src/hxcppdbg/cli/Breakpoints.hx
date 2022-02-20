@@ -28,7 +28,7 @@ class Breakpoints {
 
     @:command public function list() {
         for (id => breakpoint in breakpoints) {
-            final end = if (breakpoint.column != 0) 'Column ${ breakpoint.column }' else '';
+            final end = if (breakpoint.char != 0) 'Character ${ breakpoint.char }' else '';
 
             Sys.println('[$id] ${ breakpoint.file } Line ${ breakpoint.line } ${ end }');
         }
@@ -46,7 +46,7 @@ class Add {
 
     public var line : Null<Int>;
 
-    public var column = 0;
+    public var char = 0;
 
     public function new(_sourcemap, _lldb, _breakpoints) {
         sourcemap   = _sourcemap;
@@ -96,7 +96,7 @@ class Add {
     @:defaultCommand public function run() {
         switch sourcemap.files.find(f -> f.haxe.endsWith(file)) {
             case null:
-                throw new Exception('Unable to find file in sourcemap with name $file');
+                Sys.println('Unable to find file in sourcemap with name $file');
             case file:
                 // Find all exprs which fit within the line given.
                 // We could have multiple exprs due to anonymous functions.
@@ -110,15 +110,15 @@ class Add {
 
                 // If no column was specified then choose the least specific (larget range) of all found exprs.
                 // When a column is specified then choose the least specific of the exprs which fit the column constraint.
-                final mapping = if (column == 0) {
+                final mapping = if (char == 0) {
                     exprs.sort((e1, e2) -> (e2.haxe.end.line - e2.haxe.start.line) - (e1.haxe.end.line - e1.haxe.start.line));
                     exprs[0];
                 } else {
                     // This logic to find the best fitting expr with column info doesn't seem very sound, needs a re-think.
-                    final filtered = exprs.filter(expr -> column >= expr.haxe.start.col && column <= expr.haxe.end.col);
+                    final filtered = exprs.filter(expr -> char >= expr.haxe.start.col && char <= expr.haxe.end.col);
 
                     if (filtered.length == 0) {
-                        Sys.println('unable to map $file:$line$column to a c++ line');
+                        Sys.println('unable to map $file:$line:$char to a c++ line');
 
                         return;
                     }
@@ -127,12 +127,12 @@ class Add {
                     filtered[filtered.length - 1];
                 }
 
-                switch lldb.setBreakpoint(file.generated, mapping.cpp.start.line)
+                switch lldb.setBreakpoint(file.cpp, mapping.cpp)
                 {
                     case null:
                         Sys.println('unable to set breakpoint');
                     case id:
-                        breakpoints.set(id, new BreakpointLocation(file.haxe, mapping.haxe.start.line, if (column != 0) mapping.haxe.start.col else 0));
+                        breakpoints.set(id, new BreakpointLocation(file.haxe, mapping.haxe.start.line, if (char != 0) mapping.haxe.start.col else 0));
 
                         Sys.println('breakpoint $id set');
                 }
@@ -173,11 +173,11 @@ private class BreakpointLocation {
 
     public final line : Int;
 
-    public final column : Int;
+    public final char : Int;
 
-    public function new(_file, _line, _column) {
-        file   = _file;
-        line   = _line;
-        column = _column;
+    public function new(_file, _line, _char) {
+        file = _file;
+        line = _line;
+        char = _char;
     }
 }

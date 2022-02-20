@@ -5,13 +5,11 @@ class Sourcemap {
 }
 
 class GeneratedFile {
-    public var generated : String;
+    public var cpp : String;
 
     public var haxe : String;
 
     public var type : String;
-
-    public var closures : Array<Closure>;
 
     public var functions : Array<Function>;
 
@@ -21,23 +19,25 @@ class GeneratedFile {
 class Closure {
     public var name : String;
 
-    public var captures : Array<NameMap>;
+    public var arguments : Array<NameMap>;
 }
 
 class Function {
-    public var haxe : String;
+    public var name : String;
 
     public var cpp : String;
 
     public var arguments : Array<NameMap>;
 
     public var variables : Array<NameMap>;
+
+    public var closures : Array<Closure>;
 }
 
 class ExprMap {
     public var haxe : ExprRange;
 
-    public var cpp : ExprRange;
+    public var cpp : Int;
 }
 
 class ExprRange {
