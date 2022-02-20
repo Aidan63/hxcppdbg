@@ -13,8 +13,6 @@ class Step {
 
     public var thread = 0;
 
-    public var details = false;
-
     public function new(_sourcemap, _process) {
         sourcemap = _sourcemap;
         process   = _process;
@@ -36,9 +34,6 @@ class Step {
                         case Haxe(currentFile, _, currentLine):
                             switch baseFrame {
                                 case Haxe(baseFile, _, baseLine):
-                                    if (details) {
-                                        trace(currentFile.haxe, baseFile.haxe, currentLine, baseLine);
-                                    }
                                     currentFile.haxe == baseFile.haxe && currentLine == baseLine;
                                 case Native(_, _, _):
                                     // Our base frame shouldn't ever be a non haxe one.
@@ -46,10 +41,7 @@ class Step {
                                     // so we sould correct this down the line.
                                     throw new Exception('');
                             }
-                        case Native(file, type, line):
-                            if (details) {
-                                trace(file, type, line);
-                            }
+                        case Native(_, _, _):
                             true;
                     }
             }
