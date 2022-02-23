@@ -1,50 +1,33 @@
 package hxcppdbg.cli;
 
-import sys.io.File;
+import hxcppdbg.core.DebugSession;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
-import hxcppdbg.core.sourcemap.Sourcemap;
-import hxcppdbg.core.drivers.lldb.LLDBProcess;
-import hxcppdbg.core.drivers.lldb.LLDBObjects;
 
 class Hxcppdbg {
     final thread : Thread;
 
     final event : EventHandler;
 
-    final sourcemap : Sourcemap;
-
-    final lldb : LLDBObjects;
-
-    final process : LLDBProcess;
+    final session : DebugSession;
 
     @:command public final breakpoints : Breakpoints;
 
-    @:command public final stack : Stack;
+    public function new(_thread, _event, _session)
+    {
+        thread  = _thread;
+        event   = _event;
+        session = _session;
 
-    @:command public final locals : Locals;
-
-    @:command public final step : Step;
-
-    public function new(_thread, _event) {
-        thread = _thread;
-        event  = _event;
-
-        sourcemap   = new json2object.JsonParser<Sourcemap>().fromJson(File.getContent('/mnt/d/programming/haxe/hxcppdbg/sample_sourcemap.json'));
-        lldb        = LLDBObjects.createFromFile('/mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
-        process     = lldb.launch();
-        breakpoints = new Breakpoints(sourcemap, lldb);
-        stack       = new Stack(sourcemap, process);
-        locals      = new Locals(sourcemap, process);
-        step        = new Step(sourcemap, process);
+        breakpoints = new Breakpoints(session.breakpoints);
     }
 
     @:command public function start() {
-        process.start(Sys.getCwd());
+        session.driver.start();
     }
 
     @:command public function resume() {
-        process.resume();
+        session.driver.resume();
     }
 
     @:command

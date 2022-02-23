@@ -1,18 +1,21 @@
 package hxcppdbg.cli;
 
+import sys.io.File;
+import hxcppdbg.core.DebugSession;
+import hxcppdbg.core.drivers.lldb.LLDBDriver;
+import hxcppdbg.core.sourcemap.Sourcemap;
 import sys.thread.Thread;
 import tink.cli.Prompt.PromptType;
 import tink.cli.prompt.SysPrompt;
-import hxcppdbg.core.drivers.lldb.LLDBBoot;
 
 function main() {
-    LLDBBoot.boot();
-
-    final thread = Thread.createWithEventLoop(tick);
-    final event  = thread.events.repeat(tick, 0);
-    final hxcpp  = new Hxcppdbg(thread, event);
-    final regex  = ~/\s+/g;
-    final input  = new SysPrompt();
+    final sourcemap = new json2object.JsonParser<Sourcemap>().fromJson(File.getContent('/mnt/d/programming/haxe/hxcppdbg/sample_sourcemap.json'));
+    final driver    = new LLDBDriver('/mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
+    final thread    = Thread.createWithEventLoop(tick);
+    final event     = thread.events.repeat(tick, 0);
+    final session   = new DebugSession(driver, sourcemap);
+    final regex     = ~/\s+/g;
+    final input     = new SysPrompt();
 
     while (true) {
         input
@@ -23,7 +26,7 @@ function main() {
                         final args = regex.split(data);
         
                         tink.Cli
-                            .process(args, hxcpp)
+                            .process(args, new Hxcppdbg(thread, event, session))
                             .handle(_ -> {});
                     case Failure(failure):
                         failure.throwSelf();
@@ -35,16 +38,3 @@ function main() {
 function tick() {
     Sys.sleep(1 / 1000);
 }
-
-// function main() {
-//     LLDBBoot.boot();
-//     final o = LLDBObjects.createFromFile("/mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug");
-//     final p = o.launch(Sys.getCwd());
-
-//     trace(o, p);
-//     trace(p.getState());
-    
-//     p.dump();
-
-//     trace('done');
-// }
