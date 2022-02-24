@@ -27,11 +27,16 @@ class Breakpoints
 
     @:command public function list()
     {
-        // for (id => breakpoint in breakpoints) {
-        //     final end = if (breakpoint.char != 0) 'Character ${ breakpoint.char }' else '';
+        final breakpoints = driver.list();
 
-        //     Sys.println('[$id] ${ breakpoint.file } Line ${ breakpoint.line } ${ end }');
-        // }
+        breakpoints.sort((b1, b2) -> b1.id - b2.id);
+
+        for (breakpoint in breakpoints)
+        {
+            final end = if (breakpoint.char != 0) 'Character ${ breakpoint.char }' else '';
+
+            Sys.println('[${ breakpoint.id }] ${ breakpoint.file } Line ${ breakpoint.line } ${ end }');
+        }
     }
 }
 

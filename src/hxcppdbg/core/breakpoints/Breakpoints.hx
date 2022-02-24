@@ -8,14 +8,16 @@ import hxcppdbg.core.drivers.IBreakpoints;
 using Lambda;
 using StringTools;
 
-class Breakpoints {
+class Breakpoints
+{
     final sourcemap : Sourcemap;
 
     final driver : IBreakpoints;
 
     final active : Map<Int, Breakpoint>;
 
-    public function new(_sourcemap, _driver) {
+    public function new(_sourcemap, _driver)
+    {
         sourcemap = _sourcemap;
         driver    = _driver;
         active    = [];
@@ -61,7 +63,13 @@ class Breakpoints {
         }
     }
 
-    public function delete(_id) {
+    public function delete(_id)
+    {
         return driver.remove(_id);
+    }
+
+    public function list()
+    {
+        return active.array();
     }
 }

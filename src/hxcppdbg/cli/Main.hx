@@ -8,7 +8,8 @@ import sys.thread.Thread;
 import tink.cli.Prompt.PromptType;
 import tink.cli.prompt.SysPrompt;
 
-function main() {
+function main()
+{
     final sourcemap = new json2object.JsonParser<Sourcemap>().fromJson(File.getContent('/mnt/d/programming/haxe/hxcppdbg/sample_sourcemap.json'));
     final driver    = new LLDBDriver('/mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
     final thread    = Thread.createWithEventLoop(tick);
@@ -17,11 +18,13 @@ function main() {
     final regex     = ~/\s+/g;
     final input     = new SysPrompt();
 
-    while (true) {
+    while (true)
+    {
         input
             .prompt(PromptType.ofString('hxcppdbg '))
             .handle(cb -> {
-                switch cb {
+                switch cb
+                {
                     case Success(data):
                         final args = regex.split(data);
         
@@ -35,6 +38,7 @@ function main() {
     }
 }
 
-function tick() {
+function tick()
+{
     Sys.sleep(1 / 1000);
 }
