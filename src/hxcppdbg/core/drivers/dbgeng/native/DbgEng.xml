@@ -1,0 +1,20 @@
+<xml>
+    <compiler id="MSVC" exe="cl.exe" if="windows">
+        <flag value = "/std:c++17"/>
+    </compiler>
+
+    <files id='haxe'>
+        <compilerflag value='-ID:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native'/>
+        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DbgEngObjects.cpp'/>
+    </files>
+
+    <files id='dbgeng'>
+        <compilerflag value='-ID:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native'/>
+    </files>
+
+    <target id="haxe">
+        <files id='dbgeng'/>
+
+        <lib name = "DbgEng.lib"/>
+    </target>
+</xml>

@@ -2,7 +2,6 @@ package hxcppdbg.cli;
 
 import sys.io.File;
 import hxcppdbg.core.DebugSession;
-import hxcppdbg.core.drivers.lldb.LLDBDriver;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import sys.thread.Thread;
 import tink.cli.Prompt.PromptType;
@@ -10,8 +9,13 @@ import tink.cli.prompt.SysPrompt;
 
 function main()
 {
+#if HX_WINDOWS
+    final sourcemap = new json2object.JsonParser<Sourcemap>().fromJson(File.getContent('D:/programming/haxe/hxcppdbg/sample/sourcemap.json'));
+    final driver    = new hxcppdbg.core.drivers.dbgeng.DbgEngDriver('D:/programming/haxe/hxcppdbg/sample/bin/windows/Main-debug.exe');
+#else
     final sourcemap = new json2object.JsonParser<Sourcemap>().fromJson(File.getContent('/mnt/d/programming/haxe/hxcppdbg/sample_sourcemap.json'));
-    final driver    = new LLDBDriver('/mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
+    final driver    = new hxcppdbg.core.drivers.lldb.LLDBDriver('/mnt/d/programming/haxe/hxcppdbg/sample/bin/Main-debug');
+#end
     final thread    = Thread.createWithEventLoop(tick);
     final event     = thread.events.repeat(tick, 0);
     final session   = new DebugSession(driver, sourcemap);

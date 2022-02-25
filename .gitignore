@@ -1,3 +1,5 @@
 bin/
 sample/bin/
 dump/
+haxe/
+node_modules/
