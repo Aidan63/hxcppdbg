@@ -8,4 +8,8 @@ extern class DbgEngObjects
 {
     @:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createFromFile')
     static function createFromFile(_file : String) : DbgEngObjects;
+
+    function createBreakpoint(_file : String, _line : Int) : Null<Int>;
+
+    function start() : Void;
 }

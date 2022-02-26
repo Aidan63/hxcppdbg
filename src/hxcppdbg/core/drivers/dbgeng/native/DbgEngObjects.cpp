@@ -4,8 +4,10 @@
 
 hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createFromFile(String file)
 {
-	auto client = PDEBUG_CLIENT{ nullptr };
-	if (!SUCCEEDED(DebugCreate(__uuidof(PDEBUG_CLIENT), (void**)&client)))
+	// Should we request the highest version or not?
+	// Don't know what the required windows version is for the different versions.
+	auto client = PDEBUG_CLIENT7{ nullptr };
+	if (!SUCCEEDED(DebugCreate(__uuidof(PDEBUG_CLIENT7), (void**)&client)))
 	{
 		hx::Throw(HX_CSTRING("Unable to create IDebugClient object"));
 	}
@@ -16,16 +18,99 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 		hx::Throw(HX_CSTRING("Unable to get IDebugControl object from client"));
 	}
 
+	auto symbols = PDEBUG_SYMBOLS5{ nullptr };
+	if (!SUCCEEDED(client->QueryInterface(__uuidof(PDEBUG_SYMBOLS5), (void**)&symbols)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get IDebugSymbol object from client"));
+	}
+
+	auto events = std::make_unique<DebugEventCallbacks>();
+	if (!SUCCEEDED(client->SetEventCallbacksWide(events.get())))
+	{
+		hx::Throw(HX_CSTRING("Unable to set events callback"));
+	}
+
 	if (!SUCCEEDED(client->CreateProcessAndAttach(NULL, PSTR(file.utf8_str()), DEBUG_PROCESS, 0, DEBUG_ATTACH_DEFAULT)))
 	{
 		hx::Throw(HX_CSTRING("Unable to create and attach to process"));
 	}
 
-	return hx::ObjectPtr<DbgEngObjects>(new DbgEngObjects(client, control));
+	// Even after the above create and attach call the process will not have been started.
+	// Our custom callback class will suspend the process as soon as the process starts so we can do whatever we want.
+	// Once the process has been suspended this wait for event function will return.
+	if (!SUCCEEDED(control->WaitForEvent(0, INFINITE)))
+	{
+		hx::Throw(HX_CSTRING("Failed to wait for event"));
+	}
+
+	auto status = ULONG{ 0 };
+	if (!SUCCEEDED(control->GetExecutionStatus(&status)))
+	{
+		hx::Throw(HX_CSTRING("Failed to get execution status"));
+	}
+
+	if (status != DEBUG_STATUS_BREAK)
+	{
+		hx::Throw(HX_CSTRING("Process is not suspended"));
+	}
+
+	return hx::ObjectPtr<DbgEngObjects>(new DbgEngObjects(client, control, symbols, std::move(events)));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::DbgEngObjects(PDEBUG_CLIENT _client, PDEBUG_CONTROL _control)
-	: client(_client), control(_control)
+hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, std::unique_ptr<DebugEventCallbacks> _events)
+	: client(_client), control(_control), symbols(_symbols), events(std::move(_events))
 {
 	//
+}
+
+hx::Null<int> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createBreakpoint(String _file, int _line)
+{
+	auto entry = DEBUG_SYMBOL_SOURCE_ENTRY();
+    auto count = ULONG{ 0 };
+	if (!SUCCEEDED(symbols->GetSourceEntriesByLine(_line, _file.utf8_str(), DEBUG_GSEL_NEAREST_ONLY, &entry, 1, &count)))
+	{
+		return null();
+	}
+
+	auto breakpoint = PDEBUG_BREAKPOINT{ nullptr };
+	if (!SUCCEEDED(control->AddBreakpoint(DEBUG_BREAKPOINT_CODE, DEBUG_ANY_ID, &breakpoint)))
+	{
+		hx::Throw(HX_CSTRING("unable to add breakpoint"));
+	}
+
+	if (!SUCCEEDED(breakpoint->AddFlags(DEBUG_BREAKPOINT_ENABLED)))
+	{
+		hx::Throw(HX_CSTRING("unable to enable breakpoint"));
+	}
+
+	if (!SUCCEEDED(breakpoint->SetOffset(entry.Offset)))
+	{
+		hx::Throw(HX_CSTRING("unable to set offset"));
+	}
+
+	auto id = ULONG{ 0 };
+	if (!SUCCEEDED(breakpoint->GetId(&id)))
+	{
+		hx::Throw(HX_CSTRING("unable to get id"));
+	}
+
+	return id;
+}
+
+bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::removeBreakpoint(int id)
+{
+	return false;
+}
+
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start()
+{
+	if (!SUCCEEDED(control->SetExecutionStatus(DEBUG_STATUS_GO)))
+	{
+		hx::Throw(HX_CSTRING("Unable to change execution state"));
+	}
+
+	if (!SUCCEEDED(control->WaitForEvent(0, INFINITE)))
+	{
+		hx::Throw(HX_CSTRING("Unable to wait for event"));
+	}
 }

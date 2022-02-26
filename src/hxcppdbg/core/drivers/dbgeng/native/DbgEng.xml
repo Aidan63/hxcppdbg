@@ -6,6 +6,7 @@
     <files id='haxe'>
         <compilerflag value='-ID:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native'/>
         <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DbgEngObjects.cpp'/>
+        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DebugEventCallbacks.cpp'/>
     </files>
 
     <files id='dbgeng'>

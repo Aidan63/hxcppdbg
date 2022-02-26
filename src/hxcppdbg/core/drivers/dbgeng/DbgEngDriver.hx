@@ -8,10 +8,14 @@ class DbgEngDriver extends Driver
 
 	public function new(_file)
 	{
-		objects = DbgEngObjects.createFromFile(_file);
+		objects     = DbgEngObjects.createFromFile(_file);
+		breakpoints = new DbgEngBreakpoints(objects);
 	}
 
-	public function start() {}
+	public function start()
+	{
+		objects.start();
+	}
 
 	public function stop() {}
 
