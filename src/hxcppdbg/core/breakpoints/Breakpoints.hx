@@ -1,6 +1,7 @@
 package hxcppdbg.core.breakpoints;
 
 import haxe.Exception;
+import hxcppdbg.core.ds.Signal;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.IBreakpoints;
@@ -16,11 +17,14 @@ class Breakpoints
 
     final active : Map<Int, Breakpoint>;
 
+    public final onBreakpointHit : Signal<BreakpointHit>;
+
     public function new(_sourcemap, _driver)
     {
-        sourcemap = _sourcemap;
-        driver    = _driver;
-        active    = [];
+        sourcemap       = _sourcemap;
+        driver          = _driver;
+        active          = [];
+        onBreakpointHit = new Signal();
     }
 
     public function create(_hxFile, _hxLine, _hxChar = 0)

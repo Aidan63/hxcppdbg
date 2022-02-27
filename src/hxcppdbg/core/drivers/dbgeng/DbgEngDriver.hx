@@ -6,9 +6,9 @@ class DbgEngDriver extends Driver
 {
 	final objects : DbgEngObjects;
 
-	public function new(_file)
+	public function new(_file, _onBreakpointCb)
 	{
-		objects     = DbgEngObjects.createFromFile(_file);
+		objects     = DbgEngObjects.createFromFile(_file, _onBreakpointCb);
 		breakpoints = new DbgEngBreakpoints(objects);
 	}
 

@@ -2,7 +2,7 @@
 
 #include "DbgEngObjects.hpp"
 
-hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createFromFile(String file)
+hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createFromFile(String file, Dynamic _onBreakpointCb)
 {
 	// Should we request the highest version or not?
 	// Don't know what the required windows version is for the different versions.
@@ -24,7 +24,7 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 		hx::Throw(HX_CSTRING("Unable to get IDebugSymbol object from client"));
 	}
 
-	auto events = std::make_unique<DebugEventCallbacks>(client);
+	auto events = std::make_unique<DebugEventCallbacks>(client, _onBreakpointCb);
 	if (!SUCCEEDED(client->SetEventCallbacksWide(events.get())))
 	{
 		hx::Throw(HX_CSTRING("Unable to set events callback"));
@@ -54,14 +54,30 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 		hx::Throw(HX_CSTRING("Process is not suspended"));
 	}
 
-	return hx::ObjectPtr<DbgEngObjects>(new DbgEngObjects(client, control, symbols, std::move(events)));
+	return hx::ObjectPtr<DbgEngObjects>(new DbgEngObjects(client, control, symbols, std::move(events), _onBreakpointCb));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, std::unique_ptr<DebugEventCallbacks> _events)
-	: client(_client), control(_control), symbols(_symbols), events(std::move(_events))
+hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb)
+	: client(_client), control(_control), symbols(_symbols), events(std::move(_events)), onBreakpointCb(_onBreakpointCb)
 {
 	//
 }
+
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::__Mark(HX_MARK_PARAMS)
+{
+	HX_MARK_BEGIN_CLASS(DbgEngObjects);
+	HX_MARK_MEMBER_NAME(onBreakpointCb, "onBreakpointCb");
+	HX_MARK_END_CLASS();
+}
+
+#ifdef HXCPP_VISIT_ALLOCS
+
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::__Visit(HX_VISIT_PARAMS)
+{
+	HX_VISIT_MEMBER_NAME(onBreakpointCb, "onBreakpointCb");
+}
+
+#endif
 
 hx::Null<int> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createBreakpoint(String _file, int _line)
 {

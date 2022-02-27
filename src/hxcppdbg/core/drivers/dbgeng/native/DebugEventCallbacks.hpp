@@ -8,9 +8,10 @@ namespace hxcppdbg::core::drivers::dbgeng::native
     {
     private:
         PDEBUG_CLIENT7 client;
+        Dynamic onBreakpointCb;
 
     public:
-        DebugEventCallbacks(PDEBUG_CLIENT7 _client);
+        DebugEventCallbacks(PDEBUG_CLIENT7 _client, Dynamic _onBreakpointCb);
 
         STDMETHOD_(ULONG, AddRef)();
         STDMETHOD_(ULONG, Release)();

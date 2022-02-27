@@ -2,8 +2,8 @@
 
 #include "DebugEventCallbacks.hpp"
 
-hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::DebugEventCallbacks(PDEBUG_CLIENT7 _client)
-    : client(_client)
+hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::DebugEventCallbacks(PDEBUG_CLIENT7 _client, Dynamic _onBreakpointCb)
+    : client(_client), onBreakpointCb(_onBreakpointCb)
 {
     //
 }
@@ -47,6 +47,8 @@ HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::Breakpoint
     {
         hx::Throw(HX_CSTRING("Unable to get breakpoint ID"));
     }
+
+    onBreakpointCb(breakpointID, threadID);
 
     return DEBUG_STATUS_BREAK;
 }

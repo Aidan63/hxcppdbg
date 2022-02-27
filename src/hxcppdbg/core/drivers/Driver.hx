@@ -1,6 +1,7 @@
 package hxcppdbg.core.drivers;
 
-abstract class Driver {
+abstract class Driver
+{
     public final breakpoints : IBreakpoints;
 
     public abstract function start() : Void;

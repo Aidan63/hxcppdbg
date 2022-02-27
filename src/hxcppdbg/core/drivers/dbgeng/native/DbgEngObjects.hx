@@ -7,7 +7,7 @@ package hxcppdbg.core.drivers.dbgeng.native;
 extern class DbgEngObjects
 {
     @:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createFromFile')
-    static function createFromFile(_file : String) : DbgEngObjects;
+    static function createFromFile(_file : String, _onBreakpointCb : Int->Int->Void) : DbgEngObjects;
 
     function createBreakpoint(_file : String, _line : Int) : Null<Int>;
 

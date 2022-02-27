@@ -1,22 +1,14 @@
 package hxcppdbg.cli;
 
 import hxcppdbg.core.Session;
-import sys.thread.Thread;
-import sys.thread.EventLoop.EventHandler;
 
 class Hxcppdbg {
-    final thread : Thread;
-
-    final event : EventHandler;
-
     final session : Session;
 
     @:command public final breakpoints : Breakpoints;
 
-    public function new(_thread, _event, _session)
+    public function new(_session)
     {
-        thread  = _thread;
-        event   = _event;
         session = _session;
 
         breakpoints = new Breakpoints(session.breakpoints);
@@ -32,8 +24,7 @@ class Hxcppdbg {
 
     @:command
     public function exit() {
-        thread.events.cancel(event);
-        thread.events.run(shutdown);
+        shutdown();
     }
 
     @:defaultCommand
