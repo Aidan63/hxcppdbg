@@ -2,6 +2,12 @@
 
 #include "DebugEventCallbacks.hpp"
 
+hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::DebugEventCallbacks(PDEBUG_CLIENT7 _client)
+    : client(_client)
+{
+    //
+}
+
 ULONG hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::AddRef()
 {
     return 1;
@@ -24,7 +30,25 @@ HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::GetInteres
 
 HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::Breakpoint(PDEBUG_BREAKPOINT2 bp)
 {
-    return DEBUG_STATUS_NO_CHANGE;
+    auto sys = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
+    if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&sys)))
+    {
+        hx::Throw(HX_CSTRING("Unable to get IDebugSystemObjects4"));
+    }
+
+    auto threadID = ULONG{ 0 };
+    if (!SUCCEEDED(sys->GetEventThread(&threadID)))
+    {
+        hx::Throw(HX_CSTRING("Unable to get thread ID"));
+    }
+
+    auto breakpointID = ULONG{ 0 };
+    if (!SUCCEEDED(bp->GetId(&breakpointID)))
+    {
+        hx::Throw(HX_CSTRING("Unable to get breakpoint ID"));
+    }
+
+    return DEBUG_STATUS_BREAK;
 }
 
 HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::Exception(PEXCEPTION_RECORD64, ULONG firstChance)

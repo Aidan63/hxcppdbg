@@ -6,7 +6,12 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 {
     class DebugEventCallbacks : public DebugBaseEventCallbacksWide
     {
+    private:
+        PDEBUG_CLIENT7 client;
+
     public:
+        DebugEventCallbacks(PDEBUG_CLIENT7 _client);
+
         STDMETHOD_(ULONG, AddRef)();
         STDMETHOD_(ULONG, Release)();
         STDMETHOD(GetInterestMask)(OUT PULONG mask);

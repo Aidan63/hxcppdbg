@@ -24,7 +24,7 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 		hx::Throw(HX_CSTRING("Unable to get IDebugSymbol object from client"));
 	}
 
-	auto events = std::make_unique<DebugEventCallbacks>();
+	auto events = std::make_unique<DebugEventCallbacks>(client);
 	if (!SUCCEEDED(client->SetEventCallbacksWide(events.get())))
 	{
 		hx::Throw(HX_CSTRING("Unable to set events callback"));

@@ -1,6 +1,6 @@
 package hxcppdbg.cli;
 
-import hxcppdbg.core.DebugSession;
+import hxcppdbg.core.Session;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
 
@@ -9,7 +9,7 @@ class Hxcppdbg {
 
     final event : EventHandler;
 
-    final session : DebugSession;
+    final session : Session;
 
     @:command public final breakpoints : Breakpoints;
 
