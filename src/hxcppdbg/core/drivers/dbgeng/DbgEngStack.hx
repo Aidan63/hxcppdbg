@@ -11,6 +11,8 @@ using StringTools;
 
 class DbgEngStack implements IStack
 {
+    static final anonNamespace = "`anonymous namespace'::";
+
     final objects : DbgEngObjects;
     
 	public function new(_objects)
@@ -58,14 +60,20 @@ class DbgEngStack implements IStack
                 case "'".code:
                     skip = !skip;
                 case "(".code:
-                    // If we enconter an open bracket then we are at the last part of a function (its arguments) so we can skip the rest.
-                    // arguments are handled based on the sourcemap, not the symbol name.
-                    break;
-                case '`'.code if (!skip):
-                    final wanted = "`anonymous namespace'::";
-                    if (withoutBackticks.substr(i, wanted.length) == wanted)
+                    if (buffer.toString().endsWith('operator'))
                     {
-                        i += wanted.length;
+                        buffer.addChar('('.code);
+                    }
+                    else
+                    {
+                        // If we enconter an open bracket then we are at the last part of a function (its arguments) so we can skip the rest.
+                        // arguments are handled based on the sourcemap, not the symbol name.
+                        break;
+                    }
+                case '`'.code if (!skip):
+                    if (withoutBackticks.substr(i, anonNamespace.length) == anonNamespace)
+                    {
+                        i += anonNamespace.length;
 
                         continue;
                     }
