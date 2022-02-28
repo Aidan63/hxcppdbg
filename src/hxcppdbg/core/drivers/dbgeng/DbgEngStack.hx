@@ -35,6 +35,7 @@ class DbgEngStack implements IStack
         // sub::Resources_obj::subscribe
         // `Main_obj::main'::`2'::_hx_Closure_0::_hx_run
         // ``Main_obj::main'::`2'::_hx_Closure_1::_hx_run'::`2'::_hx_Closure_0::_hx_run(int i)
+        // haxe::`anonymous namespace'::__default_trace::_hx_run(Dynamic v, Dynamic infos)
         //
         // The number of prefixed backticks refers too the number of "nameless" frames. The bottom symbol name was from
         // two nested closures which are implemented as structs defined in the function.
@@ -42,34 +43,40 @@ class DbgEngStack implements IStack
         // should match the number of initial backticks.
         // What the stuff between the single quotes means I'm not sure of (number of frames which include that "frameless" code?)
         // but I also don't think we need to care.
-        return switch backtickCount(withoutModule, '`'.code)
+        final count            = backtickCount(withoutModule, '`'.code);
+        final buffer           = new StringBuf();
+        final withoutBackticks = withoutModule.substr(count);
+
+        var skip = false;
+        var i    = 0;
+        while (i < withoutBackticks.length)
         {
-            case 0:
-                new NativeFrame(_input.file, withoutModule, _input.line);
-            case count:
-                final buffer           = new StringBuf();
-                final withoutBackticks = withoutModule.substr(count);
-
-                var skip = false;
-                for (i in 0...withoutBackticks.length)
-                {
-                    switch withoutBackticks.charCodeAt(i)
+            switch withoutBackticks.charCodeAt(i)
+            {
+                case null:
+                    throw new Exception('null char code');
+                case "'".code:
+                    skip = !skip;
+                case "(".code:
+                    // If we enconter an open bracket then we are at the last part of a function (its arguments) so we can skip the rest.
+                    // arguments are handled based on the sourcemap, not the symbol name.
+                    break;
+                case '`'.code if (!skip):
+                    final wanted = "`anonymous namespace'::";
+                    if (withoutBackticks.substr(i, wanted.length) == wanted)
                     {
-                        case null:
-                            throw new Exception('null char code');
-                        case "'".code:
-                            skip = !skip;
-                        case "(".code:
-                            // If we enconter an open bracket then we are at the last part of a function (its arguments) so we can skip the rest.
-                            // arguments are handled based on the sourcemap, not the symbol name.
-                            break;
-                        case code if (!skip):
-                            buffer.addChar(code);
-                    }
-                }
+                        i += wanted.length;
 
-                new NativeFrame(_input.file, buffer.toString(), _input.line);
+                        continue;
+                    }
+                case code if (!skip):
+                    buffer.addChar(code);
+            }
+
+            i++;
         }
+
+        return new NativeFrame(_input.file, buffer.toString(), _input.line);
     }
 
     private static function backtickCount(_input : String, _char : Int)
