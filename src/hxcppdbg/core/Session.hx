@@ -1,5 +1,6 @@
 package hxcppdbg.core;
 
+import hxcppdbg.core.stack.Stack;
 import haxe.Exception;
 import sys.io.File;
 import json2object.JsonParser;
@@ -20,6 +21,8 @@ class Session
 
     public final breakpoints : Breakpoints;
 
+    public final stack : Stack;
+
     public function new(_target : String, _sourcemap : String)
     {
         parser      = new JsonParser<Sourcemap>();
@@ -31,6 +34,7 @@ class Session
         new hxcppdbg.core.drivers.lldb.LLDBDriver(_target, onNativeBreakpointHit);
 #end
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
+        stack       = new Stack(driver.stack);
     }
 
     /**

@@ -1,5 +1,4 @@
-bin/
-sample/bin/
+/**/bin/
 dump/
 haxe/
 node_modules/

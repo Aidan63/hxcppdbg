@@ -118,6 +118,60 @@ bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::removeBreakpoint(in
 	return false;
 }
 
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getCallStack(int _threadID)
+{
+	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
+	if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&system)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get system object"));
+	}
+
+	if (!SUCCEEDED(system->SetCurrentThreadId(_threadID)))
+	{
+		hx::Throw(HX_CSTRING("Unable to set current thread"));
+	}
+
+	auto frames = std::vector<DEBUG_STACK_FRAME>(128);
+	auto filled = ULONG{ 0 };
+	if (!SUCCEEDED(control->GetStackTrace(0, 0, 0, frames.data(), frames.capacity(), &filled)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get call stack"));
+	}
+
+	auto output = Array<hx::ObjectPtr<RawStackFrame>>(0, filled);
+	for (auto i = 0; i < filled; i++)
+	{
+		auto& frame = frames[i];
+
+		auto line         = ULONG{ 0 };
+		auto fileBuffer   = std::array<char, 1024>();
+		auto fileSize     = ULONG{ 0 };
+		auto displacement = ULONG64{ 0 };
+		if (!SUCCEEDED(symbols->GetLineByOffset(frame.InstructionOffset, &line, fileBuffer.data(), fileBuffer.size(), &fileSize, &displacement)))
+		{
+			// 
+		}
+
+		auto nameBuffer   = std::array<char, 1024>();
+		auto nameSize     = ULONG{ 0 };
+		if (!SUCCEEDED(symbols->GetNameByOffset(frame.InstructionOffset, nameBuffer.data(), nameBuffer.size(), &nameSize, &displacement)))
+		{
+			auto str = std::string("unknown frame");
+
+			std::copy(str.begin(), str.end(), nameBuffer.data());
+
+			nameSize = str.length();
+		}
+
+		auto file = String::create(fileBuffer.data(), fileSize);
+		auto name = String::create(nameBuffer.data(), nameSize);
+
+		output->__SetItem(i, hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line)));
+	}
+
+	return output;
+}
+
 void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start()
 {
 	if (!SUCCEEDED(control->SetExecutionStatus(DEBUG_STATUS_GO)))

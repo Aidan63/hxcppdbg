@@ -8,9 +8,11 @@
 #include <comdef.h>
 #include <string>
 #include <array>
+#include <vector>
 #include <Windows.h>
 #include <DbgEng.h>
 #include "DebugEventCallbacks.hpp"
+#include "RawStackFrame.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
@@ -25,13 +27,15 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb);
     public:
-            void __Mark(HX_MARK_PARAMS);
+        void __Mark(HX_MARK_PARAMS);
 #ifdef HXCPP_VISIT_ALLOCS
-            void __Visit(HX_VISIT_PARAMS);
+        void __Visit(HX_VISIT_PARAMS);
 #endif
 
         hx::Null<int> createBreakpoint(String file, int line);
         bool removeBreakpoint(int id);
+
+        Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> getCallStack(int _threadID);
 
         void start();
 

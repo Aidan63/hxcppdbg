@@ -4,6 +4,8 @@ abstract class Driver
 {
     public final breakpoints : IBreakpoints;
 
+    public final stack : IStack;
+
     public abstract function start() : Void;
 
     public abstract function stop() : Void;

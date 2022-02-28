@@ -1,5 +1,8 @@
 package hxcppdbg.core.drivers;
 
-interface IStack {
-    //
+import hxcppdbg.core.stack.NativeFrame;
+
+interface IStack
+{
+    function getCallStack(_thread : Int) : Array<NativeFrame>;
 }

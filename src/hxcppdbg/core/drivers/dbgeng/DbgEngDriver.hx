@@ -10,6 +10,7 @@ class DbgEngDriver extends Driver
 	{
 		objects     = DbgEngObjects.createFromFile(_file, _onBreakpointCb);
 		breakpoints = new DbgEngBreakpoints(objects);
+		stack       = new DbgEngStack(objects);
 	}
 
 	public function start()

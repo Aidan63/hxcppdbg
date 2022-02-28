@@ -7,11 +7,14 @@ class Hxcppdbg {
 
     @:command public final breakpoints : Breakpoints;
 
+    @:command public final stack : Stack;
+
     public function new(_session)
     {
         session = _session;
 
         breakpoints = new Breakpoints(session.breakpoints);
+        stack       = new Stack(session.stack);
     }
 
     @:command public function start() {

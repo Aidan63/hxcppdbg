@@ -11,5 +11,7 @@ extern class DbgEngObjects
 
     function createBreakpoint(_file : String, _line : Int) : Null<Int>;
 
+    function getCallStack(_thread : Int) : Array<RawStackFrame>;
+
     function start() : Void;
 }
