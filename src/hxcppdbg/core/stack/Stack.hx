@@ -1,6 +1,5 @@
 package hxcppdbg.core.stack;
 
-import haxe.io.Path;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.IStack;
 
