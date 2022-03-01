@@ -163,8 +163,9 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxc
 			nameSize = str.length();
 		}
 
-		auto file = String::create(fileBuffer.data(), fileSize);
-		auto name = String::create(nameBuffer.data(), nameSize);
+		// -1 as the null terminating character is included as part of the size.
+		auto file = String::create(fileBuffer.data(), fileSize - 1);
+		auto name = String::create(nameBuffer.data(), nameSize - 1);
 
 		output->__SetItem(i, hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line)));
 	}

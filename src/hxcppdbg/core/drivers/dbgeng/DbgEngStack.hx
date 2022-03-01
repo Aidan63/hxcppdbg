@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import haxe.io.Path;
 import haxe.Exception;
 import hxcppdbg.core.stack.NativeFrame;
 import hxcppdbg.core.stack.StackFrame;
@@ -84,7 +85,9 @@ class DbgEngStack implements IStack
             i++;
         }
 
-        return new NativeFrame(_input.file, buffer.toString(), _input.line);
+        final func = buffer.toString();
+
+        return new NativeFrame(Path.normalize(_input.file), func, _input.line);
     }
 
     private static function backtickCount(_input : String, _char : Int)

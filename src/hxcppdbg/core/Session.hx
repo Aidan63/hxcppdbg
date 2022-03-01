@@ -34,7 +34,7 @@ class Session
         new hxcppdbg.core.drivers.lldb.LLDBDriver(_target, onNativeBreakpointHit);
 #end
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
-        stack       = new Stack(driver.stack);
+        stack       = new Stack(sourcemap, driver.stack);
     }
 
     /**

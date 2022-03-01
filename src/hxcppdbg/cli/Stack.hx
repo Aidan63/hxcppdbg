@@ -1,15 +1,19 @@
 package hxcppdbg.cli;
 
+import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.stack.Stack in CoreStack;
 
 using Lambda;
 using StringTools;
+using EnumValue;
 
 class Stack
 {
     final driver : CoreStack;
 
     public var thread = 0;
+
+    public var all = false;
 
     public function new(_driver)
     {
@@ -18,7 +22,22 @@ class Stack
 
     @:command public function list()
     {
-        driver.getCallStack(thread);
+        for (idx => frame in driver.getCallStack(thread).filter(filterFrame))
+        {
+            switch frame
+            {
+                case Haxe(haxe, _):
+                    switch haxe.closure
+                    {
+                        case Some(closure):
+                            Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }');
+                        case None:
+                            Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }');
+                    }
+                case Native(frame):
+                    Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
+            }
+        }
     }
 
     @:defaultCommand public function help()
@@ -26,40 +45,14 @@ class Stack
         //
     }
 
-    // final sourcemap : Sourcemap;
-
-    // final process : LLDBProcess;
-
-    // public var native = false;
-
-    // public var thread = 0;
-
-    // public function new(_sourcemap, _process) {
-    //     sourcemap = _sourcemap;
-    //     process   = _process;
-    // }
-
-    // @:command public function list() {
-    //     final native = process.getStackFrames(thread);
-    //     final frames = native.map(f -> mapNativeFrame(sourcemap, f)).filter(filterFrame);
-
-    //     for (idx => frame in frames) {
-    //         switch frame {
-    //             case Haxe(file, type, line):
-    //                 switch type {
-    //                     case Left(func):
-    //                         final args = func.arguments.map(a -> a.type).join(',');
-    //                         final name = func.name;
-    //                         final cls  = file.type;
-    //                         Sys.println('\t$idx: $cls.$name($args) Line $line');
-    //                     case Right(closure):
-    //                         final name = '${ closure.caller }.${ closure.definition.name }';
-    //                         final cls  = file.type;
-    //                         Sys.println('\t$idx: $cls.$name() Line $line');
-    //                 }
-    //             case Native(_, type, line):
-    //                 Sys.println('\t$idx: [native] $type Line $line');
-    //         }
-    //     }
-    // }
+    function filterFrame(_stackFrame : StackFrame)
+    {
+        return switch _stackFrame
+        {
+            case Haxe(_, _):
+                true;
+            case Native(_):
+                all;
+        }
+    }
 }
