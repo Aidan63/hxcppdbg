@@ -38,10 +38,15 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 	// Even after the above create and attach call the process will not have been started.
 	// Our custom callback class will suspend the process as soon as the process starts so we can do whatever we want.
 	// Once the process has been suspended this wait for event function will return.
+	hx::EnterGCFreeZone();
+
 	if (!SUCCEEDED(control->WaitForEvent(0, INFINITE)))
 	{
+		hx::ExitGCFreeZone();
 		hx::Throw(HX_CSTRING("Failed to wait for event"));
 	}
+
+	hx::ExitGCFreeZone();
 
 	auto status = ULONG{ 0 };
 	if (!SUCCEEDED(control->GetExecutionStatus(&status)))
@@ -180,8 +185,13 @@ void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start()
 		hx::Throw(HX_CSTRING("Unable to change execution state"));
 	}
 
+	hx::EnterGCFreeZone();
+
 	if (!SUCCEEDED(control->WaitForEvent(0, INFINITE)))
 	{
+		hx::ExitGCFreeZone();
 		hx::Throw(HX_CSTRING("Unable to wait for event"));
 	}
+
+	hx::ExitGCFreeZone();
 }
