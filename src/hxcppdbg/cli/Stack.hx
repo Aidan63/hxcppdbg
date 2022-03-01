@@ -15,6 +15,8 @@ class Stack
 
     public var all = false;
 
+    public var native = false;
+
     public function new(_driver)
     {
         driver = _driver;
@@ -26,13 +28,20 @@ class Stack
         {
             switch frame
             {
-                case Haxe(haxe, _):
-                    switch haxe.closure
+                case Haxe(haxe, frame):
+                    if (native)
                     {
-                        case Some(closure):
-                            Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }');
-                        case None:
-                            Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }');
+                        Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
+                    }
+                    else
+                    {
+                        switch haxe.closure
+                        {
+                            case Some(closure):
+                                Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }');
+                            case None:
+                                Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }');
+                        }
                     }
                 case Native(frame):
                     Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
