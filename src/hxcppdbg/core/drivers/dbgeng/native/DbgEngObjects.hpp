@@ -37,7 +37,10 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> getCallStack(int _threadID);
 
-        void start();
+        hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> getFrame(int _thread, int _index);
+
+        void start(int status);
+        void step(int thread, int status);
 
         static hx::ObjectPtr<DbgEngObjects> createFromFile(String file, Dynamic _onBreakpointCb);
     };

@@ -13,5 +13,9 @@ extern class DbgEngObjects
 
     function getCallStack(_thread : Int) : Array<RawStackFrame>;
 
-    function start() : Void;
+    function getFrame(_thread : Int, _index : Int) : RawStackFrame;
+
+    function start(_status : Int) : Void;
+
+    function step(_thread : Int, _status : Int) : Void;
 }

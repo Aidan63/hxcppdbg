@@ -18,9 +18,14 @@ class Stack
         driver    = _driver;
     }
 
-    public function getCallStack(_threadID)
+    public function getCallStack(_thread)
     {
-        return driver.getCallStack(_threadID).map(mapNativeFrame);
+        return driver.getCallStack(_thread).map(mapNativeFrame);
+    }
+
+    public function getFrame(_thread, _index)
+    {
+        return mapNativeFrame(driver.getFrame(_thread, _index));
     }
 
     function mapNativeFrame(_frame : NativeFrame) : StackFrame

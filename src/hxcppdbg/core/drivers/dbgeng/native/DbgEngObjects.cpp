@@ -178,9 +178,56 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxc
 	return output;
 }
 
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start()
+hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getFrame(int _thread, int _index)
 {
-	if (!SUCCEEDED(control->SetExecutionStatus(DEBUG_STATUS_GO)))
+	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
+	if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&system)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get system object"));
+	}
+
+	if (!SUCCEEDED(system->SetCurrentThreadId(_thread)))
+	{
+		hx::Throw(HX_CSTRING("Unable to set current thread"));
+	}
+
+	auto frame  = DEBUG_STACK_FRAME{ 0 };
+	auto filled = ULONG{ 0 };
+	if (!SUCCEEDED(control->GetStackTrace(_index, 0, 0, &frame, 1, &filled)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get call stack"));
+	}
+
+	auto line         = ULONG{ 0 };
+	auto fileBuffer   = std::array<char, 1024>();
+	auto fileSize     = ULONG{ 0 };
+	auto displacement = ULONG64{ 0 };
+	if (!SUCCEEDED(symbols->GetLineByOffset(frame.InstructionOffset, &line, fileBuffer.data(), fileBuffer.size(), &fileSize, &displacement)))
+	{
+		// 
+	}
+
+	auto nameBuffer   = std::array<char, 1024>();
+	auto nameSize     = ULONG{ 0 };
+	if (!SUCCEEDED(symbols->GetNameByOffset(frame.InstructionOffset, nameBuffer.data(), nameBuffer.size(), &nameSize, &displacement)))
+	{
+		auto str = std::string("unknown frame");
+
+		std::copy(str.begin(), str.end(), nameBuffer.data());
+
+		nameSize = str.length();
+	}
+
+	// -1 as the null terminating character is included as part of the size.
+	auto file = String::create(fileBuffer.data(), fileSize - 1);
+	auto name = String::create(nameBuffer.data(), nameSize - 1);
+
+	return hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line));
+}
+
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start(int status)
+{
+	if (!SUCCEEDED(control->SetExecutionStatus(status)))
 	{
 		hx::Throw(HX_CSTRING("Unable to change execution state"));
 	}
@@ -194,4 +241,20 @@ void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start()
 	}
 
 	hx::ExitGCFreeZone();
+}
+
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::step(int _thread, int _status)
+{
+	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
+	if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&system)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get system object"));
+	}
+
+	if (!SUCCEEDED(system->SetCurrentThreadId(_thread)))
+	{
+		hx::Throw(HX_CSTRING("Unable to set current thread"));
+	}
+
+	start(_status);
 }

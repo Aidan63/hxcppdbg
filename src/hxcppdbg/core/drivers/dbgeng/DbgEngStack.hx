@@ -26,6 +26,11 @@ class DbgEngStack implements IStack
         return objects.getCallStack(_thread).map(rawFrameToNativeFrame);
     }
 
+    public function getFrame(_thread : Int, _index : Int)
+    {
+        return rawFrameToNativeFrame(objects.getFrame(_thread, _index));
+    }
+
     private static function rawFrameToNativeFrame(_input : RawStackFrame)
     {
         // dbgeng symbol names are prefixed with the module followed by a '!' before the rest of the symbol name.

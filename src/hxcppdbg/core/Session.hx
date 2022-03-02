@@ -15,7 +15,7 @@ class Session
 {
     final parser : JsonParser<Sourcemap>;
 
-    public final driver : Driver;
+    final driver : Driver;
 
     public final sourcemap : Sourcemap;
 
@@ -35,6 +35,56 @@ class Session
 #end
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
         stack       = new Stack(sourcemap, driver.stack);
+    }
+
+    public function start()
+    {
+        driver.start();
+    }
+
+    public function resume()
+    {
+        driver.resume();
+    }
+
+    public function pause()
+    {
+        driver.pause();
+    }
+
+    public function stop()
+    {
+        driver.stop();
+    }
+
+    public function step(_thread : Int, _type : StepType)
+    {
+        final baseFrame = stack.getFrame(_thread, 0);
+        
+        var stepAgain = true;
+        var current   = null;
+
+        while (stepAgain)
+        {
+            driver.step(_thread, _type);
+
+            stepAgain = switch (current = stack.getFrame(_thread, 0))
+            {
+                case Haxe(haxeCurrent, _):
+                    switch baseFrame
+                    {
+                        case Haxe(haxeBase, _):
+                            haxeCurrent.file.haxe == haxeBase.file.haxe && haxeCurrent.expr.haxe.start.line == haxeBase.expr.haxe.start.line;
+                        case Native(_):
+                            // Our base frame shouldn't ever be a non haxe one.
+                            // In the future this might be the case (native breakpoints),
+                            // so we sould correct this down the line.
+                            throw new Exception('');
+                    }
+                case Native(_):
+                    true;
+            }
+        }
     }
 
     /**

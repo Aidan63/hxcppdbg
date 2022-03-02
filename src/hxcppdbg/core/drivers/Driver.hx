@@ -13,4 +13,6 @@ abstract class Driver
     public abstract function pause() : Void;
 
     public abstract function resume() : Void;
+
+    public abstract function step(_thread : Int, _type : StepType) : Void;
 }
