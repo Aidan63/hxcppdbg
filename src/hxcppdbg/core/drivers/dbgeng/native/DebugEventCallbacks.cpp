@@ -30,6 +30,8 @@ HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::GetInteres
 
 HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::Breakpoint(PDEBUG_BREAKPOINT2 bp)
 {
+    hx::ExitGCFreeZone();
+
     auto sys = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
     if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&sys)))
     {
@@ -49,6 +51,8 @@ HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::Breakpoint
     }
 
     onBreakpointCb(breakpointID, threadID);
+
+    hx::EnterGCFreeZone();
 
     return DEBUG_STATUS_BREAK;
 }
