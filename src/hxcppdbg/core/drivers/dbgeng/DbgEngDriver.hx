@@ -49,6 +49,31 @@ class DbgEngDriver extends Driver
 			case Over:
 				objects.step(_thread, STEP_OVER);
 			case Out:
+				// Dbgeng doesn't seem to have a build in step out? Are we suppose to inspect the return
+				// address and continue to that somehow?
+				// In any case get the current stack trace and keep stepping over until we end up back at the previous frame.
+				// This could take a very long time if you step out in the middle of a long function...
+				final stack = objects.getCallStack(_thread);
+
+				switch stack.length
+				{
+					case 0, 1:
+						return;
+					case _:
+						final previous = stack[1];
+
+						while (true)
+						{
+							objects.step(_thread, STEP_OVER);
+
+							final top = objects.getFrame(_thread, 0);
+
+							if (top.file == previous.file && top.symbol == previous.symbol && top.line >= previous.line)
+							{
+								return;
+							}
+						}
+				}
 				throw new NotImplementedException();
 		}
 	}
