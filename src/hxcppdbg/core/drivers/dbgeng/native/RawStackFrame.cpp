@@ -2,8 +2,8 @@
 
 #include "RawStackFrame.hpp"
 
-hxcppdbg::core::drivers::dbgeng::native::RawStackFrame::RawStackFrame(String _file, String _symbol, int _line)
-    : file(_file), symbol(_symbol), line(_line)
+hxcppdbg::core::drivers::dbgeng::native::RawStackFrame::RawStackFrame(String _file, String _symbol, int _line, uint64_t _address)
+    : file(_file), symbol(_symbol), line(_line), address(_address)
 {
     //
 }

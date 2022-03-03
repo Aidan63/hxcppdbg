@@ -172,7 +172,7 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxc
 		auto file = String::create(fileBuffer.data(), fileSize - 1);
 		auto name = String::create(nameBuffer.data(), nameSize - 1);
 
-		output->__SetItem(i, hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line)));
+		output->__SetItem(i, hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line, frame.FrameOffset)));
 	}
 
 	return output;
@@ -222,7 +222,7 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> hxcppdbg::
 	auto file = String::create(fileBuffer.data(), fileSize - 1);
 	auto name = String::create(nameBuffer.data(), nameSize - 1);
 
-	return hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line));
+	return hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line, frame.FrameOffset));
 }
 
 void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start(int status)

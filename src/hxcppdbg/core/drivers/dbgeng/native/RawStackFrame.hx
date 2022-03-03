@@ -10,4 +10,6 @@ extern class RawStackFrame
     public final symbol : String;
 
     public final line : Int;
+
+    public final address : cpp.UInt64;
 }

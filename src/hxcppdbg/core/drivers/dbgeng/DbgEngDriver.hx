@@ -68,7 +68,7 @@ class DbgEngDriver extends Driver
 
 							final top = objects.getFrame(_thread, 0);
 
-							if (top.file == previous.file && top.symbol == previous.symbol && top.line >= previous.line)
+							if (top.address == previous.address)
 							{
 								return;
 							}

@@ -12,8 +12,9 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         String file;
         String symbol;
         int line;
+        uint64_t address;
 
-        RawStackFrame(String _file, String _symbol, int _line);
+        RawStackFrame(String _file, String _symbol, int _line, uint64_t _address);
 
         void __Mark(HX_MARK_PARAMS);
 #ifdef HXCPP_VISIT_ALLOCS
