@@ -1,5 +1,6 @@
 package hxcppdbg.core.stack;
 
+import haxe.Exception;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.IStack;
 
@@ -66,9 +67,13 @@ class Stack
                                         // If we can't find our closure something has gone wrong, should we throw instead?
                                         StackFrame.Native(_frame);
                                     case func:
-                                        final closure = func.closures.find(f -> f.name == closureName);
-
-                                        StackFrame.Haxe(new HaxeFrame(file, expr, func, Some(closure)), _frame);
+                                        switch func.closures.find(f -> f.name == closureName)
+                                        {
+                                            case null:
+                                                throw new Exception('Failed to find closure');
+                                            case closure:
+                                                StackFrame.Haxe(new HaxeFrame(file, expr, func, Some(closure)), _frame);
+                                        }
                                 }
                             case name:
                                 switch file.functions.find(f -> f.cpp == name)

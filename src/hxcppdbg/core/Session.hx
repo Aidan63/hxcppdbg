@@ -62,7 +62,7 @@ class Session
         final baseFrame = stack.getFrame(_thread, 0);
         
         var stepAgain = true;
-        var current   = null;
+        var current   = baseFrame;
 
         while (stepAgain)
         {
