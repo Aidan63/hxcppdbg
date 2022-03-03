@@ -24,6 +24,12 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 		hx::Throw(HX_CSTRING("Unable to get IDebugSymbol object from client"));
 	}
 
+	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
+	if (!SUCCEEDED(client->QueryInterface(__uuidof(PDEBUG_SYSTEM_OBJECTS4), (void**)&system)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get IDebugSystemObjects object from client"));
+	}
+
 	auto events = std::make_unique<DebugEventCallbacks>(client, _onBreakpointCb);
 	if (!SUCCEEDED(client->SetEventCallbacksWide(events.get())))
 	{
@@ -59,11 +65,11 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 		hx::Throw(HX_CSTRING("Process is not suspended"));
 	}
 
-	return hx::ObjectPtr<DbgEngObjects>(new DbgEngObjects(client, control, symbols, std::move(events), _onBreakpointCb));
+	return hx::ObjectPtr<DbgEngObjects>(new DbgEngObjects(client, control, symbols, system, std::move(events), _onBreakpointCb));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb)
-	: client(_client), control(_control), symbols(_symbols), events(std::move(_events)), onBreakpointCb(_onBreakpointCb)
+hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb)
+	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), onBreakpointCb(_onBreakpointCb)
 {
 	//
 }
@@ -125,17 +131,6 @@ bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::removeBreakpoint(in
 
 Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getCallStack(int _threadID)
 {
-	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
-	if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&system)))
-	{
-		hx::Throw(HX_CSTRING("Unable to get system object"));
-	}
-
-	if (!SUCCEEDED(system->SetCurrentThreadId(_threadID)))
-	{
-		hx::Throw(HX_CSTRING("Unable to set current thread"));
-	}
-
 	auto frames = std::vector<DEBUG_STACK_FRAME>(128);
 	auto filled = ULONG{ 0 };
 	if (!SUCCEEDED(control->GetStackTrace(0, 0, 0, frames.data(), frames.capacity(), &filled)))
@@ -180,17 +175,6 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxc
 
 hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getFrame(int _thread, int _index)
 {
-	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
-	if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&system)))
-	{
-		hx::Throw(HX_CSTRING("Unable to get system object"));
-	}
-
-	if (!SUCCEEDED(system->SetCurrentThreadId(_thread)))
-	{
-		hx::Throw(HX_CSTRING("Unable to set current thread"));
-	}
-
 	auto frame  = DEBUG_STACK_FRAME{ 0 };
 	auto filled = ULONG{ 0 };
 	if (!SUCCEEDED(control->GetStackTrace(_index, 0, 0, &frame, 1, &filled)))
@@ -245,12 +229,6 @@ void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start(int status)
 
 void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::step(int _thread, int _status)
 {
-	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
-	if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&system)))
-	{
-		hx::Throw(HX_CSTRING("Unable to get system object"));
-	}
-
 	if (!SUCCEEDED(system->SetCurrentThreadId(_thread)))
 	{
 		hx::Throw(HX_CSTRING("Unable to set current thread"));

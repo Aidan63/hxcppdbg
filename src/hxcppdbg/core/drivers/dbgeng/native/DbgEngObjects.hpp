@@ -22,10 +22,11 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         PDEBUG_CLIENT7 client;
         PDEBUG_CONTROL control;
         PDEBUG_SYMBOLS5 symbols;
+        PDEBUG_SYSTEM_OBJECTS4 system;
         std::unique_ptr<DebugEventCallbacks> events;
         Dynamic onBreakpointCb;
 
-        DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb);
+        DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb);
     public:
         void __Mark(HX_MARK_PARAMS);
 #ifdef HXCPP_VISIT_ALLOCS
