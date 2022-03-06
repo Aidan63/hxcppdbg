@@ -3,6 +3,7 @@ package hxcppdbg.core.drivers.lldb;
 import haxe.Exception;
 import hxcppdbg.core.stack.NativeFrame;
 import hxcppdbg.core.drivers.lldb.native.LLDBProcess;
+import hxcppdbg.core.drivers.lldb.native.RawStackFrame;
 
 using StringTools;
 
@@ -27,7 +28,7 @@ class LLDBStack implements IStack
 		return rawFrameToNativeFrame(process.getStackFrame(_thread, _index));
 	}
 
-    private static function rawFrameToNativeFrame(_input : Frame)
+    private static function rawFrameToNativeFrame(_input : RawStackFrame)
     {
         final buffer = new StringBuf();
 

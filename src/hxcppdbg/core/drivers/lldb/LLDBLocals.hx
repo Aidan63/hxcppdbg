@@ -2,6 +2,7 @@ package hxcppdbg.core.drivers.lldb;
 
 import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.drivers.lldb.native.LLDBProcess;
+import hxcppdbg.core.drivers.lldb.native.RawStackLocal;
 
 class LLDBLocals implements ILocals
 {
@@ -22,7 +23,7 @@ class LLDBLocals implements ILocals
         //
     }
 
-    function variableToNativeLocal(_input : Variable)
+    function variableToNativeLocal(_input : RawStackLocal)
     {
         return new NativeLocal(_input.name, _input.type, _input.value);
     }

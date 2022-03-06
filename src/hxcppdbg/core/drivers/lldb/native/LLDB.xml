@@ -6,6 +6,8 @@
         <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/LLDBObjects.cpp'/>
         <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/LLDBProcess.cpp'/>
         <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/TypeConverters.cpp'/>
+        <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/RawStackFrame.cpp'/>
+        <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/RawStackLocal.cpp'/>
     </files>
 
     <files id='lldb'>

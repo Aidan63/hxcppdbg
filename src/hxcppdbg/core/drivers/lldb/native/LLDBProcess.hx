@@ -12,39 +12,15 @@ extern class LLDBProcess {
 
     function dump() : Void;
 
-    function getStackFrame(_threadIndex : Int, _frameIndex : Int) : Null<Frame>;
+    function getStackFrame(_threadIndex : Int, _frameIndex : Int) : Null<RawStackFrame>;
 
-    function stepIn(_threadIndex : Int) : Frame;
+    function stepIn(_threadIndex : Int) : RawStackFrame;
 
-    function stepOver(_threadIndex : Int) : Frame;
+    function stepOver(_threadIndex : Int) : RawStackFrame;
 
-    function stepOut(_threadIndex : Int) : Frame;
+    function stepOut(_threadIndex : Int) : RawStackFrame;
 
-    function getStackFrames(_threadIndex : Int) : Array<Frame>;
+    function getStackFrames(_threadIndex : Int) : Array<RawStackFrame>;
 
-    function getStackVariables(_threadIndex : Int, _frameIndex : Int) : Array<Variable>;
-}
-
-@:keep
-@:include('LLDBProcess.hpp')
-@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame>')
-extern class Frame {
-    final file : String;
-
-    final func : String;
-
-    final symbol : String;
-
-    final line : Int;
-}
-
-@:keep
-@:include('LLDBProcess.hpp')
-@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Variable>')
-extern class Variable {
-    final name : String;
-
-    final value : String;
-
-    final type : String;
+    function getStackVariables(_threadIndex : Int, _frameIndex : Int) : Array<RawStackLocal>;
 }
