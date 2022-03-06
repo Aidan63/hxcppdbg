@@ -6,6 +6,8 @@ abstract class Driver
 
     public final stack : IStack;
 
+    public final locals : ILocals;
+
     public abstract function start() : Void;
 
     public abstract function stop() : Void;

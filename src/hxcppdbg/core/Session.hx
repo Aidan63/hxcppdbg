@@ -1,6 +1,5 @@
 package hxcppdbg.core;
 
-import hxcppdbg.core.stack.Stack;
 import haxe.Exception;
 import sys.io.File;
 import json2object.JsonParser;
@@ -8,6 +7,8 @@ import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.breakpoints.Breakpoints;
 import hxcppdbg.core.breakpoints.BreakpointHit;
 import hxcppdbg.core.drivers.Driver;
+import hxcppdbg.core.stack.Stack;
+import hxcppdbg.core.locals.Locals;
 
 using Lambda;
 
@@ -23,6 +24,8 @@ class Session
 
     public final stack : Stack;
 
+    public final locals : Locals;
+
     public function new(_target : String, _sourcemap : String)
     {
         parser      = new JsonParser<Sourcemap>();
@@ -35,6 +38,7 @@ class Session
 #end
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
         stack       = new Stack(sourcemap, driver.stack);
+        locals      = new Locals(sourcemap, driver.locals, stack);
     }
 
     public function start()

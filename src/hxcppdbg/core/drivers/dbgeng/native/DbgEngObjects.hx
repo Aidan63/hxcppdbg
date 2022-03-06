@@ -15,6 +15,10 @@ extern class DbgEngObjects
 
     function getFrame(_thread : Int, _index : Int) : RawStackFrame;
 
+    function getVariables(_thread : Int, _frame : Int) : Array<RawFrameLocal>;
+
+    function getArguments(_thread : Int, _frame : Int) : Array<RawFrameLocal>;
+
     function start(_status : Int) : Void;
 
     function step(_thread : Int, _status : Int) : Void;

@@ -12,6 +12,8 @@ class Hxcppdbg
 
     @:command public final step : Step;
 
+    @:command public final locals : Locals;
+
     public function new(_session)
     {
         session = _session;
@@ -19,6 +21,7 @@ class Hxcppdbg
         breakpoints = new Breakpoints(session.breakpoints);
         stack       = new Stack(session.stack);
         step        = new Step(session);
+        locals      = new Locals(session.locals);
     }
 
     @:command public function start()

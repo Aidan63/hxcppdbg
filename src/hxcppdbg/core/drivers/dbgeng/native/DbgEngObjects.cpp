@@ -2,6 +2,10 @@
 
 #include "DbgEngObjects.hpp"
 
+IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::manager = nullptr;
+
+IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::host = nullptr;
+
 hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createFromFile(String file, Dynamic _onBreakpointCb)
 {
 	// Should we request the highest version or not?
@@ -28,6 +32,17 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 	if (!SUCCEEDED(client->QueryInterface(__uuidof(PDEBUG_SYSTEM_OBJECTS4), (void**)&system)))
 	{
 		hx::Throw(HX_CSTRING("Unable to get IDebugSystemObjects object from client"));
+	}
+
+	auto hostDataModelAccess = (IHostDataModelAccess*) nullptr;
+	if (!SUCCEEDED(client->QueryInterface(__uuidof(IHostDataModelAccess), (void**)&hostDataModelAccess)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get data model access"));
+	}
+
+	if (!SUCCEEDED(hostDataModelAccess->GetDataModel(&manager, &host)))
+	{
+		hx::Throw(HX_CSTRING("Unable to get data model manager and debug host"));
 	}
 
 	auto events = std::make_unique<DebugEventCallbacks>(client, _onBreakpointCb);
@@ -207,6 +222,119 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> hxcppdbg::
 	auto name = String::create(nameBuffer.data(), nameSize - 1);
 
 	return hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line, frame.FrameOffset));
+}
+
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getVariables(int thread, int frame)
+{
+	if (!SUCCEEDED(system->SetCurrentThreadId(thread)))
+	{
+		hx::Throw(HX_CSTRING("Failed to set current thread"));
+	}
+	if (!SUCCEEDED(symbols->SetScopeFrameByIndex(frame)))
+	{
+		hx::Throw(HX_CSTRING("Failed to set scope frame"));
+	}
+
+	auto group = PDEBUG_SYMBOL_GROUP2{ nullptr };
+	if (!SUCCEEDED(symbols->GetScopeSymbolGroup2(DEBUG_SCOPE_GROUP_LOCALS, nullptr, &group)))
+	{
+		hx::Throw(HX_CSTRING("Failed to set symbol group"));
+	}
+
+	auto count = ULONG{ 0 };
+	if (!SUCCEEDED(group->GetNumberSymbols(&count)))
+	{
+		hx::Throw(HX_CSTRING("Failed to set symbol group count"));
+	}
+
+	auto hostSymbols = (IDebugHostSymbols*)nullptr;
+	if (host->QueryInterface(__uuidof(IDebugHostSymbols), (void**)&hostSymbols))
+	{
+		hx::Throw(HX_CSTRING("Failed to get debug host symbols"));
+	}
+
+	auto ctx = (IDebugHostContext*)nullptr;
+	if (!SUCCEEDED(host->GetCurrentContext(&ctx)))
+	{
+		hx::Throw(HX_CSTRING("Failed to get debug host symbols"));
+	}
+
+	auto output = Array<hx::ObjectPtr<RawFrameLocal>>(0, count);
+	for (auto i = 0; i < count; i++)
+	{
+		auto offset = ULONG64{ 0 };
+		if (!SUCCEEDED(group->GetSymbolOffset(i, &offset)))
+		{
+			hx::Throw(HX_CSTRING("Failed to get symbol offset"));
+		}
+
+		auto nameBuffer   = std::array<WCHAR, 1024>();
+		auto nameSize     = ULONG{ 0 };
+		auto displacement = ULONG64{ 0 };
+		if (!SUCCEEDED(group->GetSymbolNameWide(i, nameBuffer.data(), nameBuffer.size(), &nameSize)))
+		{
+			hx::Throw(HX_CSTRING("Failed to get symbol name"));
+		}
+
+		auto module = ULONG64{ 0 };
+		auto type   = ULONG{ 0 };
+		if (!SUCCEEDED(symbols->GetSymbolTypeIdWide(nameBuffer.data(), &type, &module)))
+		{
+			continue;
+		}
+
+		auto hostModule = (IDebugHostModule*)nullptr;
+		if (!SUCCEEDED(hostSymbols->FindModuleByLocation(ctx, module, &hostModule)))
+		{
+			hx::Throw(HX_CSTRING("Failed to find module"));
+		}
+
+		auto typeBuffer   = std::array<WCHAR, 1024>();
+		auto typeSize     = ULONG{ 0 };
+		if(!SUCCEEDED(symbols->GetTypeNameWide(module, type, typeBuffer.data(), typeBuffer.size(), &typeSize)))
+		{
+			hx::Throw(HX_CSTRING("Failed to find module"));
+		}
+
+		auto hostType = (IDebugHostType*)nullptr;
+		if(!SUCCEEDED(hostModule->FindTypeByName(typeBuffer.data(), &hostType)))
+		{
+			hx::Throw(HX_CSTRING("Failed to find module"));
+		}
+
+		auto d =
+			Debugger::DataModel::ClientEx::Object::CreateTyped(
+				Debugger::DataModel::ClientEx::HostContext(ctx),
+				Debugger::DataModel::ClientEx::Type(hostType),
+				offset);
+
+		std::wstring display;
+		try
+		{
+			display = d.ToDisplayString();
+		}
+		catch (const std::exception& e)
+		{
+			auto buffer = std::array<WCHAR, 1024>();
+			auto size   = ULONG{ 0 };
+			group->GetSymbolValueTextWide(i, buffer.data(), buffer.size(), &size);
+
+			display = std::wstring(buffer.data(), size - 1);
+		}
+
+		output->__SetItem(i,
+			new RawFrameLocal(
+				String::create(nameBuffer.data(), nameSize - 1),
+				String::create(typeBuffer.data(), typeSize - 1),
+				String::create(display.c_str(), display.length())));
+	}
+
+	return output;
+}
+
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getArguments(int thread, int frame)
+{
+	return null();
 }
 
 void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start(int status)

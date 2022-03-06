@@ -4,6 +4,7 @@
 #include <hxcpp.h>
 #endif
 
+#include <iostream>
 #include <memory>
 #include <comdef.h>
 #include <string>
@@ -11,8 +12,13 @@
 #include <vector>
 #include <Windows.h>
 #include <DbgEng.h>
+#include <DbgModel.h>
+#include "DbgModelClientEx.hpp"
 #include "DebugEventCallbacks.hpp"
 #include "RawStackFrame.hpp"
+#include "RawFrameLocal.hpp"
+
+#include "models/StringExtensions.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
@@ -37,12 +43,16 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         bool removeBreakpoint(int id);
 
         Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> getCallStack(int _threadID);
-
         hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> getFrame(int _thread, int _index);
+
+        Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> getVariables(int _thread, int _frame);
+        Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> getArguments(int _thread, int _frame);
 
         void start(int status);
         void step(int thread, int status);
 
         static hx::ObjectPtr<DbgEngObjects> createFromFile(String file, Dynamic _onBreakpointCb);
+        static IDataModelManager* manager;
+        static IDebugHost* host;
     };
 }
