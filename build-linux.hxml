@@ -1,7 +1,8 @@
 -p src
--m hxcppdbg.cli.Main
+-m hxcppdbg.Main
 -L tink_cli
 -L hxparse
 -L json2object
---cpp bin
+-D HXCPP_M64
+--cpp bin/linux
 --debug

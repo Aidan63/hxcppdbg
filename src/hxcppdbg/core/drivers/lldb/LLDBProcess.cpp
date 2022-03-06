@@ -208,7 +208,10 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lld
     }
 
     auto lineEntry = frame.GetLineEntry();
-    auto fileName  = String::create(lineEntry.GetFileSpec().GetFilename());
+    auto fileSpec  = lineEntry.GetFileSpec();
+    auto dir       = fileSpec.GetDirectory();
+    auto absFile   = dir == nullptr ? std::string("") : std::string(dir) + std::string("/") + std::string(fileSpec.GetFilename());
+    auto fileName  = String::create(absFile.c_str());
     auto funcName  = String::create(frame.GetFunctionName());
     auto symName   = String::create(frame.GetSymbol().GetName());
     auto lineNum   = lineEntry.GetLine();

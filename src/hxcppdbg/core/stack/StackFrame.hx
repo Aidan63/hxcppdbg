@@ -1,20 +1,10 @@
 package hxcppdbg.core.stack;
 
-import haxe.ds.Either;
-import hxcppdbg.core.sourcemap.Sourcemap;
+import hxcppdbg.core.stack.HaxeFrame;
+import hxcppdbg.core.stack.NativeFrame;
 
-class ClosureDefinition {
-    public final definition : Closure;
-
-    public final caller : String;
-
-    public function new(_definition, _caller) {
-        definition = _definition;
-        caller     = _caller;
-    }
-}
-
-enum StackFrame {
-    Haxe(file : GeneratedFile, type : Either<Function, ClosureDefinition>, line : Int);
-    Native(file : String, type : String, line : Int);
+enum StackFrame
+{
+    Haxe(haxe : HaxeFrame, native : NativeFrame);
+    Native(frame : NativeFrame);
 }

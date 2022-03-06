@@ -1,10 +1,12 @@
 package hxcppdbg.core.sourcemap;
 
-class Sourcemap {
+@:structInit class Sourcemap
+{
     public var files : Array<GeneratedFile>;
 }
 
-class GeneratedFile {
+@:structInit class GeneratedFile
+{
     public var cpp : String;
 
     public var haxe : String;
@@ -16,13 +18,15 @@ class GeneratedFile {
     public var exprs : Array<ExprMap>;
 }
 
-class Closure {
+@:structInit class Closure
+{
     public var name : String;
 
     public var arguments : Array<NameMap>;
 }
 
-class Function {
+@:structInit class Function
+{
     public var name : String;
 
     public var cpp : String;
@@ -34,19 +38,22 @@ class Function {
     public var closures : Array<Closure>;
 }
 
-class ExprMap {
+@:structInit class ExprMap
+{
     public var haxe : ExprRange;
 
     public var cpp : Int;
 }
 
-class ExprRange {
+@:structInit class ExprRange
+{
     public var start : Position;
 
     public var end : Position;
 }
 
-class NameMap {
+@:structInit class NameMap
+{
     public var haxe : String;
 
     public var cpp : String;
@@ -54,7 +61,8 @@ class NameMap {
     public var type : String;
 }
 
-class Position {
+@:structInit class Position
+{
     public var line : Int;
 
     public var col : Int;
