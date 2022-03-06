@@ -7,7 +7,7 @@
 #include <SBValue.h>
 #include <SBError.h>
 
-namespace hxcppdbg::core::drivers::lldb
+namespace hxcppdbg::core::drivers::lldb::native
 {
     /**
      * Given an LLDB value which contains a HXCPP string extract the value of the string

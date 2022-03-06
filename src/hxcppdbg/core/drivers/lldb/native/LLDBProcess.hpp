@@ -13,7 +13,7 @@
 #include <SBSymbol.h>
 #include "TypeConverters.hpp"
 
-namespace hxcppdbg::core::drivers::lldb
+namespace hxcppdbg::core::drivers::lldb::native
 {
     class Frame : public hx::Object
     {
@@ -56,13 +56,13 @@ namespace hxcppdbg::core::drivers::lldb
         void start(String cwd);
         void resume();
 
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> stepOver(int threadIndex);
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> stepIn(int threadIndex);
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> stepOut(int threadIndex);
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame> stepOver(int threadIndex);
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame> stepIn(int threadIndex);
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame> stepOut(int threadIndex);
 
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> getStackFrame(int threadIndex, int frameIndex);
-        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> getStackFrames(int threadIndex);
-        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>> getStackVariables(int threadIndex, int frameIndex);
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame> getStackFrame(int threadIndex, int frameIndex);
+        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame>> getStackFrames(int threadIndex);
+        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Variable>> getStackVariables(int threadIndex, int frameIndex);
 
         int __GetType() const;
         String toString();

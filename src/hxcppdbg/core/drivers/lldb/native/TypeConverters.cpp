@@ -1,6 +1,8 @@
+#include <hxcpp.h>
+
 #include "TypeConverters.hpp"
 
-String hxcppdbg::core::drivers::lldb::extractString(::lldb::SBValue value)
+String hxcppdbg::core::drivers::lldb::native::extractString(::lldb::SBValue value)
 {
     auto lengthValue = value.GetChildMemberWithName("length");
     if (!lengthValue.IsValid())

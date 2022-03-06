@@ -9,7 +9,7 @@
 #include <SBBreakpointLocation.h>
 #include "LLDBProcess.hpp"
 
-namespace hxcppdbg::core::drivers::lldb
+namespace hxcppdbg::core::drivers::lldb::native
 {
     class LLDBObjects : public hx::Object
     {
@@ -21,7 +21,7 @@ namespace hxcppdbg::core::drivers::lldb
         hx::Null<int> setBreakpoint(String cppFile, int cppLine);
         bool removeBreakpoint(int id);
 
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess> launch();
+        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::LLDBProcess> launch();
 
         void __Mark(HX_MARK_PARAMS);
 #ifdef HXCPP_VISIT_ALLOCS

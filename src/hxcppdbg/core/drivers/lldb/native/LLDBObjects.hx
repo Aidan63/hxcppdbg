@@ -1,10 +1,11 @@
-package hxcppdbg.core.drivers.lldb;
+package hxcppdbg.core.drivers.lldb.native;
 
 @:keep
 @:include('LLDBObjects.hpp')
-@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBObjects>')
-extern class LLDBObjects {
-    @:native('hxcppdbg::core::drivers::lldb::LLDBObjects::createFromFile')
+@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::LLDBObjects>')
+extern class LLDBObjects
+{
+    @:native('hxcppdbg::core::drivers::lldb::native::LLDBObjects::createFromFile')
     static function createFromFile(file : String) : LLDBObjects;
 
     var onBreakpointHitCallback : (_breakpointID : Int, _threadIdx : Int)->Void;

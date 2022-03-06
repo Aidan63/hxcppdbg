@@ -1,14 +1,16 @@
+#include <hxcpp.h>
+
 #include "LLDBProcess.hpp"
 
 // Frame
 
-hxcppdbg::core::drivers::lldb::Frame::Frame(String _file, String _function, String _symbol, int _line)
+hxcppdbg::core::drivers::lldb::native::Frame::Frame(String _file, String _function, String _symbol, int _line)
     : file(_file), func(_function), line(_line), symbol(_symbol)
 {
     //
 }
 
-void hxcppdbg::core::drivers::lldb::Frame::__Mark(HX_MARK_PARAMS)
+void hxcppdbg::core::drivers::lldb::native::Frame::__Mark(HX_MARK_PARAMS)
 {
     HX_MARK_BEGIN_CLASS(Frame);
 	HX_MARK_MEMBER_NAME(file,"file");
@@ -19,7 +21,7 @@ void hxcppdbg::core::drivers::lldb::Frame::__Mark(HX_MARK_PARAMS)
 
 #if HXCPP_VISIT_ALLOCS
 
-void hxcppdbg::core::drivers::lldb::Frame::__Visit(HX_VISIT_PARAMS)
+void hxcppdbg::core::drivers::lldb::native::Frame::__Visit(HX_VISIT_PARAMS)
 {
     HX_VISIT_MEMBER_NAME(file,"onBreakpointHitCallback");
     HX_VISIT_MEMBER_NAME(func,"func");
@@ -30,13 +32,13 @@ void hxcppdbg::core::drivers::lldb::Frame::__Visit(HX_VISIT_PARAMS)
 
 // Variable
 
-hxcppdbg::core::drivers::lldb::Variable::Variable(String _name, String _value, String _type)
+hxcppdbg::core::drivers::lldb::native::Variable::Variable(String _name, String _value, String _type)
     : name(_name), value(_value), type(_type)
 {
     //
 }
 
-void hxcppdbg::core::drivers::lldb::Variable::__Mark(HX_MARK_PARAMS)
+void hxcppdbg::core::drivers::lldb::native::Variable::__Mark(HX_MARK_PARAMS)
 {
     HX_MARK_BEGIN_CLASS(Frame);
 	HX_MARK_MEMBER_NAME(name,"name");
@@ -47,7 +49,7 @@ void hxcppdbg::core::drivers::lldb::Variable::__Mark(HX_MARK_PARAMS)
 
 #if HXCPP_VISIT_ALLOCS
 
-void hxcppdbg::core::drivers::lldb::Variable::__Visit(HX_VISIT_PARAMS)
+void hxcppdbg::core::drivers::lldb::native::Variable::__Visit(HX_VISIT_PARAMS)
 {
     HX_VISIT_MEMBER_NAME(name,"name");
     HX_VISIT_MEMBER_NAME(value,"value");
@@ -58,25 +60,25 @@ void hxcppdbg::core::drivers::lldb::Variable::__Visit(HX_VISIT_PARAMS)
 
 // LLDBProcess
 
-int hxcppdbg::core::drivers::lldb::LLDBProcess::lldbProcessType = hxcpp_alloc_kind();
+int hxcppdbg::core::drivers::lldb::native::LLDBProcess::lldbProcessType = hxcpp_alloc_kind();
 
-void hxcppdbg::core::drivers::lldb::LLDBProcess::finalise(Dynamic obj)
+void hxcppdbg::core::drivers::lldb::native::LLDBProcess::finalise(Dynamic obj)
 {
-    static_cast<hxcppdbg::core::drivers::lldb::LLDBProcess*>(obj.mPtr)->destroy();
+    static_cast<hxcppdbg::core::drivers::lldb::native::LLDBProcess*>(obj.mPtr)->destroy();
 }
 
-hxcppdbg::core::drivers::lldb::LLDBProcess::LLDBProcess(::lldb::SBTarget t)
+hxcppdbg::core::drivers::lldb::native::LLDBProcess::LLDBProcess(::lldb::SBTarget t)
     : target(t)
 {
     _hx_set_finalizer(this, finalise);
 }
 
-int hxcppdbg::core::drivers::lldb::LLDBProcess::getState()
+int hxcppdbg::core::drivers::lldb::native::LLDBProcess::getState()
 {
     return process.GetState();
 }
 
-void hxcppdbg::core::drivers::lldb::LLDBProcess::start(String cwd)
+void hxcppdbg::core::drivers::lldb::native::LLDBProcess::start(String cwd)
 {
     auto options = target.GetLaunchInfo();
     options.SetWorkingDirectory(cwd.utf8_str());
@@ -98,7 +100,7 @@ void hxcppdbg::core::drivers::lldb::LLDBProcess::start(String cwd)
     }
 }
 
-void hxcppdbg::core::drivers::lldb::LLDBProcess::resume()
+void hxcppdbg::core::drivers::lldb::native::LLDBProcess::resume()
 {
     hx::EnterGCFreeZone();
     auto error = process.Continue();
@@ -110,7 +112,7 @@ void hxcppdbg::core::drivers::lldb::LLDBProcess::resume()
     }
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lldb::LLDBProcess::stepIn(int threadIndex)
+hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame> hxcppdbg::core::drivers::lldb::native::LLDBProcess::stepIn(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
@@ -132,7 +134,7 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lld
     return getStackFrame(threadIndex, 0);
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lldb::LLDBProcess::stepOver(int threadIndex)
+hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame> hxcppdbg::core::drivers::lldb::native::LLDBProcess::stepOver(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
@@ -160,7 +162,7 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lld
     return getStackFrame(threadIndex, 0);
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lldb::LLDBProcess::stepOut(int threadIndex)
+hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame> hxcppdbg::core::drivers::lldb::native::LLDBProcess::stepOut(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
@@ -188,7 +190,7 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lld
     return getStackFrame(threadIndex, 0);
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lldb::LLDBProcess::getStackFrame(int threadIndex, int frameIndex)
+hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame> hxcppdbg::core::drivers::lldb::native::LLDBProcess::getStackFrame(int threadIndex, int frameIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
@@ -219,11 +221,11 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame> hxcppdbg::core::drivers::lld
     return hx::ObjectPtr<Frame>(new Frame(fileName, funcName, symName, lineNum));
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drivers::lldb::LLDBProcess::getStackFrames(int threadIndex)
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame>> hxcppdbg::core::drivers::lldb::native::LLDBProcess::getStackFrames(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>>(0, 0);
+        return Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame>>(0, 0);
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
@@ -233,7 +235,7 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drive
     }
     
     auto count  = thread.GetNumFrames();
-    auto frames = Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>>(0, count);
+    auto frames = Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame>>(0, count);
 
     for (int i = 0; i < count; i++)
     {
@@ -243,7 +245,7 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>> hxcppdbg::core::drive
     return frames;
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>> hxcppdbg::core::drivers::lldb::LLDBProcess::getStackVariables(int threadIndex, int frameIndex)
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Variable>> hxcppdbg::core::drivers::lldb::native::LLDBProcess::getStackVariables(int threadIndex, int frameIndex)
 {
     auto thread    = process.GetThreadAtIndex(threadIndex);
     auto frame     = thread.GetFrameAtIndex(frameIndex);
@@ -259,7 +261,7 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>> hxcppdbg::core::dr
         String varValue;
         if (std::string(type) == std::string("String"))
         {
-            varValue = hxcppdbg::core::drivers::lldb::extractString(variable);
+            varValue = hxcppdbg::core::drivers::lldb::native::extractString(variable);
         }
         else
         {
@@ -272,17 +274,17 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>> hxcppdbg::core::dr
     return output;
 }
 
-void hxcppdbg::core::drivers::lldb::LLDBProcess::destroy()
+void hxcppdbg::core::drivers::lldb::native::LLDBProcess::destroy()
 {
     process.Destroy();
 }
 
-int hxcppdbg::core::drivers::lldb::LLDBProcess::__GetType() const
+int hxcppdbg::core::drivers::lldb::native::LLDBProcess::__GetType() const
 {
     return lldbProcessType;
 }
 
-String hxcppdbg::core::drivers::lldb::LLDBProcess::toString()
+String hxcppdbg::core::drivers::lldb::native::LLDBProcess::toString()
 {
     return HX_CSTRING("LLDBProcess");
 }

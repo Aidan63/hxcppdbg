@@ -1,0 +1,21 @@
+<xml>
+    <files id='haxe'>
+        <compilerflag value='-I/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native'/>
+        <compilerflag value='-I/usr/lib/llvm-10/include/lldb/API'/>
+        <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/LLDBBoot.cpp'/>
+        <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/LLDBObjects.cpp'/>
+        <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/LLDBProcess.cpp'/>
+        <file name='/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/TypeConverters.cpp'/>
+    </files>
+
+    <files id='lldb'>
+        <compilerflag value='-I/mnt/d/programming/haxe/hxcppdbg/src/core/hxcppdbg/drivers/lldb/native'/>
+        <compilerflag value='-I/usr/lib/llvm-10/include/lldb/API'/>
+    </files>
+
+    <target id='haxe'>
+        <files id='lldb'/>
+
+        <lib name='-llldb'/>
+    </target>
+</xml>

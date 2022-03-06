@@ -1,8 +1,8 @@
-package hxcppdbg.core.drivers.lldb;
+package hxcppdbg.core.drivers.lldb.native;
 
 @:keep
 @:include('LLDBProcess.hpp')
-@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::LLDBProcess>')
+@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::LLDBProcess>')
 extern class LLDBProcess {
     function getState() : Int;
 
@@ -27,7 +27,7 @@ extern class LLDBProcess {
 
 @:keep
 @:include('LLDBProcess.hpp')
-@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Frame>')
+@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Frame>')
 extern class Frame {
     final file : String;
 
@@ -40,7 +40,7 @@ extern class Frame {
 
 @:keep
 @:include('LLDBProcess.hpp')
-@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::Variable>')
+@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::Variable>')
 extern class Variable {
     final name : String;
 
