@@ -18,8 +18,6 @@
 #include "RawStackFrame.hpp"
 #include "RawFrameLocal.hpp"
 
-#include "models/StringExtensions.hpp"
-
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
     class DbgEngObjects : public hx::Object

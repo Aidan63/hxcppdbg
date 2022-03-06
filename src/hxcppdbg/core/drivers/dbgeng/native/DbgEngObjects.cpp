@@ -259,7 +259,7 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxc
 		hx::Throw(HX_CSTRING("Failed to get debug host symbols"));
 	}
 
-	auto output = Array<hx::ObjectPtr<RawFrameLocal>>(0, count);
+	auto output = Array<hx::ObjectPtr<RawFrameLocal>>(0, 0);
 	for (auto i = 0; i < count; i++)
 	{
 		auto offset = ULONG64{ 0 };
@@ -322,7 +322,7 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxc
 			display = std::wstring(buffer.data(), size - 1);
 		}
 
-		output->__SetItem(i,
+		output->Add(
 			new RawFrameLocal(
 				String::create(nameBuffer.data(), nameSize - 1),
 				String::create(typeBuffer.data(), typeSize - 1),
