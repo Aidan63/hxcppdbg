@@ -18,9 +18,14 @@
 #include "RawStackFrame.hpp"
 #include "RawFrameLocal.hpp"
 
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, utils, HResultException)
+HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
+HX_DECLARE_CLASS2(haxe, ds, Option)
+
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
-    class DbgEngObjects : public hx::Object
+    class DbgEngObjects_obj : public hx::Object
     {
     private:
         PDEBUG_CLIENT7 client;
@@ -30,15 +35,15 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         std::unique_ptr<DebugEventCallbacks> events;
         Dynamic onBreakpointCb;
 
-        DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb);
+        DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb);
     public:
         void __Mark(HX_MARK_PARAMS);
 #ifdef HXCPP_VISIT_ALLOCS
         void __Visit(HX_VISIT_PARAMS);
 #endif
 
-        hx::Null<int> createBreakpoint(String file, int line);
-        bool removeBreakpoint(int id);
+        hxcppdbg::core::ds::Result createBreakpoint(String file, int line);
+        haxe::ds::Option removeBreakpoint(int id);
 
         Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> getCallStack(int _threadID);
         hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> getFrame(int _thread, int _index);
@@ -49,7 +54,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         void start(int status);
         void step(int thread, int status);
 
-        static hx::ObjectPtr<DbgEngObjects> createFromFile(String file, Dynamic _onBreakpointCb);
+        static hxcppdbg::core::ds::Result createFromFile(String file, Dynamic _onBreakpointCb);
         static IDataModelManager* manager;
         static IDebugHost* host;
     };

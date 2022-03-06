@@ -4,10 +4,10 @@
 
 IDataModelManager* Debugger::DataModel::ClientEx::GetManager()
 {
-    return hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::manager;
+    return hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager;
 }
 
 IDebugHost* Debugger::DataModel::ClientEx::GetHost()
 {
-    return hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::host;
+    return hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::host;
 }

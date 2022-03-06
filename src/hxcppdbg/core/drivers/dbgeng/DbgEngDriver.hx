@@ -15,7 +15,11 @@ class DbgEngDriver extends Driver
 
 	public function new(_file, _onBreakpointCb)
 	{
-		objects     = DbgEngObjects.createFromFile(_file, _onBreakpointCb);
+		objects     = switch DbgEngObjects.createFromFile(_file, _onBreakpointCb)
+		{
+			case Success(v): v;
+			case Error(e): throw e;
+		}
 		breakpoints = new DbgEngBreakpoints(objects);
 		stack       = new DbgEngStack(objects);
 		locals      = new DbgEngLocals(objects);

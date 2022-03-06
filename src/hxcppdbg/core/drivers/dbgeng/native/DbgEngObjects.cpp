@@ -1,59 +1,73 @@
 #include <hxcpp.h>
 
+#ifndef INCLUDED_haxe_Exception
+#include <hxcppdbg/core/drivers/dbgeng/utils/HResultException.h>
+#endif
+
+#ifndef INCLUDED_haxe_ds_Option
+#include <haxe/ds/Option.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_ds_Result
+#include <hxcppdbg/core/ds/Result.h>
+#endif
+
 #include "DbgEngObjects.hpp"
 
-IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::manager = nullptr;
+IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
-IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::host = nullptr;
+IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::host = nullptr;
 
-hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createFromFile(String file, Dynamic _onBreakpointCb)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile(String file, Dynamic _onBreakpointCb)
 {
+	auto result = HRESULT{ S_OK };
+
 	// Should we request the highest version or not?
 	// Don't know what the required windows version is for the different versions.
 	auto client = PDEBUG_CLIENT7{ nullptr };
-	if (!SUCCEEDED(DebugCreate(__uuidof(PDEBUG_CLIENT7), (void**)&client)))
+	if (!SUCCEEDED(result = DebugCreate(__uuidof(PDEBUG_CLIENT7), (void**)&client)))
 	{
-		hx::Throw(HX_CSTRING("Unable to create IDebugClient object"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to create IDebugClient object"), result));
 	}
 
 	auto control = PDEBUG_CONTROL{ nullptr };
-	if (!SUCCEEDED(client->QueryInterface(__uuidof(PDEBUG_CONTROL), (void**)&control)))
+	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(PDEBUG_CONTROL), (void**)&control)))
 	{
-		hx::Throw(HX_CSTRING("Unable to get IDebugControl object from client"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get IDebugControl object from client"), result));
 	}
 
 	auto symbols = PDEBUG_SYMBOLS5{ nullptr };
-	if (!SUCCEEDED(client->QueryInterface(__uuidof(PDEBUG_SYMBOLS5), (void**)&symbols)))
+	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(PDEBUG_SYMBOLS5), (void**)&symbols)))
 	{
-		hx::Throw(HX_CSTRING("Unable to get IDebugSymbol object from client"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get IDebugSymbol object from client"), result));
 	}
 
 	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
-	if (!SUCCEEDED(client->QueryInterface(__uuidof(PDEBUG_SYSTEM_OBJECTS4), (void**)&system)))
+	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(PDEBUG_SYSTEM_OBJECTS4), (void**)&system)))
 	{
-		hx::Throw(HX_CSTRING("Unable to get IDebugSystemObjects object from client"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get IDebugSystemObjects object from client"), result));
 	}
 
 	auto hostDataModelAccess = (IHostDataModelAccess*) nullptr;
-	if (!SUCCEEDED(client->QueryInterface(__uuidof(IHostDataModelAccess), (void**)&hostDataModelAccess)))
+	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(IHostDataModelAccess), (void**)&hostDataModelAccess)))
 	{
-		hx::Throw(HX_CSTRING("Unable to get data model access"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get data model access"), result));
 	}
 
-	if (!SUCCEEDED(hostDataModelAccess->GetDataModel(&manager, &host)))
+	if (!SUCCEEDED(result = hostDataModelAccess->GetDataModel(&manager, &host)))
 	{
-		hx::Throw(HX_CSTRING("Unable to get data model manager and debug host"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get data model manager and debug host"), result));
 	}
 
 	auto events = std::make_unique<DebugEventCallbacks>(client, _onBreakpointCb);
-	if (!SUCCEEDED(client->SetEventCallbacksWide(events.get())))
+	if (!SUCCEEDED(result = client->SetEventCallbacksWide(events.get())))
 	{
-		hx::Throw(HX_CSTRING("Unable to set events callback"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set events callback"), result));
 	}
 
-	if (!SUCCEEDED(client->CreateProcessAndAttach(NULL, PSTR(file.utf8_str()), DEBUG_PROCESS, 0, DEBUG_ATTACH_DEFAULT)))
+	if (!SUCCEEDED(result = client->CreateProcessAndAttach(NULL, PSTR(file.utf8_str()), DEBUG_PROCESS, 0, DEBUG_ATTACH_DEFAULT)))
 	{
-		hx::Throw(HX_CSTRING("Unable to create and attach to process"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to create and attach to process"), result));
 	}
 
 	// Even after the above create and attach call the process will not have been started.
@@ -61,35 +75,38 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects> hxcppdbg::
 	// Once the process has been suspended this wait for event function will return.
 	hx::EnterGCFreeZone();
 
-	if (!SUCCEEDED(control->WaitForEvent(0, INFINITE)))
+	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
 		hx::ExitGCFreeZone();
-		hx::Throw(HX_CSTRING("Failed to wait for event"));
+
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to wait for event"), result));
 	}
 
 	hx::ExitGCFreeZone();
 
 	auto status = ULONG{ 0 };
-	if (!SUCCEEDED(control->GetExecutionStatus(&status)))
+	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
 	{
-		hx::Throw(HX_CSTRING("Failed to get execution status"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get execution status"), result));
 	}
 
 	if (status != DEBUG_STATUS_BREAK)
 	{
 		hx::Throw(HX_CSTRING("Process is not suspended"));
+
+		return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING(""), nullptr, nullptr));
 	}
 
-	return hx::ObjectPtr<DbgEngObjects>(new DbgEngObjects(client, control, symbols, system, std::move(events), _onBreakpointCb));
+	return hxcppdbg::core::ds::Result_obj::Success(new DbgEngObjects_obj(client, control, symbols, system, std::move(events), _onBreakpointCb));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::DbgEngObjects(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb)
+hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb)
 	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), onBreakpointCb(_onBreakpointCb)
 {
 	//
 }
 
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::__Mark(HX_MARK_PARAMS)
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::__Mark(HX_MARK_PARAMS)
 {
 	HX_MARK_BEGIN_CLASS(DbgEngObjects);
 	HX_MARK_MEMBER_NAME(onBreakpointCb, "onBreakpointCb");
@@ -98,53 +115,68 @@ void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::__Mark(HX_MARK_PARA
 
 #ifdef HXCPP_VISIT_ALLOCS
 
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::__Visit(HX_VISIT_PARAMS)
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::__Visit(HX_VISIT_PARAMS)
 {
 	HX_VISIT_MEMBER_NAME(onBreakpointCb, "onBreakpointCb");
 }
 
 #endif
 
-hx::Null<int> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createBreakpoint(String _file, int _line)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createBreakpoint(String _file, int _line)
 {
+	auto result = HRESULT{ S_OK };
+
 	auto entry = DEBUG_SYMBOL_SOURCE_ENTRY();
     auto count = ULONG{ 0 };
-	if (!SUCCEEDED(symbols->GetSourceEntriesByLine(_line, _file.utf8_str(), DEBUG_GSEL_NEAREST_ONLY, &entry, 1, &count)))
+	if (!SUCCEEDED(result = symbols->GetSourceEntriesByLine(_line, _file.utf8_str(), DEBUG_GSEL_NEAREST_ONLY, &entry, 1, &count)))
 	{
-		return null();
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get source entries by line"), result));
 	}
 
 	auto breakpoint = PDEBUG_BREAKPOINT{ nullptr };
-	if (!SUCCEEDED(control->AddBreakpoint(DEBUG_BREAKPOINT_CODE, DEBUG_ANY_ID, &breakpoint)))
+	if (!SUCCEEDED(result = control->AddBreakpoint(DEBUG_BREAKPOINT_CODE, DEBUG_ANY_ID, &breakpoint)))
 	{
-		hx::Throw(HX_CSTRING("unable to add breakpoint"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to add breakpoint"), result));
 	}
 
-	if (!SUCCEEDED(breakpoint->AddFlags(DEBUG_BREAKPOINT_ENABLED)))
+	if (!SUCCEEDED(result = breakpoint->AddFlags(DEBUG_BREAKPOINT_ENABLED)))
 	{
-		hx::Throw(HX_CSTRING("unable to enable breakpoint"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to enable breakpoint"), result));
 	}
 
-	if (!SUCCEEDED(breakpoint->SetOffset(entry.Offset)))
+	if (!SUCCEEDED(result = breakpoint->SetOffset(entry.Offset)))
 	{
-		hx::Throw(HX_CSTRING("unable to set offset"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set breakpoint offset"), result));
 	}
 
 	auto id = ULONG{ 0 };
 	if (!SUCCEEDED(breakpoint->GetId(&id)))
 	{
-		hx::Throw(HX_CSTRING("unable to get id"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get breakpoint ID"), result));
 	}
 
-	return id;
+	return hxcppdbg::core::ds::Result_obj::Success(id);
 }
 
-bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::removeBreakpoint(int id)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::removeBreakpoint(int id)
 {
-	return false;
+	auto result = HRESULT{ S_OK };
+
+	auto breakpoint = PDEBUG_BREAKPOINT{ nullptr };
+	if (!SUCCEEDED(result = control->GetBreakpointById(id, &breakpoint)))
+	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get breakpoint by id"), result));
+	}
+
+	if (!SUCCEEDED(result = control->RemoveBreakpoint(breakpoint)))
+	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to remove breakpoint"), result));
+	}
+
+	return haxe::ds::Option_obj::None;
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getCallStack(int _threadID)
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadID)
 {
 	auto frames = std::vector<DEBUG_STACK_FRAME>(128);
 	auto filled = ULONG{ 0 };
@@ -188,7 +220,7 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxc
 	return output;
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getFrame(int _thread, int _index)
+hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getFrame(int _thread, int _index)
 {
 	auto frame  = DEBUG_STACK_FRAME{ 0 };
 	auto filled = ULONG{ 0 };
@@ -224,7 +256,7 @@ hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> hxcppdbg::
 	return hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line, frame.FrameOffset));
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getVariables(int thread, int frame)
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int thread, int frame)
 {
 	if (!SUCCEEDED(system->SetCurrentThreadId(thread)))
 	{
@@ -332,12 +364,12 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxc
 	return output;
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::getArguments(int thread, int frame)
+Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getArguments(int thread, int frame)
 {
 	return null();
 }
 
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start(int status)
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::start(int status)
 {
 	if (!SUCCEEDED(control->SetExecutionStatus(status)))
 	{
@@ -355,7 +387,7 @@ void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::start(int status)
 	hx::ExitGCFreeZone();
 }
 
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::step(int _thread, int _status)
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _status)
 {
 	if (!SUCCEEDED(system->SetCurrentThreadId(_thread)))
 	{

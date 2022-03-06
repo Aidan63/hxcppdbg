@@ -1,15 +1,18 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
+
 @:keep
 @:include('DbgEngObjects.hpp')
-@:native('hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects>')
+@:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects')
 @:buildXml('<include name="D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DbgEng.xml"/>')
 extern class DbgEngObjects
 {
-    @:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects::createFromFile')
-    static function createFromFile(_file : String, _onBreakpointCb : Int->Int->Void) : DbgEngObjects;
+    @:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile')
+    static function createFromFile(_file : String, _onBreakpointCb : Int->Int->Void) : Result<DbgEngObjects, HResultException>;
 
-    function createBreakpoint(_file : String, _line : Int) : Null<Int>;
+    function createBreakpoint(_file : String, _line : Int) : Result<Int, HResultException>;
 
     function getCallStack(_thread : Int) : Array<RawStackFrame>;
 
