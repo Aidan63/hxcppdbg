@@ -44,6 +44,19 @@ class LLDBDriver extends Driver
     {
         process.resume();
     }
+
+	public function step(_thread:Int, _type:StepType)
+    {
+        switch _type
+        {
+            case In:
+                process.stepIn(_thread);
+            case Over:
+                process.stepOver(_thread);
+            case Out:
+                process.stepOut(_thread);
+        }
+    }
 }
 
 class LLDBBreakpoints implements IBreakpoints
