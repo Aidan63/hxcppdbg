@@ -1,5 +1,7 @@
 package hxcppdbg.core.drivers.lldb;
 
+import hxcppdbg.core.drivers.lldb.LLDBProcess.Variable;
+import hxcppdbg.core.locals.NativeLocal;
 import haxe.Exception;
 import hxcppdbg.core.drivers.lldb.LLDBProcess.Frame;
 import hxcppdbg.core.stack.NativeFrame;
@@ -21,6 +23,7 @@ class LLDBDriver extends Driver
         process     = objects.launch();
         breakpoints = new LLDBBreakpoints(objects);
         stack       = new LLDBStack(process);
+        locals      = new LLDBLocals(process);
 
         objects.onBreakpointHitCallback = _onBreakpointCb;
     }
@@ -95,6 +98,11 @@ class LLDBStack implements IStack
 		return process.getStackFrames(_thread).map(rawFrameToNativeFrame);
 	}
 
+    public function getFrame(_thread:Int, _index:Int)
+    {
+		return rawFrameToNativeFrame(process.getStackFrame(_thread, _index));
+	}
+
     private static function rawFrameToNativeFrame(_input : Frame)
     {
         final buffer = new StringBuf();
@@ -142,5 +150,30 @@ class LLDBStack implements IStack
         }
 
         return new NativeFrame(_input.file, buffer.toString(), _input.line);
+    }
+}
+
+class LLDBLocals implements ILocals
+{
+    final process : LLDBProcess;
+
+    public function new(_process)
+    {
+        process = _process;
+    }
+
+	public function getVariables(_thread : Int, _frame : Int)
+    {
+		return process.getStackVariables(_thread, _frame).map(variableToNativeLocal);
+	}
+
+	public function getArguments(_thread:Int, _frame:Int)
+    {
+        //
+    }
+
+    function variableToNativeLocal(_input : Variable)
+    {
+        return new NativeLocal(_input.name, _input.type, _input.value);
     }
 }
