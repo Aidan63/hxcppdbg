@@ -68,27 +68,27 @@ class Session
         var stepAgain = true;
         var current   = baseFrame;
 
-        while (stepAgain)
-        {
-            driver.step(_thread, _type);
+        // while (stepAgain)
+        // {
+        //     driver.step(_thread, _type);
 
-            stepAgain = switch (current = stack.getFrame(_thread, 0))
-            {
-                case Haxe(haxeCurrent, _):
-                    switch baseFrame
-                    {
-                        case Haxe(haxeBase, _):
-                            haxeCurrent.file.haxe == haxeBase.file.haxe && haxeCurrent.expr.haxe.start.line == haxeBase.expr.haxe.start.line;
-                        case Native(_):
-                            // Our base frame shouldn't ever be a non haxe one.
-                            // In the future this might be the case (native breakpoints),
-                            // so we sould correct this down the line.
-                            throw new Exception('');
-                    }
-                case Native(_):
-                    true;
-            }
-        }
+        //     stepAgain = switch (current = stack.getFrame(_thread, 0))
+        //     {
+        //         case Haxe(haxeCurrent, _):
+        //             switch baseFrame
+        //             {
+        //                 case Haxe(haxeBase, _):
+        //                     haxeCurrent.file.haxe == haxeBase.file.haxe && haxeCurrent.expr.haxe.start.line == haxeBase.expr.haxe.start.line;
+        //                 case Native(_):
+        //                     // Our base frame shouldn't ever be a non haxe one.
+        //                     // In the future this might be the case (native breakpoints),
+        //                     // so we sould correct this down the line.
+        //                     throw new Exception('');
+        //             }
+        //         case Native(_):
+        //             true;
+        //     }
+        // }
     }
 
     /**

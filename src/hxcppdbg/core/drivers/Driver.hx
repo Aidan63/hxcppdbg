@@ -1,5 +1,8 @@
 package hxcppdbg.core.drivers;
 
+import haxe.Exception;
+import haxe.ds.Option;
+
 abstract class Driver
 {
     public final breakpoints : IBreakpoints;
@@ -8,13 +11,13 @@ abstract class Driver
 
     public final locals : ILocals;
 
-    public abstract function start() : Void;
+    public abstract function start() : Option<Exception>;
 
-    public abstract function stop() : Void;
+    public abstract function stop() : Option<Exception>;
 
-    public abstract function pause() : Void;
+    public abstract function pause() : Option<Exception>;
 
-    public abstract function resume() : Void;
+    public abstract function resume() : Option<Exception>;
 
-    public abstract function step(_thread : Int, _type : StepType) : Void;
+    public abstract function step(_thread : Int, _type : StepType) : Option<Exception>;
 }

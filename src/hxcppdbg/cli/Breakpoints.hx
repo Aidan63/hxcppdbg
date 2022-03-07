@@ -78,13 +78,12 @@ class Remove {
 
     @:defaultCommand public function run()
     {
-        if (driver.delete(id))
+        switch driver.delete(id)
         {
-            Sys.println('Breakpoint $id removed');
-        }
-        else
-        {
-            Sys.println('Failed to remove breakpoing $id');
+            case Some(exn):
+                Sys.println('Failed to remove breakpoing $id : ${ exn.message }');
+            case None:
+                Sys.println('Breakpoint $id removed');
         }
     }
 }

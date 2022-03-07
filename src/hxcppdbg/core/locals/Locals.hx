@@ -1,5 +1,6 @@
 package hxcppdbg.core.locals;
 
+import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.sourcemap.Sourcemap;
@@ -24,10 +25,13 @@ class Locals
 
     public function getLocals(_thread, _index)
     {
-        final frame  = stack.getFrame(_thread, _index);
-        final hxVars = driver.getVariables(_thread, _index).map(mapNativeLocal.bind(frame));
-
-        return hxVars;
+        return switch stack.getFrame(_thread, _index)
+        {
+            case Success(frame):
+                Result.Success(driver.getVariables(_thread, _index).map(mapNativeLocal.bind(frame)));
+            case Error(e):
+                return Result.Error(e);
+        }
     }
 
     function mapNativeLocal(_frame : StackFrame, _native : NativeLocal)

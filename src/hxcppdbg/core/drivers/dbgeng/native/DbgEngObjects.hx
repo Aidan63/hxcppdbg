@@ -1,5 +1,7 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import haxe.ds.Option;
+import hxcppdbg.core.stack.NativeFrame;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
 
@@ -14,15 +16,17 @@ extern class DbgEngObjects
 
     function createBreakpoint(_file : String, _line : Int) : Result<Int, HResultException>;
 
-    function getCallStack(_thread : Int) : Array<RawStackFrame>;
+    function removeBreakpoint(_breakpoint : Int) : Option<HResultException>;
 
-    function getFrame(_thread : Int, _index : Int) : RawStackFrame;
+    function getCallStack(_thread : Int) : Result<Array<NativeFrame>, HResultException>;
+
+    function getFrame(_thread : Int, _index : Int) : Result<NativeFrame, HResultException>;
 
     function getVariables(_thread : Int, _frame : Int) : Array<RawFrameLocal>;
 
     function getArguments(_thread : Int, _frame : Int) : Array<RawFrameLocal>;
 
-    function start(_status : Int) : Void;
+    function start(_status : Int) : Option<HResultException>;
 
-    function step(_thread : Int, _status : Int) : Void;
+    function step(_thread : Int, _status : Int) : Option<HResultException>;
 }

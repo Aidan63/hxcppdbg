@@ -12,6 +12,14 @@
 #include <hxcppdbg/core/ds/Result.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_stack_NativeFrame
+#include <hxcppdbg/core/stack/NativeFrame.h>
+#endif
+
+#ifndef INCLUDED_haxe_io_Path
+#include <haxe/io/Path.h>
+#endif
+
 #include "DbgEngObjects.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
@@ -106,6 +114,141 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PD
 	//
 }
 
+hxcppdbg::core::stack::NativeFrame hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::nativeFrameFromDebugFrame(DEBUG_STACK_FRAME& frame)
+{
+	auto line         = ULONG{ 0 };
+	auto fileBuffer   = std::array<WCHAR, 1024>();
+	auto fileSize     = ULONG{ 0 };
+	auto displacement = ULONG64{ 0 };
+	if (!SUCCEEDED(symbols->GetLineByOffsetWide(frame.InstructionOffset, &line, fileBuffer.data(), fileBuffer.size(), &fileSize, &displacement)))
+	{
+		auto str = std::wstring(L"unknown file");
+
+		std::copy(str.begin(), str.end(), fileBuffer.data());
+
+		fileSize = str.length() + 1;
+	}
+
+	auto nameBuffer = std::array<WCHAR, 1024>();
+	auto nameSize   = ULONG{ 0 };
+	if (!SUCCEEDED(symbols->GetNameByOffsetWide(frame.InstructionOffset, nameBuffer.data(), nameBuffer.size(), &nameSize, &displacement)))
+	{
+		auto str = std::wstring(L"unknown frame");
+
+		std::copy(str.begin(), str.end(), nameBuffer.data());
+
+		nameSize = str.length() + 1;
+	}
+
+	// -1 as the null terminating character is included as part of the size.
+	auto file = haxe::io::Path_obj::normalize(String::create(fileBuffer.data(), fileSize - 1));
+	auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameSize - 1));
+
+	return hxcppdbg::core::stack::NativeFrame_obj::__new(file, name, line);
+}
+
+String hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::cleanSymbolName(std::wstring _input)
+{
+	// dbgeng symbol names are prefixed with the module followed by a '!' before the rest of the symbol name.
+	auto modulePivot   = _input.find_first_of(L'!');
+	auto withoutModule = _input.substr(modulePivot + 1);
+
+	// Here are some examples of dbgeng symbols and what I think parts of it mean...
+	// There's next to no information about the ` and ' characters as they seem to be msvc internal stuff.
+	//
+	// sub::Resources_obj::subscribe
+	// `Main_obj::main'::`2'::_hx_Closure_0::_hx_run
+	// ``Main_obj::main'::`2'::_hx_Closure_1::_hx_run'::`2'::_hx_Closure_0::_hx_run(int i)
+	// haxe::`anonymous namespace'::__default_trace::_hx_run(Dynamic v, Dynamic infos)
+	//
+	// The number of prefixed backticks refers too the number of "nameless" frames. The bottom symbol name was from
+	// two nested closures which are implemented as structs defined in the function.
+	// The text between the single quotes are not part of the namespace type path and the number of these quotes
+	// should match the number of initial backticks.
+	// What the stuff between the single quotes means I'm not sure of (number of frames which include that "frameless" code?)
+	// but I also don't think we need to care.
+	auto count            = backtickCount(withoutModule);
+	auto buffer           = std::wstring();
+	auto withoutBackticks = withoutModule.substr(count);
+	auto anonNamespace    = std::wstring(L"`anonymous namespace'::");
+
+	auto skip = false;
+	auto i    = int{ 0 };
+	while (i < withoutBackticks.length())
+	{
+		switch (withoutBackticks.at(i))
+		{
+			case L'\'':
+				skip = !skip;
+				break;
+			case L'(':
+				if (endsWith(buffer, std::wstring(L"operator")))
+				{
+					buffer.push_back(L'(');
+				}
+				else
+				{
+					// If we enconter an open bracket then we are at the last part of a function (its arguments) so we can skip the rest.
+					// arguments are handled based on the sourcemap, not the symbol name.
+					break;
+				}
+				break;
+			case L'`':
+				if (!skip)
+				{
+					if (withoutBackticks.substr(i, anonNamespace.length()) == anonNamespace)
+					{
+						i += anonNamespace.length();
+
+						continue;
+					}
+				}
+				else
+				{
+					buffer.push_back(L'`');
+				}
+				break;
+			default:
+				buffer.push_back(withoutBackticks[i]);
+				break;
+		}
+
+		i++;
+	}
+
+	return String::create(buffer.data(), buffer.length());
+}
+
+int hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::backtickCount(std::wstring _input)
+{
+	auto count = int{ 0 };
+	for (auto&& character : _input)
+	{
+		if (character == L'`')
+		{
+			count++;
+		}
+		else
+		{
+			return count;
+		}
+	}
+
+	return count;
+}
+
+bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::endsWith(std::wstring& const _input, std::wstring& const _ending)
+{
+	if (_input.length() >= _ending.length())
+	{
+        return (0 == _input.compare(_input.length() - _ending.length(), _ending.length(), _ending));
+    }
+	else
+	{
+        return false;
+    }
+}
+
 void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::__Mark(HX_MARK_PARAMS)
 {
 	HX_MARK_BEGIN_CLASS(DbgEngObjects);
@@ -176,84 +319,41 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::rem
 	return haxe::ds::Option_obj::None;
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadID)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadID)
 {
+	auto result = HRESULT{ S_OK };
 	auto frames = std::vector<DEBUG_STACK_FRAME>(128);
 	auto filled = ULONG{ 0 };
-	if (!SUCCEEDED(control->GetStackTrace(0, 0, 0, frames.data(), frames.capacity(), &filled)))
+	if (!SUCCEEDED(result = control->GetStackTrace(0, 0, 0, frames.data(), frames.capacity(), &filled)))
 	{
-		hx::Throw(HX_CSTRING("Unable to get call stack"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get call stack"), result));
 	}
 
-	auto output = Array<hx::ObjectPtr<RawStackFrame>>(0, filled);
+	auto output = Array<hxcppdbg::core::stack::NativeFrame>(0, filled);
 	for (auto i = 0; i < filled; i++)
 	{
-		auto& frame = frames[i];
-
-		auto line         = ULONG{ 0 };
-		auto fileBuffer   = std::array<char, 1024>();
-		auto fileSize     = ULONG{ 0 };
-		auto displacement = ULONG64{ 0 };
-		if (!SUCCEEDED(symbols->GetLineByOffset(frame.InstructionOffset, &line, fileBuffer.data(), fileBuffer.size(), &fileSize, &displacement)))
-		{
-			// 
-		}
-
-		auto nameBuffer   = std::array<char, 1024>();
-		auto nameSize     = ULONG{ 0 };
-		if (!SUCCEEDED(symbols->GetNameByOffset(frame.InstructionOffset, nameBuffer.data(), nameBuffer.size(), &nameSize, &displacement)))
-		{
-			auto str = std::string("unknown frame");
-
-			std::copy(str.begin(), str.end(), nameBuffer.data());
-
-			nameSize = str.length();
-		}
-
-		// -1 as the null terminating character is included as part of the size.
-		auto file = String::create(fileBuffer.data(), fileSize - 1);
-		auto name = String::create(nameBuffer.data(), nameSize - 1);
-
-		output->__SetItem(i, hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line, frame.FrameOffset)));
+		output->__SetItem(i, nativeFrameFromDebugFrame(frames[i]));
 	}
 
-	return output;
+	return hxcppdbg::core::ds::Result_obj::Success(output);
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawStackFrame> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getFrame(int _thread, int _index)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getFrame(int _thread, int _index)
 {
+	auto result = HRESULT{ S_OK };
+	if (!SUCCEEDED(result = system->SetCurrentThreadId(_thread)))
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set current thread"), result));
+	}
+
 	auto frame  = DEBUG_STACK_FRAME{ 0 };
 	auto filled = ULONG{ 0 };
-	if (!SUCCEEDED(control->GetStackTrace(_index, 0, 0, &frame, 1, &filled)))
+	if (!SUCCEEDED(result = control->GetStackTrace(_index, 0, 0, &frame, 1, &filled)))
 	{
-		hx::Throw(HX_CSTRING("Unable to get call stack"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get call stack"), result));
 	}
 
-	auto line         = ULONG{ 0 };
-	auto fileBuffer   = std::array<char, 1024>();
-	auto fileSize     = ULONG{ 0 };
-	auto displacement = ULONG64{ 0 };
-	if (!SUCCEEDED(symbols->GetLineByOffset(frame.InstructionOffset, &line, fileBuffer.data(), fileBuffer.size(), &fileSize, &displacement)))
-	{
-		// 
-	}
-
-	auto nameBuffer   = std::array<char, 1024>();
-	auto nameSize     = ULONG{ 0 };
-	if (!SUCCEEDED(symbols->GetNameByOffset(frame.InstructionOffset, nameBuffer.data(), nameBuffer.size(), &nameSize, &displacement)))
-	{
-		auto str = std::string("unknown frame");
-
-		std::copy(str.begin(), str.end(), nameBuffer.data());
-
-		nameSize = str.length();
-	}
-
-	// -1 as the null terminating character is included as part of the size.
-	auto file = String::create(fileBuffer.data(), fileSize - 1);
-	auto name = String::create(nameBuffer.data(), nameSize - 1);
-
-	return hx::ObjectPtr<RawStackFrame>(new RawStackFrame(file, name, line, frame.FrameOffset));
+	return hxcppdbg::core::ds::Result_obj::Success(nativeFrameFromDebugFrame(frame));
 }
 
 Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int thread, int frame)
@@ -369,30 +469,39 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxc
 	return null();
 }
 
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::start(int status)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::start(int status)
 {
-	if (!SUCCEEDED(control->SetExecutionStatus(status)))
+	auto result = HRESULT{ S_OK };
+
+	if (!SUCCEEDED(result = control->SetExecutionStatus(status)))
 	{
-		hx::Throw(HX_CSTRING("Unable to change execution state"));
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
 	}
 
 	hx::EnterGCFreeZone();
 
-	if (!SUCCEEDED(control->WaitForEvent(0, INFINITE)))
+	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
 		hx::ExitGCFreeZone();
-		hx::Throw(HX_CSTRING("Unable to wait for event"));
+
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
 	}
 
 	hx::ExitGCFreeZone();
+
+	return haxe::ds::Option_obj::None;
 }
 
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _status)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _status)
 {
-	if (!SUCCEEDED(system->SetCurrentThreadId(_thread)))
+	auto result = HRESULT{ S_OK };
+
+	if (!SUCCEEDED(result = system->SetCurrentThreadId(_thread)))
 	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set current thread"), result));
+
 		hx::Throw(HX_CSTRING("Unable to set current thread"));
 	}
 
-	start(_status);
+	return start(_status);
 }

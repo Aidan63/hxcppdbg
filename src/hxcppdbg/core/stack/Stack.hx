@@ -6,6 +6,7 @@ import hxcppdbg.core.drivers.IStack;
 
 using Lambda;
 using StringTools;
+using hxcppdbg.core.utils.ResultUtils;
 
 class Stack
 {
@@ -26,7 +27,7 @@ class Stack
 
     public function getFrame(_thread, _index)
     {
-        return mapNativeFrame(driver.getFrame(_thread, _index));
+        return driver.getFrame(_thread, _index).apply(mapNativeFrame);
     }
 
     function mapNativeFrame(_frame : NativeFrame) : StackFrame
