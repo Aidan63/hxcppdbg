@@ -37,8 +37,10 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb);
 
         hxcppdbg::core::stack::NativeFrame nativeFrameFromDebugFrame(DEBUG_STACK_FRAME& frame);
-        String cleanSymbolName(std::wstring _input);
-        int backtickCount(std::wstring _input);
+
+        static String cleanSymbolName(std::wstring _input);
+        static int backtickCount(std::wstring _input);
+        static bool endsWith(std::wstring const &_input, std::wstring const &_ending);
     public:
         void __Mark(HX_MARK_PARAMS);
 #ifdef HXCPP_VISIT_ALLOCS

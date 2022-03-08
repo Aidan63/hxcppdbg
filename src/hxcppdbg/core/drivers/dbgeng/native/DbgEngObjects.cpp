@@ -241,6 +241,18 @@ int hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::backtickCount(st
 	return count;
 }
 
+bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::endsWith(std::wstring const &_input, std::wstring const &_ending)
+{
+    if (_input.length() >= _ending.length())
+    {
+        return (0 == _input.compare(_input.length() - _ending.length(), _ending.length(), _ending));
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::__Mark(HX_MARK_PARAMS)
 {
 	HX_MARK_BEGIN_CLASS(DbgEngObjects);
