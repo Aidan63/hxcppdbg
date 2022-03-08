@@ -58,9 +58,9 @@ class Breakpoints
 
                         switch driver.create(file.cpp, mapping.cpp)
                         {
-                            case null:
-                                Error(new Exception('unable to set breakpoint'));
-                            case id:
+                            case Error(e):
+                                Error(new Exception('Unable to set breakpoint', e));
+                            case Success(id):
                                 Success(active[id] = new Breakpoint(id, file.haxe, mapping.haxe.start.line, if (_hxChar != 0) mapping.haxe.start.col else 0));
                         }
                 }

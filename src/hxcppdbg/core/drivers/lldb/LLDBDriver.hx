@@ -1,8 +1,12 @@
 package hxcppdbg.core.drivers.lldb;
 
+import haxe.ds.Option;
+import haxe.Exception;
 import hxcppdbg.core.drivers.lldb.native.LLDBBoot;
 import hxcppdbg.core.drivers.lldb.native.LLDBProcess;
 import hxcppdbg.core.drivers.lldb.native.LLDBObjects;
+
+using hxcppdbg.core.utils.ResultUtils;
 
 class LLDBDriver extends Driver
 {
@@ -14,7 +18,7 @@ class LLDBDriver extends Driver
     {
         LLDBBoot.boot();
 
-        objects     = LLDBObjects.createFromFile(_file);
+        objects     = LLDBObjects.createFromFile(_file).resultOrThrow();
         process     = objects.launch();
         breakpoints = new LLDBBreakpoints(objects);
         stack       = new LLDBStack(process);
@@ -25,27 +29,27 @@ class LLDBDriver extends Driver
 
 	public function start()
     {
-        process.start(Sys.getCwd());
+        return process.start(Sys.getCwd());
     }
 
 	public function stop()
     {
-        //
+        return Option.Some(new Exception(''));
     }
 
     public function pause()
     {
-        //
+        return Option.Some(new Exception(''));
     }
 
 	public function resume()
     {
-        process.resume();
+        return process.resume();
     }
 
 	public function step(_thread:Int, _type:StepType)
     {
-        switch _type
+        return switch _type
         {
             case In:
                 process.stepIn(_thread);

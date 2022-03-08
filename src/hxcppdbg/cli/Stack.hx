@@ -24,28 +24,34 @@ class Stack
 
     @:command public function list()
     {
-        for (idx => frame in driver.getCallStack(thread).filter(filterFrame))
+        switch driver.getCallStack(thread)
         {
-            switch frame
-            {
-                case Haxe(haxe, frame):
-                    if (native)
+            case Success(v):
+                for (idx => frame in v.filter(filterFrame))
+                {
+                    switch frame
                     {
-                        Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
+                        case Haxe(haxe, frame):
+                            if (native)
+                            {
+                                Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
+                            }
+                            else
+                            {
+                                switch haxe.closure
+                                {
+                                    case Some(closure):
+                                        Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }');
+                                    case None:
+                                        Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }');
+                                }
+                            }
+                        case Native(frame):
+                            Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
                     }
-                    else
-                    {
-                        switch haxe.closure
-                        {
-                            case Some(closure):
-                                Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }');
-                            case None:
-                                Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }');
-                        }
-                    }
-                case Native(frame):
-                    Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
-            }
+                }
+            case Error(e):
+                Sys.println('\tUnable to get stack list : ${ e.details() }');
         }
     }
 

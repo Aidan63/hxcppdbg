@@ -7,8 +7,6 @@
         <compilerflag value='-ID:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native'/>
         <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DbgEngObjects.cpp'/>
         <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DebugEventCallbacks.cpp'/>
-        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/RawStackFrame.cpp'/>
-        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/RawFrameLocal.cpp'/>
         <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DbgModelClientEx.cpp'/>
         <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/models/StringExtensions.cpp'/>
     </files>

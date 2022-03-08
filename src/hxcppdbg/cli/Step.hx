@@ -42,16 +42,16 @@ class Step
 
     function printLocation()
     {
-        switch session.stack.getFrame(thread, 0)
-        {
-            case Haxe(haxe, _):
-                Sys.println('Thread $thread at ${ haxe.file.haxe } Line ${ haxe.expr.haxe.start.line }');
-            case Native(_):
-                // We should never end up in a native function.
-                // Eventually a native flag might be added which means we could.
-                // We could also step out of the haxe main so maybe we should continue running the program (and check for exit).
-                throw new Exception('');
+        // switch session.stack.getFrame(thread, 0)
+        // {
+        //     case Haxe(haxe, _):
+        //         Sys.println('Thread $thread at ${ haxe.file.haxe } Line ${ haxe.expr.haxe.start.line }');
+        //     case Native(_):
+        //         // We should never end up in a native function.
+        //         // Eventually a native flag might be added which means we could.
+        //         // We could also step out of the haxe main so maybe we should continue running the program (and check for exit).
+        //         throw new Exception('');
 
-        }
+        // }
     }
 }

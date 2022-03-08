@@ -1,18 +1,22 @@
 package hxcppdbg.core.drivers.lldb.native;
 
+import haxe.Exception;
+import haxe.ds.Option;
+import hxcppdbg.core.ds.Result;
+
 @:keep
 @:include('LLDBObjects.hpp')
-@:native('hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::LLDBObjects>')
+@:native('hxcppdbg::core::drivers::lldb::native::LLDBObjects')
 extern class LLDBObjects
 {
-    @:native('hxcppdbg::core::drivers::lldb::native::LLDBObjects::createFromFile')
-    static function createFromFile(file : String) : LLDBObjects;
+    @:native('hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::createFromFile')
+    static function createFromFile(file : String) : Result<LLDBObjects, Exception>;
 
     var onBreakpointHitCallback : (_breakpointID : Int, _threadIdx : Int)->Void;
 
     function launch() : LLDBProcess;
 
-    function setBreakpoint(cppFile : String, cppLine : Int) : Null<Int>;
+    function setBreakpoint(cppFile : String, cppLine : Int) : Result<Int, Exception>;
 
-    function removeBreakpoint(id : Int) : Bool;
+    function removeBreakpoint(id : Int) : Option<Exception>;
 }

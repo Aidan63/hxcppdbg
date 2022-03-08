@@ -1,6 +1,5 @@
 package hxcppdbg.cli;
 
-import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.locals.Locals in CoreLocals;
 
 using Lambda;
@@ -19,15 +18,21 @@ class Locals
 
     @:command public function list()
     {
-        for (hxVar in locals.getLocals(0, 0))
+        switch locals.getLocals(0, 0)
         {
-            switch hxVar
-            {
-                case Native(_):
-                    continue;
-                case Haxe(_haxe, _native):
-                    Sys.println('\t${ _haxe.haxe }\t\t${ _haxe.type }\t\t${ _native.value }');
-            }
+            case Success(vars):
+                for (hxVar in vars)
+                {
+                    switch hxVar
+                    {
+                        case Native(_):
+                            continue;
+                        case Haxe(_haxe, _native):
+                            Sys.println('\t${ _haxe.haxe }\t\t${ _haxe.type }\t\t${ _native.value }');
+                    }
+                }
+            case Error(e):
+                Sys.println('\tError : ${ e.message }');
         }
     }
 
