@@ -85,16 +85,16 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	// Even after the above create and attach call the process will not have been started.
 	// Our custom callback class will suspend the process as soon as the process starts so we can do whatever we want.
 	// Once the process has been suspended this wait for event function will return.
-	hx::EnterGCFreeZone();
+	// hx::EnterGCFreeZone();
 
 	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
-		hx::ExitGCFreeZone();
+		// hx::ExitGCFreeZone();
 
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to wait for event"), result));
 	}
 
-	hx::ExitGCFreeZone();
+	// hx::ExitGCFreeZone();
 
 	auto status = ULONG{ 0 };
 	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
@@ -323,23 +323,67 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::rem
 	return haxe::ds::Option_obj::None;
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadID)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadIndex)
 {
 	auto result = HRESULT{ S_OK };
-	auto frames = std::vector<DEBUG_STACK_FRAME>(128);
-	auto filled = ULONG{ 0 };
-	if (!SUCCEEDED(result = control->GetStackTrace(0, 0, 0, frames.data(), frames.capacity(), &filled)))
+	auto sysID  = ULONG{ 0 };
+	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get call stack"), result));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get thread ID from index"), result));
 	}
 
-	auto output = Array<hxcppdbg::core::stack::NativeFrame>(0, filled);
-	for (auto i = 0; i < filled; i++)
+	auto threads = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads");
+	for (auto&& thread : threads)
 	{
-		output->__SetItem(i, nativeFrameFromDebugFrame(frames[i]));
+		auto id     = int{ thread.KeyValue(L"Id") };
+		auto name   = thread.KeyValue(L"Name");
+
+		if (id == sysID)
+		{
+			auto value  = thread.ToDisplayString();
+			auto frames = thread.KeyValue(L"Stack").KeyValue(L"Frames");
+			auto count  = int { frames.CallMethod(L"Count") };
+			auto output = Array<hxcppdbg::core::stack::NativeFrame>(0, count);
+
+			for (auto&& frame : frames)
+			{
+				auto offset = ULONG64{ frame.KeyValue(L"Attributes").KeyValue(L"InstructionOffset") };
+				auto line   = ULONG{ 0 };
+
+				auto fileBuffer = std::array<WCHAR, 1024>();
+				auto fileLength = ULONG{ 0 };
+				if (!SUCCEEDED(result = symbols->GetLineByOffsetWide(offset, &line, fileBuffer.data(), fileBuffer.size(), &fileLength, nullptr)))
+				{
+					auto str = std::wstring(L"unknown file");
+
+					std::copy(str.begin(), str.end(), fileBuffer.data());
+
+					fileLength = str.length() + 1;
+				}
+
+				auto nameBuffer = std::array<WCHAR, 1024>();
+				auto nameLength = ULONG{ 0 };
+				if (!SUCCEEDED(symbols->GetNameByOffsetWide(offset, nameBuffer.data(), nameBuffer.size(), &nameLength, nullptr)))
+				{
+					auto str = std::wstring(L"unknown function");
+
+					std::copy(str.begin(), str.end(), fileBuffer.data());
+
+					nameLength = str.length() + 1;
+				}
+
+				// -1 as the null terminating character is included as part of the size.
+				auto file = haxe::io::Path_obj::normalize(String::create(fileBuffer.data(), fileLength - 1));
+				auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameLength - 1));
+
+				output->Add(hxcppdbg::core::stack::NativeFrame_obj::__new(file, name, line));
+			}
+
+			return hxcppdbg::core::ds::Result_obj::Success(output);
+		}
 	}
 
-	return hxcppdbg::core::ds::Result_obj::Success(output);
+	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find thread for index"), 0));
 }
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getFrame(int _thread, int _index)
@@ -484,16 +528,16 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::sta
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
 	}
 
-	hx::EnterGCFreeZone();
+	// hx::EnterGCFreeZone();
 
 	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
-		hx::ExitGCFreeZone();
+		// hx::ExitGCFreeZone();
 
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
 	}
 
-	hx::ExitGCFreeZone();
+	// hx::ExitGCFreeZone();
 
 	return haxe::ds::Option_obj::None;
 }

@@ -112,7 +112,7 @@ void hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::finalise(::Dynamic 
 
 bool hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::onBreakpointHit(void *baton, ::lldb::SBProcess &process, ::lldb::SBThread &thread, ::lldb::SBBreakpointLocation &location)
 {
-    hx::ExitGCFreeZone();
+    // hx::ExitGCFreeZone();
 
     // This callback will be called while this thread is in a GC free zone.
     // Re-enter a GC zone and then exit before returning as the GC free zone is exited again once control returns from the calling lldb object.
@@ -126,7 +126,7 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::onBreakpointHit(voi
         obj->onBreakpointHitCallback(bp, tid);
     }
 
-    hx::EnterGCFreeZone();
+    // hx::EnterGCFreeZone();
 
     return true;
 }
