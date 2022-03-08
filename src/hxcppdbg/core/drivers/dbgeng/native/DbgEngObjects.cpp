@@ -16,6 +16,10 @@
 #include <hxcppdbg/core/stack/NativeFrame.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_locals_NativeVariable
+#include <hxcppdbg/core/locals/NativeLocal.h>
+#endif
+
 #ifndef INCLUDED_haxe_io_Path
 #include <haxe/io/Path.h>
 #endif
@@ -237,7 +241,7 @@ int hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::backtickCount(st
 	return count;
 }
 
-bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::endsWith(std::wstring& const _input, std::wstring& const _ending)
+bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::endsWith(std::wstring const &_input, std::wstring const &_ending)
 {
 	if (_input.length() >= _ending.length())
 	{
@@ -356,82 +360,84 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return hxcppdbg::core::ds::Result_obj::Success(nativeFrameFromDebugFrame(frame));
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int thread, int frame)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int thread, int frame)
 {
-	if (!SUCCEEDED(system->SetCurrentThreadId(thread)))
+	auto result = HRESULT{ S_OK };
+
+	if (!SUCCEEDED(result = system->SetCurrentThreadId(thread)))
 	{
-		hx::Throw(HX_CSTRING("Failed to set current thread"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set current thread"), result));
 	}
-	if (!SUCCEEDED(symbols->SetScopeFrameByIndex(frame)))
+	if (!SUCCEEDED(result = symbols->SetScopeFrameByIndex(frame)))
 	{
-		hx::Throw(HX_CSTRING("Failed to set scope frame"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set scope frame"), result));
 	}
 
 	auto group = PDEBUG_SYMBOL_GROUP2{ nullptr };
-	if (!SUCCEEDED(symbols->GetScopeSymbolGroup2(DEBUG_SCOPE_GROUP_LOCALS, nullptr, &group)))
+	if (!SUCCEEDED(result = symbols->GetScopeSymbolGroup2(DEBUG_SCOPE_GROUP_LOCALS, nullptr, &group)))
 	{
-		hx::Throw(HX_CSTRING("Failed to set symbol group"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol group"), result));
 	}
 
 	auto count = ULONG{ 0 };
-	if (!SUCCEEDED(group->GetNumberSymbols(&count)))
+	if (!SUCCEEDED(result = group->GetNumberSymbols(&count)))
 	{
-		hx::Throw(HX_CSTRING("Failed to set symbol group count"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol group count"), result));
 	}
 
 	auto hostSymbols = (IDebugHostSymbols*)nullptr;
-	if (host->QueryInterface(__uuidof(IDebugHostSymbols), (void**)&hostSymbols))
+	if (!SUCCEEDED(result = host->QueryInterface(__uuidof(IDebugHostSymbols), (void**)&hostSymbols)))
 	{
-		hx::Throw(HX_CSTRING("Failed to get debug host symbols"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get debug host symbols"), result));
 	}
 
 	auto ctx = (IDebugHostContext*)nullptr;
-	if (!SUCCEEDED(host->GetCurrentContext(&ctx)))
+	if (!SUCCEEDED(result = host->GetCurrentContext(&ctx)))
 	{
-		hx::Throw(HX_CSTRING("Failed to get debug host symbols"));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get debug host context"), result));
 	}
 
-	auto output = Array<hx::ObjectPtr<RawFrameLocal>>(0, 0);
+	auto output = Array<hxcppdbg::core::locals::NativeLocal>(0, 0);
 	for (auto i = 0; i < count; i++)
 	{
 		auto offset = ULONG64{ 0 };
-		if (!SUCCEEDED(group->GetSymbolOffset(i, &offset)))
+		if (!SUCCEEDED(result = group->GetSymbolOffset(i, &offset)))
 		{
-			hx::Throw(HX_CSTRING("Failed to get symbol offset"));
+			return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol offset"), result));
 		}
 
 		auto nameBuffer   = std::array<WCHAR, 1024>();
 		auto nameSize     = ULONG{ 0 };
 		auto displacement = ULONG64{ 0 };
-		if (!SUCCEEDED(group->GetSymbolNameWide(i, nameBuffer.data(), nameBuffer.size(), &nameSize)))
+		if (!SUCCEEDED(result = group->GetSymbolNameWide(i, nameBuffer.data(), nameBuffer.size(), &nameSize)))
 		{
 			hx::Throw(HX_CSTRING("Failed to get symbol name"));
 		}
 
 		auto module = ULONG64{ 0 };
 		auto type   = ULONG{ 0 };
-		if (!SUCCEEDED(symbols->GetSymbolTypeIdWide(nameBuffer.data(), &type, &module)))
+		if (!SUCCEEDED(result = symbols->GetSymbolTypeIdWide(nameBuffer.data(), &type, &module)))
 		{
 			continue;
 		}
 
 		auto hostModule = (IDebugHostModule*)nullptr;
-		if (!SUCCEEDED(hostSymbols->FindModuleByLocation(ctx, module, &hostModule)))
+		if (!SUCCEEDED(result = hostSymbols->FindModuleByLocation(ctx, module, &hostModule)))
 		{
-			hx::Throw(HX_CSTRING("Failed to find module"));
+			return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find module"), result));
 		}
 
 		auto typeBuffer   = std::array<WCHAR, 1024>();
 		auto typeSize     = ULONG{ 0 };
-		if(!SUCCEEDED(symbols->GetTypeNameWide(module, type, typeBuffer.data(), typeBuffer.size(), &typeSize)))
+		if(!SUCCEEDED(result = symbols->GetTypeNameWide(module, type, typeBuffer.data(), typeBuffer.size(), &typeSize)))
 		{
-			hx::Throw(HX_CSTRING("Failed to find module"));
+			return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get type name"), result));
 		}
 
 		auto hostType = (IDebugHostType*)nullptr;
-		if(!SUCCEEDED(hostModule->FindTypeByName(typeBuffer.data(), &hostType)))
+		if(!SUCCEEDED(result = hostModule->FindTypeByName(typeBuffer.data(), &hostType)))
 		{
-			hx::Throw(HX_CSTRING("Failed to find module"));
+			return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find type"), result));
 		}
 
 		auto d =
@@ -455,18 +461,18 @@ Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxc
 		}
 
 		output->Add(
-			new RawFrameLocal(
+			hxcppdbg::core::locals::NativeLocal_obj::__new(
 				String::create(nameBuffer.data(), nameSize - 1),
 				String::create(typeBuffer.data(), typeSize - 1),
 				String::create(display.c_str(), display.length())));
 	}
 
-	return output;
+	return hxcppdbg::core::ds::Result_obj::Success(output);
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getArguments(int thread, int frame)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getArguments(int thread, int frame)
 {
-	return null();
+	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Not Implemented"), S_FALSE));
 }
 
 haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::start(int status)

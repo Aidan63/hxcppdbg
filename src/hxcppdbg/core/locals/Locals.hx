@@ -7,6 +7,7 @@ import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.ILocals;
 
 using Lambda;
+using hxcppdbg.core.utils.ResultUtils;
 
 class Locals
 {
@@ -28,9 +29,9 @@ class Locals
         return switch stack.getFrame(_thread, _index)
         {
             case Success(frame):
-                Result.Success(driver.getVariables(_thread, _index).map(mapNativeLocal.bind(frame)));
+                driver.getVariables(_thread, _index).map(mapNativeLocal.bind(frame));
             case Error(e):
-                return Result.Error(e);
+                Result.Error(e);
         }
     }
 

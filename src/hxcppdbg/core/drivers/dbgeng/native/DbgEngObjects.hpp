@@ -16,8 +16,6 @@
 #include <DbgModel.h>
 #include "DbgModelClientEx.hpp"
 #include "DebugEventCallbacks.hpp"
-#include "RawStackFrame.hpp"
-#include "RawFrameLocal.hpp"
 
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
 HX_DECLARE_CLASS3(hxcppdbg, core, stack, NativeFrame)
@@ -54,8 +52,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result getCallStack(int _threadID);
         hxcppdbg::core::ds::Result getFrame(int _thread, int _index);
 
-        Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> getVariables(int _thread, int _frame);
-        Array<hx::ObjectPtr<hxcppdbg::core::drivers::dbgeng::native::RawFrameLocal>> getArguments(int _thread, int _frame);
+        hxcppdbg::core::ds::Result getVariables(int _thread, int _frame);
+        hxcppdbg::core::ds::Result getArguments(int _thread, int _frame);
 
         haxe::ds::Option start(int status);
         haxe::ds::Option step(int thread, int status);

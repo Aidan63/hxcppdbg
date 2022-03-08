@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import hxcppdbg.core.locals.NativeLocal;
 import haxe.ds.Option;
 import hxcppdbg.core.stack.NativeFrame;
 import hxcppdbg.core.ds.Result;
@@ -22,9 +23,9 @@ extern class DbgEngObjects
 
     function getFrame(_thread : Int, _index : Int) : Result<NativeFrame, HResultException>;
 
-    function getVariables(_thread : Int, _frame : Int) : Array<RawFrameLocal>;
+    function getVariables(_thread : Int, _frame : Int) : Result<Array<NativeLocal>, HResultException>;
 
-    function getArguments(_thread : Int, _frame : Int) : Array<RawFrameLocal>;
+    function getArguments(_thread : Int, _frame : Int) : Result<Array<NativeLocal>, HResultException>;
 
     function start(_status : Int) : Option<HResultException>;
 
