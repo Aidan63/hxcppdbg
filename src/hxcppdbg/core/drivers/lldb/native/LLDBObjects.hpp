@@ -7,21 +7,25 @@
 #include <SBDebugger.h>
 #include <SBTarget.h>
 #include <SBBreakpointLocation.h>
-#include "LLDBProcess.hpp"
+
+HX_DECLARE_CLASS2(haxe, ds, Option)
+HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, lldb, native, LLDBObjects)
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, lldb, native, LLDBProcess)
 
 namespace hxcppdbg::core::drivers::lldb::native
 {
-    class LLDBObjects : public hx::Object
+    class LLDBObjects_obj : public hx::Object
     {
     public:
         Dynamic onBreakpointHitCallback;
 
         void destroy();
 
-        hx::Null<int> setBreakpoint(String cppFile, int cppLine);
-        bool removeBreakpoint(int id);
+        hxcppdbg::core::ds::Result setBreakpoint(String cppFile, int cppLine);
+        haxe::ds::Option removeBreakpoint(int id);
 
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::LLDBProcess> launch();
+        hxcppdbg::core::drivers::lldb::native::LLDBProcess launch();
 
         void __Mark(HX_MARK_PARAMS);
 #ifdef HXCPP_VISIT_ALLOCS
@@ -30,9 +34,9 @@ namespace hxcppdbg::core::drivers::lldb::native
         int __GetType() const;
         String toString();
 
-        static hx::ObjectPtr<LLDBObjects> createFromFile(String file);
+        static hxcppdbg::core::ds::Result createFromFile(String file);
     private:
-        LLDBObjects(::lldb::SBDebugger dbg, ::lldb::SBTarget tgt);
+        LLDBObjects_obj(::lldb::SBDebugger dbg, ::lldb::SBTarget tgt);
 
         ::lldb::SBDebugger debugger;
         ::lldb::SBTarget target;

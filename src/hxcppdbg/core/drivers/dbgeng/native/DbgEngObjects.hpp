@@ -39,7 +39,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::stack::NativeFrame nativeFrameFromDebugFrame(DEBUG_STACK_FRAME& frame);
         String cleanSymbolName(std::wstring _input);
         int backtickCount(std::wstring _input);
-        bool endsWith(std::wstring const &_input, std::wstring const &_ending);
     public:
         void __Mark(HX_MARK_PARAMS);
 #ifdef HXCPP_VISIT_ALLOCS

@@ -1,6 +1,6 @@
 #include <hxcpp.h>
 
-#ifndef INCLUDED_haxe_Exception
+#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_utils_HResultException
 #include <hxcppdbg/core/drivers/dbgeng/utils/HResultException.h>
 #endif
 
@@ -239,18 +239,6 @@ int hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::backtickCount(st
 	}
 
 	return count;
-}
-
-bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::endsWith(std::wstring const &_input, std::wstring const &_ending)
-{
-	if (_input.length() >= _ending.length())
-	{
-        return (0 == _input.compare(_input.length() - _ending.length(), _ending.length(), _ending));
-    }
-	else
-	{
-        return false;
-    }
 }
 
 void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::__Mark(HX_MARK_PARAMS)

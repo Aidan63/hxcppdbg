@@ -1,26 +1,50 @@
 #include <hxcpp.h>
 
+#ifndef INCLUDED_haxe_Exception
+#include <haxe/Exception.h>
+#endif
+
+#ifndef INCLUDED_haxe_ds_Option
+#include <haxe/ds/Option.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_ds_Result
+#include <hxcppdbg/core/ds/Result.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_stack_NativeFrame
+#include <hxcppdbg/core/stack/NativeFrame.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_locals_NativeLocal
+#include <hxcppdbg/core/locals/NativeLocal.h>
+#endif
+
+#ifndef INCLUDED_haxe_io_Path
+#include <haxe/io/Path.h>
+#endif
+
 #include "LLDBProcess.hpp"
 
-int hxcppdbg::core::drivers::lldb::native::LLDBProcess::lldbProcessType = hxcpp_alloc_kind();
+int hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::lldbProcessType = hxcpp_alloc_kind();
 
-void hxcppdbg::core::drivers::lldb::native::LLDBProcess::finalise(Dynamic obj)
+void hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::finalise(Dynamic obj)
 {
-    static_cast<hxcppdbg::core::drivers::lldb::native::LLDBProcess*>(obj.mPtr)->destroy();
+    static_cast<hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj*>(obj.mPtr)->destroy();
 }
 
-hxcppdbg::core::drivers::lldb::native::LLDBProcess::LLDBProcess(::lldb::SBTarget t)
+hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::LLDBProcess_obj(::lldb::SBTarget t)
     : target(t)
 {
     _hx_set_finalizer(this, finalise);
 }
 
-int hxcppdbg::core::drivers::lldb::native::LLDBProcess::getState()
+int hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::getState()
 {
     return process.GetState();
 }
 
-void hxcppdbg::core::drivers::lldb::native::LLDBProcess::start(String cwd)
+haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::start(String cwd)
 {
     auto options = target.GetLaunchInfo();
     options.SetWorkingDirectory(cwd.utf8_str());
@@ -32,17 +56,15 @@ void hxcppdbg::core::drivers::lldb::native::LLDBProcess::start(String cwd)
 
     hx::ExitGCFreeZone();
 
-    if (!process.IsValid())
-    {
-        hx::Throw(HX_CSTRING("Failed to launch process"));
-    }
     if (error.Fail())
     {
-        hx::Throw(String(error.GetCString()));
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
     }
+
+    return haxe::ds::Option_obj::None;
 }
 
-void hxcppdbg::core::drivers::lldb::native::LLDBProcess::resume()
+haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::resume()
 {
     hx::EnterGCFreeZone();
     auto error = process.Continue();
@@ -50,21 +72,23 @@ void hxcppdbg::core::drivers::lldb::native::LLDBProcess::resume()
 
     if (error.Fail())
     {
-        hx::Throw(String(error.GetCString()));
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
     }
+
+    return haxe::ds::Option_obj::None;
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> hxcppdbg::core::drivers::lldb::native::LLDBProcess::stepIn(int threadIndex)
+haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepIn(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return null();
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
-        hx::Throw(HX_CSTRING("Thread is not valid"));
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
     }
 
     hx::EnterGCFreeZone();
@@ -73,48 +97,48 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> hxcppdbg::co
 
     hx::ExitGCFreeZone();
 
-    return getStackFrame(threadIndex, 0);
+    return haxe::ds::Option_obj::None;
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> hxcppdbg::core::drivers::lldb::native::LLDBProcess::stepOver(int threadIndex)
+haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepOver(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return null();
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
-        hx::Throw(HX_CSTRING("Thread is not valid"));
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
     }
 
     hx::EnterGCFreeZone();
 
-    ::lldb::SBError error;
+    auto error = ::lldb::SBError();
     thread.StepOver(::lldb::RunMode::eOnlyDuringStepping, error);
 
     hx::ExitGCFreeZone();
 
     if (error.Fail())
     {
-        hx::Throw(String::create(error.GetCString()));
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
     }
 
-    return getStackFrame(threadIndex, 0);
+    return haxe::ds::Option_obj::None;
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> hxcppdbg::core::drivers::lldb::native::LLDBProcess::stepOut(int threadIndex)
+haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepOut(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return null();
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
-        hx::Throw(HX_CSTRING("Thread is not valid"));
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
     }
 
     hx::EnterGCFreeZone();
@@ -126,107 +150,188 @@ hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> hxcppdbg::co
 
     if (error.Fail())
     {
-        hx::Throw(String::create(error.GetCString()));
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
     }
 
-    return getStackFrame(threadIndex, 0);
+    return haxe::ds::Option_obj::None;
 }
 
-hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> hxcppdbg::core::drivers::lldb::native::LLDBProcess::getStackFrame(int threadIndex, int frameIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::getStackFrame(int threadIndex, int frameIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return null();
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
-        hx::Throw(HX_CSTRING("Thread is not valid"));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
     }
 
     auto frame = thread.GetFrameAtIndex(frameIndex);
     if (!frame.IsValid())
     {
-        hx::Throw(HX_CSTRING("Unable to get frame 0"));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Unable to read frame"), nullptr, nullptr));
     }
 
-    auto lineEntry = frame.GetLineEntry();
-    auto fileSpec  = lineEntry.GetFileSpec();
-    auto dir       = fileSpec.GetDirectory();
-    auto absFile   = dir == nullptr ? std::string("") : std::string(dir) + std::string("/") + std::string(fileSpec.GetFilename());
-    auto fileName  = String::create(absFile.c_str());
-    auto funcName  = String::create(frame.GetFunctionName());
-    auto symName   = String::create(frame.GetSymbol().GetName());
-    auto lineNum   = lineEntry.GetLine();
-
-    return hx::ObjectPtr<RawStackFrame>(new RawStackFrame(fileName, funcName, symName, lineNum));
+    return hxcppdbg::core::ds::Result_obj::Success(createNativeFrame(frame));
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame>> hxcppdbg::core::drivers::lldb::native::LLDBProcess::getStackFrames(int threadIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::getStackFrames(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame>>(0, 0);
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
-        hx::Throw(HX_CSTRING("Thread is not valid"));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
     }
     
     auto count  = thread.GetNumFrames();
-    auto frames = Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame>>(0, count);
+    auto frames = Array<hxcppdbg::core::stack::NativeFrame>(0, count);
 
     for (int i = 0; i < count; i++)
     {
-        frames->__SetItem(i, getStackFrame(threadIndex, i));
+        auto frame = thread.GetFrameAtIndex(i);
+        if (!frame.IsValid())
+        {
+            return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Unable to read frame"), nullptr, nullptr));
+        }
+
+        frames->__SetItem(i, createNativeFrame(frame));
     }
 
-    return frames;
+    return hxcppdbg::core::ds::Result_obj::Success(frames);
 }
 
-Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackLocal>> hxcppdbg::core::drivers::lldb::native::LLDBProcess::getStackVariables(int threadIndex, int frameIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::getStackVariables(int threadIndex, int frameIndex)
 {
-    auto thread    = process.GetThreadAtIndex(threadIndex);
-    auto frame     = thread.GetFrameAtIndex(frameIndex);
-    auto variables = frame.GetVariables(true, true, true, true);
-    auto output    = Array<hx::ObjectPtr<RawStackLocal>>(0, variables.GetSize());
+    auto thread = process.GetThreadAtIndex(threadIndex);
+    if (!thread.IsValid())
+    {
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
+    }
 
+    auto frame = thread.GetFrameAtIndex(frameIndex);
+    if (!frame.IsValid())
+    {
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Unable to read frame"), nullptr, nullptr));
+    }
+
+    auto variables = frame.GetVariables(false, true, true, true);
+    if (!variables.IsValid())
+    {
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Unable to get local variables"), nullptr, nullptr));
+    }
+
+    auto output = Array<hxcppdbg::core::locals::NativeLocal>(0, variables.GetSize());
     for (int i = 0; i < variables.GetSize(); i++)
     {
         auto variable = variables.GetValueAtIndex(i);
         auto name     = variable.GetName();
         auto type     = variable.GetTypeName();
+        auto value    = (std::string(type) == std::string("String")) ? hxcppdbg::core::drivers::lldb::native::extractString(variable) : String::create(variable.GetValue());
+        auto local    = hxcppdbg::core::locals::NativeLocal_obj::__new(String::create(name), value, String::create(value));
 
-        String varValue;
-        if (std::string(type) == std::string("String"))
-        {
-            varValue = hxcppdbg::core::drivers::lldb::native::extractString(variable);
-        }
-        else
-        {
-            varValue = String::create(variable.GetValue());
-        }
-
-        output->__SetItem(i, hx::ObjectPtr<RawStackLocal>(new RawStackLocal(String::create(name), varValue, String::create(type))));
+        output->__SetItem(i, local);
     }
     
-    return output;
+    return hxcppdbg::core::ds::Result_obj::Success(output);
 }
 
-void hxcppdbg::core::drivers::lldb::native::LLDBProcess::destroy()
+hxcppdbg::core::stack::NativeFrame hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::createNativeFrame(::lldb::SBFrame _frame)
+{
+    auto lineEntry = _frame.GetLineEntry();
+    auto fileSpec  = lineEntry.GetFileSpec();
+    auto dir       = fileSpec.GetDirectory();
+    auto absFile   = dir == nullptr ? "" : std::string(dir) + std::string("/") + std::string(fileSpec.GetFilename());
+    auto fileName  = haxe::io::Path_obj::normalize(String::create(absFile.c_str()));
+    auto symName   = std::string(_frame.GetSymbol().GetName());
+    auto lineNum   = lineEntry.GetLine();
+
+    auto anonNamespace = std::string("(anonymous namespace)::");
+    auto buffer        = std::string();
+    auto skip          = false;
+    auto i             = 0;
+    auto code          = char{ 0 };
+
+    while (i < symName.length())
+    {
+        switch (code = symName.at(i))
+        {
+            case '(':
+                if (!endsWith(buffer, "operator"))
+                {
+                    if (symName.substr(i, anonNamespace.length()) == anonNamespace)
+                    {
+                        i += anonNamespace.length();
+
+                        continue;
+                    }
+                    else
+                    {
+                        skip = true;
+                    }
+                }
+                else
+                {
+                    buffer.push_back(code);
+                }
+                break;
+            
+            case ')':
+                if (skip)
+                {
+                    skip = false;
+                }
+                else
+                {
+                    buffer.push_back(code);
+                }
+                break;
+
+            default:
+                if (!skip)
+                {
+                    buffer.push_back(code);
+                }
+        }
+
+        i++;
+    }
+
+    auto sym = String::create(buffer.c_str(), buffer.length());
+
+    return hxcppdbg::core::stack::NativeFrame_obj::__new(fileName, sym, lineNum);
+}
+
+bool hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::endsWith(std::string const &_input, std::string const &_ending)
+{
+    if (_input.length() >= _ending.length())
+    {
+        return (0 == _input.compare(_input.length() - _ending.length(), _ending.length(), _ending));
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::destroy()
 {
     process.Destroy();
 }
 
-int hxcppdbg::core::drivers::lldb::native::LLDBProcess::__GetType() const
+int hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::__GetType() const
 {
     return lldbProcessType;
 }
 
-String hxcppdbg::core::drivers::lldb::native::LLDBProcess::toString()
+String hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::toString()
 {
     return HX_CSTRING("LLDBProcess");
 }

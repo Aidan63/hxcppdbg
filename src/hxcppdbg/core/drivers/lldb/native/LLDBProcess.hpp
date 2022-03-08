@@ -11,35 +11,41 @@
 #include <SBThread.h>
 #include <SBEvent.h>
 #include <SBSymbol.h>
-#include "RawStackFrame.hpp"
-#include "RawStackLocal.hpp"
 #include "TypeConverters.hpp"
+
+HX_DECLARE_CLASS2(haxe, ds, Option)
+HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, lldb, native, LLDBProcess);
+HX_DECLARE_CLASS3(hxcppdbg, core, stack, NativeFrame)
 
 namespace hxcppdbg::core::drivers::lldb::native
 {
-    class LLDBProcess : public hx::Object
+    class LLDBProcess_obj : public hx::Object
     {
     public:
-        LLDBProcess(::lldb::SBTarget t);
+        LLDBProcess_obj(::lldb::SBTarget t);
         
-        void destroy();
         int getState();
-        void start(String cwd);
-        void resume();
+        void destroy();
+        haxe::ds::Option start(String cwd);
+        haxe::ds::Option resume();
 
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> stepOver(int threadIndex);
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> stepIn(int threadIndex);
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> stepOut(int threadIndex);
+        haxe::ds::Option stepOver(int threadIndex);
+        haxe::ds::Option stepIn(int threadIndex);
+        haxe::ds::Option stepOut(int threadIndex);
 
-        hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame> getStackFrame(int threadIndex, int frameIndex);
-        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackFrame>> getStackFrames(int threadIndex);
-        Array<hx::ObjectPtr<hxcppdbg::core::drivers::lldb::native::RawStackLocal>> getStackVariables(int threadIndex, int frameIndex);
+        hxcppdbg::core::ds::Result getStackFrame(int threadIndex, int frameIndex);
+        hxcppdbg::core::ds::Result getStackFrames(int threadIndex);
+        hxcppdbg::core::ds::Result getStackVariables(int threadIndex, int frameIndex);
 
         int __GetType() const;
         String toString();
     private:
         ::lldb::SBTarget target;
         ::lldb::SBProcess process;
+
+        static hxcppdbg::core::stack::NativeFrame createNativeFrame(::lldb::SBFrame);
+        static bool endsWith(std::string const &_input, std::string const &_ending);
 
         static int lldbProcessType;
         static void finalise(Dynamic obj);
