@@ -36,7 +36,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb);
 
-        hxcppdbg::core::stack::NativeFrame nativeFrameFromDebugFrame(DEBUG_STACK_FRAME& frame);
+        hxcppdbg::core::stack::NativeFrame nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
 
         static String cleanSymbolName(std::wstring _input);
         static int backtickCount(std::wstring _input);
