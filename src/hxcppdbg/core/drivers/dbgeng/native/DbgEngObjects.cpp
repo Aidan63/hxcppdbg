@@ -332,58 +332,54 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get thread ID from index"), result));
 	}
 
-	auto threads = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads");
-	for (auto&& thread : threads)
+	try
 	{
-		auto id     = int{ thread.KeyValue(L"Id") };
-		auto name   = thread.KeyValue(L"Name");
+		auto predicate = [sysID](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object thread) { return int{ thread.KeyValue(L"Id") } == sysID; };
+		auto thread    = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads").CallMethod(L"First", predicate);
+		auto frames    = thread.KeyValue(L"Stack").KeyValue(L"Frames");
+		auto count     = int { frames.CallMethod(L"Count") };
+		auto output    = Array<hxcppdbg::core::stack::NativeFrame>(0, count);
 
-		if (id == sysID)
+		for (auto&& frame : frames)
 		{
-			auto value  = thread.ToDisplayString();
-			auto frames = thread.KeyValue(L"Stack").KeyValue(L"Frames");
-			auto count  = int { frames.CallMethod(L"Count") };
-			auto output = Array<hxcppdbg::core::stack::NativeFrame>(0, count);
+			auto offset = ULONG64{ frame.KeyValue(L"Attributes").KeyValue(L"InstructionOffset") };
+			auto line   = ULONG{ 0 };
 
-			for (auto&& frame : frames)
+			auto fileBuffer = std::array<WCHAR, 1024>();
+			auto fileLength = ULONG{ 0 };
+			if (!SUCCEEDED(result = symbols->GetLineByOffsetWide(offset, &line, fileBuffer.data(), fileBuffer.size(), &fileLength, nullptr)))
 			{
-				auto offset = ULONG64{ frame.KeyValue(L"Attributes").KeyValue(L"InstructionOffset") };
-				auto line   = ULONG{ 0 };
+				auto str = std::wstring(L"unknown file");
 
-				auto fileBuffer = std::array<WCHAR, 1024>();
-				auto fileLength = ULONG{ 0 };
-				if (!SUCCEEDED(result = symbols->GetLineByOffsetWide(offset, &line, fileBuffer.data(), fileBuffer.size(), &fileLength, nullptr)))
-				{
-					auto str = std::wstring(L"unknown file");
+				std::copy(str.begin(), str.end(), fileBuffer.data());
 
-					std::copy(str.begin(), str.end(), fileBuffer.data());
-
-					fileLength = str.length() + 1;
-				}
-
-				auto nameBuffer = std::array<WCHAR, 1024>();
-				auto nameLength = ULONG{ 0 };
-				if (!SUCCEEDED(symbols->GetNameByOffsetWide(offset, nameBuffer.data(), nameBuffer.size(), &nameLength, nullptr)))
-				{
-					auto str = std::wstring(L"unknown function");
-
-					std::copy(str.begin(), str.end(), fileBuffer.data());
-
-					nameLength = str.length() + 1;
-				}
-
-				// -1 as the null terminating character is included as part of the size.
-				auto file = haxe::io::Path_obj::normalize(String::create(fileBuffer.data(), fileLength - 1));
-				auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameLength - 1));
-
-				output->Add(hxcppdbg::core::stack::NativeFrame_obj::__new(file, name, line));
+				fileLength = str.length() + 1;
 			}
 
-			return hxcppdbg::core::ds::Result_obj::Success(output);
-		}
-	}
+			auto nameBuffer = std::array<WCHAR, 1024>();
+			auto nameLength = ULONG{ 0 };
+			if (!SUCCEEDED(symbols->GetNameByOffsetWide(offset, nameBuffer.data(), nameBuffer.size(), &nameLength, nullptr)))
+			{
+				auto str = std::wstring(L"unknown function");
 
-	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find thread for index"), 0));
+				std::copy(str.begin(), str.end(), fileBuffer.data());
+
+				nameLength = str.length() + 1;
+			}
+
+			// -1 as the null terminating character is included as part of the size.
+			auto file = haxe::io::Path_obj::normalize(String::create(fileBuffer.data(), fileLength - 1));
+			auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameLength - 1));
+
+			output->Add(hxcppdbg::core::stack::NativeFrame_obj::__new(file, name, line));
+		}
+
+		return hxcppdbg::core::ds::Result_obj::Success(output);
+	}
+	catch (const std::exception& exn)
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find thread for index"), 0));
+	}
 }
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getFrame(int _thread, int _index)
