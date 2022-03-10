@@ -51,7 +51,7 @@ class Stack
                     }
                 }
             case Error(e):
-                Sys.println('\tUnable to get stack list : ${ e.details() }');
+                Sys.println('\t${ e.message }');
         }
     }
 

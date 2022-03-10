@@ -85,16 +85,16 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	// Even after the above create and attach call the process will not have been started.
 	// Our custom callback class will suspend the process as soon as the process starts so we can do whatever we want.
 	// Once the process has been suspended this wait for event function will return.
-	hx::EnterGCFreeZone();
+	// hx::EnterGCFreeZone();
 
 	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
-		hx::ExitGCFreeZone();
+		// hx::ExitGCFreeZone();
 
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to wait for event"), result));
 	}
 
-	hx::ExitGCFreeZone();
+	// hx::ExitGCFreeZone();
 
 	auto status = ULONG{ 0 };
 	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
@@ -118,35 +118,36 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PD
 	//
 }
 
-hxcppdbg::core::stack::NativeFrame hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::nativeFrameFromDebugFrame(DEBUG_STACK_FRAME& frame)
+hxcppdbg::core::stack::NativeFrame hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& _frame)
 {
-	auto line         = ULONG{ 0 };
-	auto fileBuffer   = std::array<WCHAR, 1024>();
-	auto fileSize     = ULONG{ 0 };
-	auto displacement = ULONG64{ 0 };
-	if (!SUCCEEDED(symbols->GetLineByOffsetWide(frame.InstructionOffset, &line, fileBuffer.data(), fileBuffer.size(), &fileSize, &displacement)))
+	auto offset = ULONG64{ _frame.KeyValue(L"Attributes").KeyValue(L"InstructionOffset") };
+	auto line   = ULONG{ 0 };
+
+	auto fileBuffer = std::array<WCHAR, 1024>();
+	auto fileLength = ULONG{ 0 };
+	if (!SUCCEEDED(symbols->GetLineByOffsetWide(offset, &line, fileBuffer.data(), fileBuffer.size(), &fileLength, nullptr)))
 	{
 		auto str = std::wstring(L"unknown file");
 
 		std::copy(str.begin(), str.end(), fileBuffer.data());
 
-		fileSize = str.length() + 1;
+		fileLength = str.length() + 1;
 	}
 
 	auto nameBuffer = std::array<WCHAR, 1024>();
-	auto nameSize   = ULONG{ 0 };
-	if (!SUCCEEDED(symbols->GetNameByOffsetWide(frame.InstructionOffset, nameBuffer.data(), nameBuffer.size(), &nameSize, &displacement)))
+	auto nameLength = ULONG{ 0 };
+	if (!SUCCEEDED(symbols->GetNameByOffsetWide(offset, nameBuffer.data(), nameBuffer.size(), &nameLength, nullptr)))
 	{
-		auto str = std::wstring(L"unknown frame");
+		auto str = std::wstring(L"unknown function");
 
-		std::copy(str.begin(), str.end(), nameBuffer.data());
+		std::copy(str.begin(), str.end(), fileBuffer.data());
 
-		nameSize = str.length() + 1;
+		nameLength = str.length() + 1;
 	}
 
 	// -1 as the null terminating character is included as part of the size.
-	auto file = haxe::io::Path_obj::normalize(String::create(fileBuffer.data(), fileSize - 1));
-	auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameSize - 1));
+	auto file = haxe::io::Path_obj::normalize(String::create(fileBuffer.data(), fileLength - 1));
+	auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameLength - 1));
 
 	return hxcppdbg::core::stack::NativeFrame_obj::__new(file, name, line);
 }
@@ -323,151 +324,189 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::rem
 	return haxe::ds::Option_obj::None;
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadID)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadIndex)
 {
 	auto result = HRESULT{ S_OK };
-	auto frames = std::vector<DEBUG_STACK_FRAME>(128);
-	auto filled = ULONG{ 0 };
-	if (!SUCCEEDED(result = control->GetStackTrace(0, 0, 0, frames.data(), frames.capacity(), &filled)))
+	auto sysID  = ULONG{ 0 };
+	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get call stack"), result));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get thread ID from index"), result));
 	}
 
-	auto output = Array<hxcppdbg::core::stack::NativeFrame>(0, filled);
-	for (auto i = 0; i < filled; i++)
+	try
 	{
-		output->__SetItem(i, nativeFrameFromDebugFrame(frames[i]));
-	}
+		auto predicate = [sysID](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object thread) { return int{ thread.KeyValue(L"Id") } == sysID; };
+		auto thread    = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads").CallMethod(L"First", predicate);
+		auto frames    = thread.KeyValue(L"Stack").KeyValue(L"Frames");
+		auto count     = int { frames.CallMethod(L"Count") };
+		auto output    = Array<hxcppdbg::core::stack::NativeFrame>(0, count);
 
-	return hxcppdbg::core::ds::Result_obj::Success(output);
+		for (auto&& frame : frames)
+		{
+			output->Add(nativeFrameFromDebugFrame(frame));
+		}
+
+		return hxcppdbg::core::ds::Result_obj::Success(output);
+	}
+	catch (const std::exception& exn)
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(exn.what()), 0));
+	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getFrame(int _thread, int _index)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getFrame(int _threadIndex, int _frameIndex)
 {
 	auto result = HRESULT{ S_OK };
-	if (!SUCCEEDED(result = system->SetCurrentThreadId(_thread)))
+	auto sysID  = ULONG{ 0 };
+	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set current thread"), result));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get thread ID from index"), result));
 	}
 
-	auto frame  = DEBUG_STACK_FRAME{ 0 };
-	auto filled = ULONG{ 0 };
-	if (!SUCCEEDED(result = control->GetStackTrace(_index, 0, 0, &frame, 1, &filled)))
+	try
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get call stack"), result));
-	}
+		auto findThread = [sysID](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object thread) { return int{ thread.KeyValue(L"Id") } == sysID; };
+		auto thread     = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads").CallMethod(L"First", findThread);
+		auto findFrame  = [_frameIndex](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object frame) { return ULONG{ frame.KeyValue(L"Attributes").KeyValue(L"FrameNumber") } == _frameIndex; };
+		auto frame      = thread.KeyValue(L"Stack").KeyValue(L"Frames").CallMethod(L"First", findFrame);
 
-	return hxcppdbg::core::ds::Result_obj::Success(nativeFrameFromDebugFrame(frame));
+		return hxcppdbg::core::ds::Result_obj::Success(nativeFrameFromDebugFrame(frame));
+	}
+	catch (const std::exception& exn)
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(exn.what()), 0));
+	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int thread, int frame)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int _threadIndex, int _frameIndex)
 {
 	auto result = HRESULT{ S_OK };
-
-	if (!SUCCEEDED(result = system->SetCurrentThreadId(thread)))
+	auto sysID  = ULONG{ 0 };
+	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set current thread"), result));
-	}
-	if (!SUCCEEDED(result = symbols->SetScopeFrameByIndex(frame)))
-	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set scope frame"), result));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get thread ID from index"), result));
 	}
 
-	auto group = PDEBUG_SYMBOL_GROUP2{ nullptr };
-	if (!SUCCEEDED(result = symbols->GetScopeSymbolGroup2(DEBUG_SCOPE_GROUP_LOCALS, nullptr, &group)))
+	try
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol group"), result));
+		auto findThread = [sysID](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object thread) { return int{ thread.KeyValue(L"Id") } == sysID; };
+		auto thread     = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads").CallMethod(L"First", findThread);
+		auto findFrame  = [_frameIndex](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object frame) { return ULONG{ frame.KeyValue(L"Attributes").KeyValue(L"FrameNumber") } == _frameIndex; };
+		auto locals     = thread.KeyValue(L"Stack").KeyValue(L"Frames").CallMethod(L"First", findFrame).KeyValue(L"LocalVariables");
+
+		auto output = Array<hxcppdbg::core::locals::NativeLocal>(0, 0);
+		for (auto&& local : locals.Keys())
+		{
+			auto name  = std::get<0>(local);
+			auto obj   = std::get<1>(local).GetValue();
+			auto type  = obj.Type().Name();
+			auto value = obj.TryToDisplayString().value_or(L"unknown");
+
+			output->Add(hxcppdbg::core::locals::NativeLocal_obj::__new(String::create(name.c_str()), String::create(type.c_str()), String::create(value.c_str())));
+		}
+
+		return hxcppdbg::core::ds::Result_obj::Success(output);
+	}
+	catch (const std::exception& exn)
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(exn.what()), 0));
 	}
 
-	auto count = ULONG{ 0 };
-	if (!SUCCEEDED(result = group->GetNumberSymbols(&count)))
-	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol group count"), result));
-	}
+	// auto group = PDEBUG_SYMBOL_GROUP2{ nullptr };
+	// if (!SUCCEEDED(result = symbols->GetScopeSymbolGroup2(DEBUG_SCOPE_GROUP_LOCALS, nullptr, &group)))
+	// {
+	// 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol group"), result));
+	// }
 
-	auto hostSymbols = (IDebugHostSymbols*)nullptr;
-	if (!SUCCEEDED(result = host->QueryInterface(__uuidof(IDebugHostSymbols), (void**)&hostSymbols)))
-	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get debug host symbols"), result));
-	}
+	// auto count = ULONG{ 0 };
+	// if (!SUCCEEDED(result = group->GetNumberSymbols(&count)))
+	// {
+	// 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol group count"), result));
+	// }
 
-	auto ctx = (IDebugHostContext*)nullptr;
-	if (!SUCCEEDED(result = host->GetCurrentContext(&ctx)))
-	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get debug host context"), result));
-	}
+	// auto hostSymbols = (IDebugHostSymbols*)nullptr;
+	// if (!SUCCEEDED(result = host->QueryInterface(__uuidof(IDebugHostSymbols), (void**)&hostSymbols)))
+	// {
+	// 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get debug host symbols"), result));
+	// }
 
-	auto output = Array<hxcppdbg::core::locals::NativeLocal>(0, 0);
-	for (auto i = 0; i < count; i++)
-	{
-		auto offset = ULONG64{ 0 };
-		if (!SUCCEEDED(result = group->GetSymbolOffset(i, &offset)))
-		{
-			return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol offset"), result));
-		}
+	// auto ctx = (IDebugHostContext*)nullptr;
+	// if (!SUCCEEDED(result = host->GetCurrentContext(&ctx)))
+	// {
+	// 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get debug host context"), result));
+	// }
 
-		auto nameBuffer   = std::array<WCHAR, 1024>();
-		auto nameSize     = ULONG{ 0 };
-		auto displacement = ULONG64{ 0 };
-		if (!SUCCEEDED(result = group->GetSymbolNameWide(i, nameBuffer.data(), nameBuffer.size(), &nameSize)))
-		{
-			hx::Throw(HX_CSTRING("Failed to get symbol name"));
-		}
+	// auto output = Array<hxcppdbg::core::locals::NativeLocal>(0, 0);
+	// for (auto i = 0; i < count; i++)
+	// {
+	// 	auto offset = ULONG64{ 0 };
+	// 	if (!SUCCEEDED(result = group->GetSymbolOffset(i, &offset)))
+	// 	{
+	// 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol offset"), result));
+	// 	}
 
-		auto module = ULONG64{ 0 };
-		auto type   = ULONG{ 0 };
-		if (!SUCCEEDED(result = symbols->GetSymbolTypeIdWide(nameBuffer.data(), &type, &module)))
-		{
-			continue;
-		}
+	// 	auto nameBuffer   = std::array<WCHAR, 1024>();
+	// 	auto nameSize     = ULONG{ 0 };
+	// 	auto displacement = ULONG64{ 0 };
+	// 	if (!SUCCEEDED(result = group->GetSymbolNameWide(i, nameBuffer.data(), nameBuffer.size(), &nameSize)))
+	// 	{
+	// 		hx::Throw(HX_CSTRING("Failed to get symbol name"));
+	// 	}
 
-		auto hostModule = (IDebugHostModule*)nullptr;
-		if (!SUCCEEDED(result = hostSymbols->FindModuleByLocation(ctx, module, &hostModule)))
-		{
-			return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find module"), result));
-		}
+	// 	auto module = ULONG64{ 0 };
+	// 	auto type   = ULONG{ 0 };
+	// 	if (!SUCCEEDED(result = symbols->GetSymbolTypeIdWide(nameBuffer.data(), &type, &module)))
+	// 	{
+	// 		continue;
+	// 	}
 
-		auto typeBuffer   = std::array<WCHAR, 1024>();
-		auto typeSize     = ULONG{ 0 };
-		if(!SUCCEEDED(result = symbols->GetTypeNameWide(module, type, typeBuffer.data(), typeBuffer.size(), &typeSize)))
-		{
-			return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get type name"), result));
-		}
+	// 	auto hostModule = (IDebugHostModule*)nullptr;
+	// 	if (!SUCCEEDED(result = hostSymbols->FindModuleByLocation(ctx, module, &hostModule)))
+	// 	{
+	// 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find module"), result));
+	// 	}
 
-		auto hostType = (IDebugHostType*)nullptr;
-		if(!SUCCEEDED(result = hostModule->FindTypeByName(typeBuffer.data(), &hostType)))
-		{
-			return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find type"), result));
-		}
+	// 	auto typeBuffer   = std::array<WCHAR, 1024>();
+	// 	auto typeSize     = ULONG{ 0 };
+	// 	if(!SUCCEEDED(result = symbols->GetTypeNameWide(module, type, typeBuffer.data(), typeBuffer.size(), &typeSize)))
+	// 	{
+	// 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get type name"), result));
+	// 	}
 
-		auto d =
-			Debugger::DataModel::ClientEx::Object::CreateTyped(
-				Debugger::DataModel::ClientEx::HostContext(ctx),
-				Debugger::DataModel::ClientEx::Type(hostType),
-				offset);
+	// 	auto hostType = (IDebugHostType*)nullptr;
+	// 	if(!SUCCEEDED(result = hostModule->FindTypeByName(typeBuffer.data(), &hostType)))
+	// 	{
+	// 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find type"), result));
+	// 	}
 
-		std::wstring display;
-		try
-		{
-			display = d.ToDisplayString();
-		}
-		catch (const std::exception& e)
-		{
-			auto buffer = std::array<WCHAR, 1024>();
-			auto size   = ULONG{ 0 };
-			group->GetSymbolValueTextWide(i, buffer.data(), buffer.size(), &size);
+	// 	auto d =
+	// 		Debugger::DataModel::ClientEx::Object::CreateTyped(
+	// 			Debugger::DataModel::ClientEx::HostContext(ctx),
+	// 			Debugger::DataModel::ClientEx::Type(hostType),
+	// 			offset);
 
-			display = std::wstring(buffer.data(), size - 1);
-		}
+	// 	std::wstring display;
+	// 	try
+	// 	{
+	// 		display = d.ToDisplayString();
+	// 	}
+	// 	catch (const std::exception& e)
+	// 	{
+	// 		auto buffer = std::array<WCHAR, 1024>();
+	// 		auto size   = ULONG{ 0 };
+	// 		group->GetSymbolValueTextWide(i, buffer.data(), buffer.size(), &size);
 
-		output->Add(
-			hxcppdbg::core::locals::NativeLocal_obj::__new(
-				String::create(nameBuffer.data(), nameSize - 1),
-				String::create(typeBuffer.data(), typeSize - 1),
-				String::create(display.c_str(), display.length())));
-	}
+	// 		display = std::wstring(buffer.data(), size - 1);
+	// 	}
 
-	return hxcppdbg::core::ds::Result_obj::Success(output);
+	// 	output->Add(
+	// 		hxcppdbg::core::locals::NativeLocal_obj::__new(
+	// 			String::create(nameBuffer.data(), nameSize - 1),
+	// 			String::create(typeBuffer.data(), typeSize - 1),
+	// 			String::create(display.c_str(), display.length())));
+	// }
+
+	// return hxcppdbg::core::ds::Result_obj::Success(output);
 }
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getArguments(int thread, int frame)
@@ -484,16 +523,16 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::sta
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
 	}
 
-	hx::EnterGCFreeZone();
+	// hx::EnterGCFreeZone();
 
 	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
-		hx::ExitGCFreeZone();
+		// hx::ExitGCFreeZone();
 
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
 	}
 
-	hx::ExitGCFreeZone();
+	// hx::ExitGCFreeZone();
 
 	return haxe::ds::Option_obj::None;
 }
