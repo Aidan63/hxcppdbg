@@ -18,7 +18,7 @@
 #include "DebugEventCallbacks.hpp"
 
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
-HX_DECLARE_CLASS3(hxcppdbg, core, stack, NativeFrame)
+HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
 HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
 HX_DECLARE_CLASS2(haxe, ds, Option)
 
@@ -36,7 +36,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb);
 
-        hxcppdbg::core::stack::NativeFrame nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
+        hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
 
         static String cleanSymbolName(std::wstring _input);
         static int backtickCount(std::wstring _input);

@@ -20,11 +20,11 @@ class DbgEngStack implements IStack
 
     public function getCallStack(_thread : Int) : Result<Array<NativeFrame>, Exception>
     {
-        return objects.getCallStack(_thread).asExceptionResult();
+        return objects.getCallStack(_thread).map(item -> item.frame).asExceptionResult();
     }
 
     public function getFrame(_thread : Int, _index : Int) : Result<NativeFrame, Exception>
     {
-        return objects.getFrame(_thread, _index).asExceptionResult();
+        return objects.getFrame(_thread, _index).apply(item -> item.frame).asExceptionResult();
     }
 }

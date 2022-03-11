@@ -1,5 +1,7 @@
 package hxcppdbg.core;
 
+import haxe.ds.Option;
+import hxcppdbg.core.ds.Result;
 import haxe.Exception;
 import sys.io.File;
 import json2object.JsonParser;
@@ -11,6 +13,7 @@ import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.locals.Locals;
 
 using Lambda;
+using hxcppdbg.core.utils.ResultUtils;
 
 class Session
 {
@@ -63,32 +66,49 @@ class Session
 
     public function step(_thread : Int, _type : StepType)
     {
-        final baseFrame = stack.getFrame(_thread, 0);
-        
-        var stepAgain = true;
-        var current   = baseFrame;
+        return switch stack.getFrame(_thread, 0)
+        {
+            case Success(baseFrame):
+                var stepAgain = true;
+                var current   = baseFrame;
 
-        // while (stepAgain)
-        // {
-        //     driver.step(_thread, _type);
+                while (stepAgain)
+                {
+                    switch driver.step(_thread, _type)
+                    {
+                        case Some(v):
+                            return Option.Some(v);
+                        case None:
+                            switch stack.getFrame(_thread, 0)
+                            {
+                                case Success(top):
+                                    stepAgain = switch (current = top)
+                                    {
+                                        case Haxe(haxeCurrent, _):
+                                            switch baseFrame
+                                            {
+                                                case Haxe(haxeBase, _):
+                                                    haxeCurrent.file.haxe == haxeBase.file.haxe && haxeCurrent.expr.haxe.start.line == haxeBase.expr.haxe.start.line;
+                                                case Native(_):
+                                                    // Our base frame shouldn't ever be a non haxe one.
+                                                    // In the future this might be the case (native breakpoints),
+                                                    // so we sould correct this down the line.
+                                                    return Option.Some(new Exception('Unexpected native frame'));
+                                            }
+                                        case Native(_):
+                                            true;
+                                    }
+                                    
+                                case Error(e):
+                                    return Option.Some(e);
+                            }
+                    }
+                }
 
-        //     stepAgain = switch (current = stack.getFrame(_thread, 0))
-        //     {
-        //         case Haxe(haxeCurrent, _):
-        //             switch baseFrame
-        //             {
-        //                 case Haxe(haxeBase, _):
-        //                     haxeCurrent.file.haxe == haxeBase.file.haxe && haxeCurrent.expr.haxe.start.line == haxeBase.expr.haxe.start.line;
-        //                 case Native(_):
-        //                     // Our base frame shouldn't ever be a non haxe one.
-        //                     // In the future this might be the case (native breakpoints),
-        //                     // so we sould correct this down the line.
-        //                     throw new Exception('');
-        //             }
-        //         case Native(_):
-        //             true;
-        //     }
-        // }
+                Option.None;
+            case Error(e):
+                Option.Some(e);
+        }
     }
 
     /**

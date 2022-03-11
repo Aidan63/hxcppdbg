@@ -16,6 +16,10 @@
 #include <hxcppdbg/core/stack/NativeFrame.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_NativeFrameReturn
+#include <hxcppdbg/core/drivers/dbgeng/NativeFrameReturn.h>
+#endif
+
 #ifndef INCLUDED_hxcppdbg_core_locals_NativeVariable
 #include <hxcppdbg/core/locals/NativeLocal.h>
 #endif
@@ -118,10 +122,12 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PD
 	//
 }
 
-hxcppdbg::core::stack::NativeFrame hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& _frame)
+hxcppdbg::core::drivers::dbgeng::NativeFrameReturn hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& _frame)
 {
-	auto offset = ULONG64{ _frame.KeyValue(L"Attributes").KeyValue(L"InstructionOffset") };
-	auto line   = ULONG{ 0 };
+	auto attr    = _frame.KeyValue(L"Attributes");
+	auto offset  = ULONG64{ attr.KeyValue(L"InstructionOffset") };
+	auto address = ULONG64{ attr.KeyValue(L"FrameOffset") };
+	auto line    = ULONG{ 0 };
 
 	auto fileBuffer = std::array<WCHAR, 1024>();
 	auto fileLength = ULONG{ 0 };
@@ -149,7 +155,7 @@ hxcppdbg::core::stack::NativeFrame hxcppdbg::core::drivers::dbgeng::native::DbgE
 	auto file = haxe::io::Path_obj::normalize(String::create(fileBuffer.data(), fileLength - 1));
 	auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameLength - 1));
 
-	return hxcppdbg::core::stack::NativeFrame_obj::__new(file, name, line);
+	return hxcppdbg::core::drivers::dbgeng::NativeFrameReturn_obj::__new(hxcppdbg::core::stack::NativeFrame_obj::__new(file, name, line), address);
 }
 
 String hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::cleanSymbolName(std::wstring _input)
@@ -339,7 +345,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 		auto thread    = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads").CallMethod(L"First", predicate);
 		auto frames    = thread.KeyValue(L"Stack").KeyValue(L"Frames");
 		auto count     = int { frames.CallMethod(L"Count") };
-		auto output    = Array<hxcppdbg::core::stack::NativeFrame>(0, count);
+		auto output    = Array<hxcppdbg::core::drivers::dbgeng::NativeFrameReturn>(0, count);
 
 		for (auto&& frame : frames)
 		{
@@ -411,102 +417,6 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(exn.what()), 0));
 	}
-
-	// auto group = PDEBUG_SYMBOL_GROUP2{ nullptr };
-	// if (!SUCCEEDED(result = symbols->GetScopeSymbolGroup2(DEBUG_SCOPE_GROUP_LOCALS, nullptr, &group)))
-	// {
-	// 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol group"), result));
-	// }
-
-	// auto count = ULONG{ 0 };
-	// if (!SUCCEEDED(result = group->GetNumberSymbols(&count)))
-	// {
-	// 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol group count"), result));
-	// }
-
-	// auto hostSymbols = (IDebugHostSymbols*)nullptr;
-	// if (!SUCCEEDED(result = host->QueryInterface(__uuidof(IDebugHostSymbols), (void**)&hostSymbols)))
-	// {
-	// 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get debug host symbols"), result));
-	// }
-
-	// auto ctx = (IDebugHostContext*)nullptr;
-	// if (!SUCCEEDED(result = host->GetCurrentContext(&ctx)))
-	// {
-	// 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get debug host context"), result));
-	// }
-
-	// auto output = Array<hxcppdbg::core::locals::NativeLocal>(0, 0);
-	// for (auto i = 0; i < count; i++)
-	// {
-	// 	auto offset = ULONG64{ 0 };
-	// 	if (!SUCCEEDED(result = group->GetSymbolOffset(i, &offset)))
-	// 	{
-	// 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get symbol offset"), result));
-	// 	}
-
-	// 	auto nameBuffer   = std::array<WCHAR, 1024>();
-	// 	auto nameSize     = ULONG{ 0 };
-	// 	auto displacement = ULONG64{ 0 };
-	// 	if (!SUCCEEDED(result = group->GetSymbolNameWide(i, nameBuffer.data(), nameBuffer.size(), &nameSize)))
-	// 	{
-	// 		hx::Throw(HX_CSTRING("Failed to get symbol name"));
-	// 	}
-
-	// 	auto module = ULONG64{ 0 };
-	// 	auto type   = ULONG{ 0 };
-	// 	if (!SUCCEEDED(result = symbols->GetSymbolTypeIdWide(nameBuffer.data(), &type, &module)))
-	// 	{
-	// 		continue;
-	// 	}
-
-	// 	auto hostModule = (IDebugHostModule*)nullptr;
-	// 	if (!SUCCEEDED(result = hostSymbols->FindModuleByLocation(ctx, module, &hostModule)))
-	// 	{
-	// 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find module"), result));
-	// 	}
-
-	// 	auto typeBuffer   = std::array<WCHAR, 1024>();
-	// 	auto typeSize     = ULONG{ 0 };
-	// 	if(!SUCCEEDED(result = symbols->GetTypeNameWide(module, type, typeBuffer.data(), typeBuffer.size(), &typeSize)))
-	// 	{
-	// 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get type name"), result));
-	// 	}
-
-	// 	auto hostType = (IDebugHostType*)nullptr;
-	// 	if(!SUCCEEDED(result = hostModule->FindTypeByName(typeBuffer.data(), &hostType)))
-	// 	{
-	// 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to find type"), result));
-	// 	}
-
-	// 	auto d =
-	// 		Debugger::DataModel::ClientEx::Object::CreateTyped(
-	// 			Debugger::DataModel::ClientEx::HostContext(ctx),
-	// 			Debugger::DataModel::ClientEx::Type(hostType),
-	// 			offset);
-
-	// 	std::wstring display;
-	// 	try
-	// 	{
-	// 		display = d.ToDisplayString();
-	// 	}
-	// 	catch (const std::exception& e)
-	// 	{
-	// 		auto buffer = std::array<WCHAR, 1024>();
-	// 		auto size   = ULONG{ 0 };
-	// 		group->GetSymbolValueTextWide(i, buffer.data(), buffer.size(), &size);
-
-	// 		display = std::wstring(buffer.data(), size - 1);
-	// 	}
-
-	// 	output->Add(
-	// 		hxcppdbg::core::locals::NativeLocal_obj::__new(
-	// 			String::create(nameBuffer.data(), nameSize - 1),
-	// 			String::create(typeBuffer.data(), typeSize - 1),
-	// 			String::create(display.c_str(), display.length())));
-	// }
-
-	// return hxcppdbg::core::ds::Result_obj::Success(output);
 }
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getArguments(int thread, int frame)
