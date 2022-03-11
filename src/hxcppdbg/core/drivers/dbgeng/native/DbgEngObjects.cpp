@@ -89,16 +89,16 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	// Even after the above create and attach call the process will not have been started.
 	// Our custom callback class will suspend the process as soon as the process starts so we can do whatever we want.
 	// Once the process has been suspended this wait for event function will return.
-	// hx::EnterGCFreeZone();
+	hx::EnterGCFreeZone();
 
 	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
-		// hx::ExitGCFreeZone();
+		hx::ExitGCFreeZone();
 
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to wait for event"), result));
 	}
 
-	// hx::ExitGCFreeZone();
+	hx::ExitGCFreeZone();
 
 	auto status = ULONG{ 0 };
 	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
@@ -433,16 +433,16 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::sta
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
 	}
 
-	// hx::EnterGCFreeZone();
+	hx::EnterGCFreeZone();
 
 	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
-		// hx::ExitGCFreeZone();
+		hx::ExitGCFreeZone();
 
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
 	}
 
-	// hx::ExitGCFreeZone();
+	hx::ExitGCFreeZone();
 
 	return haxe::ds::Option_obj::None;
 }
