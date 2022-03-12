@@ -1,5 +1,7 @@
 package hxcppdbg.core.breakpoints;
 
+import hxcppdbg.core.sourcemap.Sourcemap.ExprMap;
+
 class Breakpoint
 {
     public final id : Int;
@@ -10,11 +12,14 @@ class Breakpoint
 
     public final char : Int;
 
-    public function new (_id, _file, _line, _char)
+    public final expr : ExprMap;
+
+    public function new (_id, _file, _line, _char, _expr)
     {
         id   = _id;
         file = _file;
         line = _line;
         char = _char;
+        expr = _expr;
     }
 }

@@ -1,6 +1,0 @@
--p ./
--p ../src
--m TestMiParsing
--L hxparse
---debug
---interp

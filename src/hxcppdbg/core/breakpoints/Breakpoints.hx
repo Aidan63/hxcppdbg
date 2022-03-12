@@ -41,7 +41,7 @@ class Breakpoints
                     case exprs:
                         final mapping = if (_hxChar == 0)
                         {
-                            exprs.sort((e1, e2) -> (e2.haxe.end.line - e2.haxe.start.line) - (e1.haxe.end.line - e1.haxe.start.line));
+                            exprs.sort((e1, e2) -> e2.cpp - e1.cpp);
                             exprs[0];
                         }
                         else
@@ -51,7 +51,7 @@ class Breakpoints
                                 case []:
                                     return Error(new Exception('unable to map $_hxFile:$_hxLine:$_hxChar to a c++ line'));
                                 case filtered:
-                                    filtered.sort((e1, e2) -> (e2.haxe.end.col - e2.haxe.start.col) - (e1.haxe.end.col - e1.haxe.start.col));
+                                    filtered.sort((e1, e2) -> e2.cpp - e1.cpp);
                                     filtered[filtered.length - 1];
                             }
                         }
@@ -61,7 +61,7 @@ class Breakpoints
                             case Error(e):
                                 Error(new Exception('Unable to set breakpoint', e));
                             case Success(id):
-                                Success(active[id] = new Breakpoint(id, file.haxe, mapping.haxe.start.line, if (_hxChar != 0) mapping.haxe.start.col else 0));
+                                Success(active[id] = new Breakpoint(id, file.haxe, mapping.haxe.start.line, _hxChar, mapping));
                         }
                 }
         }
