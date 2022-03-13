@@ -1,5 +1,5 @@
 #include "hxcpp.h"
-
+#include "DbgEngObjects.hpp"
 #include "DbgModelClientEx.hpp"
 
 IDataModelManager* Debugger::DataModel::ClientEx::GetManager()
