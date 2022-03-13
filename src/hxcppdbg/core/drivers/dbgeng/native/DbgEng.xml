@@ -9,6 +9,8 @@
         <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DebugEventCallbacks.cpp'/>
         <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DbgModelClientEx.cpp'/>
         <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/models/StringExtensions.cpp'/>
+        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/models/ArrayExtensions.cpp'/>
+        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/models/ArrayObjExtensions.cpp'/>
     </files>
 
     <files id='dbgeng'>

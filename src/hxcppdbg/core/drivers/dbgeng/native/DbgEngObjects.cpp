@@ -30,6 +30,8 @@
 
 #include "DbgEngObjects.hpp"
 #include "models/StringExtensions.hpp"
+#include "models/ArrayExtensions.hpp"
+#include "models/ArrayObjExtensions.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -388,6 +390,8 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int _threadIndex, int _frameIndex)
 {
 	auto strExt = models::StringExtensions();
+	auto arrExt = models::ArrayExtensions();
+	auto objExt = models::ArrayObjExtensions();
 
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
