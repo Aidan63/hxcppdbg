@@ -29,6 +29,7 @@
 #endif
 
 #include "DbgEngObjects.hpp"
+#include "models/StringExtensions.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -386,6 +387,8 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int _threadIndex, int _frameIndex)
 {
+	auto strExt = models::StringExtensions();
+
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
 	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))

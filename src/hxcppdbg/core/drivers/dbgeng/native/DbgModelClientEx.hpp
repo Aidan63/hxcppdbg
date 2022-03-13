@@ -4032,6 +4032,16 @@ public:
         return Object(std::move(spObj));
     }
 
+    template<typename TStr>
+    static Object FromBindingExpressionEvaluation(_In_ const HostContext& evaluationContext, _In_ const Object& binding, _In_ TStr&& expression)
+    {
+        ComPtr<IModelObject> spObj;
+        ComPtr<IDebugHostEvaluator> spEval;
+        CheckHr(GetHost()->QueryInterface(IID_PPV_ARGS(&spEval)));
+        CheckHr(spEval->EvaluateExpression(evaluationContext, Details::ExtractString(expression), binding, &spObj, nullptr));
+        return Object(std::move(spObj));
+    }
+
     // FromExtendedExpressionEvaluation():
     //
     // Creates an object from a host specific expression evaluation.  This may use any syntax the underlying host supports; however,
