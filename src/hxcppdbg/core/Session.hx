@@ -87,13 +87,13 @@ class Session
                                         case Haxe(haxeCurrent, _):
                                             switch baseFrame
                                             {
-                                                case Haxe(haxeBase, _):
-                                                    haxeCurrent.file.haxe == haxeBase.file.haxe && haxeCurrent.expr.haxe.start.line == haxeBase.expr.haxe.start.line;
+                                                case Haxe(mapped, _):
+                                                    haxeCurrent.file.haxe == mapped.file.haxe && haxeCurrent.expr.haxe.start.line == mapped.expr.haxe.start.line;
                                                 case Native(_):
                                                     // Our base frame shouldn't ever be a non haxe one.
                                                     // In the future this might be the case (native breakpoints),
                                                     // so we sould correct this down the line.
-                                                    return Option.Some(new Exception('Unexpected native frame'));
+                                                    false;
                                             }
                                         case Native(_):
                                             true;
