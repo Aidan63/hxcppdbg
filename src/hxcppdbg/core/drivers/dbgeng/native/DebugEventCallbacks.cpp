@@ -50,7 +50,19 @@ HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::Breakpoint
         hx::Throw(HX_CSTRING("Unable to get breakpoint ID"));
     }
 
-    onBreakpointCb(breakpointID, threadID);
+    try
+    {
+        onBreakpointCb(breakpointID, threadID);
+    }
+    catch (Dynamic)
+    {
+        // If this has thrown a haxe exception we're probably still in a GC zone.
+    }
+    catch (...)
+    {
+        // If a non Dynamic exception was thrown we're probably in a GC free zone?
+        hx::ExitGCFreeZone();
+    }
 
     hx::EnterGCFreeZone();
 
