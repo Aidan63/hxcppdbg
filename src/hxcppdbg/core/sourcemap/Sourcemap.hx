@@ -14,8 +14,6 @@ package hxcppdbg.core.sourcemap;
     public final type : String;
 
     public final functions : Array<Function>;
-
-    public final exprs : Array<ExprMap>;
 }
 
 @:structInit class Closure
@@ -23,6 +21,8 @@ package hxcppdbg.core.sourcemap;
     public final name : String;
 
     public final arguments : Array<NameMap>;
+
+    public final exprs : Array<ExprMap>;
 }
 
 @:structInit class Function
@@ -36,6 +36,8 @@ package hxcppdbg.core.sourcemap;
     public final variables : Array<NameMap>;
 
     public final closures : Array<Closure>;
+
+    public final exprs : Array<ExprMap>;
 }
 
 @:structInit class ExprMap
