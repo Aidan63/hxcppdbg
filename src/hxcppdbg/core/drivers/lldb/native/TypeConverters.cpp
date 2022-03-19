@@ -2,18 +2,18 @@
 
 #include "TypeConverters.hpp"
 
-String hxcppdbg::core::drivers::lldb::native::extractString(::lldb::SBValue value)
+bool hxcppdbg::core::drivers::lldb::native::TypeConverters::extractString(::lldb::SBValue value, ::lldb::SBTypeSummaryOptions options, ::lldb::SBStream& stream)
 {
     auto lengthValue = value.GetChildMemberWithName("length");
     if (!lengthValue.IsValid())
     {
-        return HX_CSTRING("Invalid String (failed to read length)");
+        return false;
     }
 
     auto length = lengthValue.GetValueAsSigned();
     if (length == 0L)
     {
-        return HX_CSTRING("");
+        return false;
     }
 
     // utf8_str() is an inline function so can't be called by lldb.
@@ -21,13 +21,13 @@ String hxcppdbg::core::drivers::lldb::native::extractString(::lldb::SBValue valu
     auto cStringExpr = value.EvaluateExpression("__CStr()");
     if (!cStringExpr.IsValid())
     {
-        return HX_CSTRING("Failed to call __CStr() to get a utf8 c-string");
+        return false;
     }
 
     auto cString = cStringExpr.GetPointeeData(0, length);
     if (!cString.IsValid())
     {
-        return HX_CSTRING("Failed to get data pointed to by the c-string");
+        return false;
     }
 
     ::lldb::SBError error;
@@ -35,5 +35,7 @@ String hxcppdbg::core::drivers::lldb::native::extractString(::lldb::SBValue valu
 
     auto read = cString.ReadRawData(error, 0, strBuf, length);
 
-    return String::create(strBuf, read);
+    stream.Printf("%s", strBuf);
+
+    return true;
 }

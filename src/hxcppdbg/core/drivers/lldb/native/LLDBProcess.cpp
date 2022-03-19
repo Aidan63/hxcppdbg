@@ -25,6 +25,8 @@
 #endif
 
 #include "LLDBProcess.hpp"
+#include <SBTypeSummary.h>
+#include <SBStream.h>
 
 int hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::lldbProcessType = hxcpp_alloc_kind();
 
@@ -234,7 +236,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_ob
         auto variable = variables.GetValueAtIndex(i);
         auto name     = variable.GetName();
         auto type     = variable.GetTypeName();
-        auto value    = (std::string(type) == std::string("String")) ? hxcppdbg::core::drivers::lldb::native::extractString(variable) : String::create(variable.GetValue());
+        auto value    = String::create(variable.GetSummary());
         auto local    = hxcppdbg::core::locals::NativeLocal_obj::__new(String::create(name), value, String::create(value));
 
         output->__SetItem(i, local);

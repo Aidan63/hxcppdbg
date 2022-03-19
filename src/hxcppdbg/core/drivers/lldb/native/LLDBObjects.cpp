@@ -14,6 +14,11 @@
 
 #include "LLDBObjects.hpp"
 #include "LLDBProcess.hpp"
+#include "TypeConverters.hpp"
+#include <SBTypeCategory.h>
+#include <SBTypeNameSpecifier.h>
+#include <SBTypeSummary.h>
+#include <SBStream.h>
 
 int hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::lldbObjectsType = hxcpp_alloc_kind();
 
@@ -32,6 +37,26 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBObjects_ob
     {
         return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Unable to create LLDB SBTarget"), nullptr, nullptr));
     }
+
+    // Setup some type printers
+    auto category = debugger.CreateCategory("hxcpp");
+    if (!category.IsValid())
+    {
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Unable to LLDB category"), nullptr, nullptr));
+    }
+
+    auto summary = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::TypeConverters::extractString);
+    if (!summary.IsValid())
+    {
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Unable to create type summary"), nullptr, nullptr));
+    }
+
+    if (!category.AddTypeSummary(::lldb::SBTypeNameSpecifier("String"), summary))
+    {
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Failed to add summary"), nullptr, nullptr));
+    }
+
+    category.SetEnabled(true);
 
     return hxcppdbg::core::ds::Result_obj::Success(new hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj(debugger, target));
 }
