@@ -1,26 +1,25 @@
 <xml>
-    <compiler id="MSVC" exe="cl.exe" if="windows">
+    <compiler id="MSVC" exe="cl.exe">
         <flag value = "/std:c++17"/>
     </compiler>
 
     <files id='haxe'>
-        <compilerflag value='-ID:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native'/>
-        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DbgEngObjects.cpp'/>
-        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DebugEventCallbacks.cpp'/>
-        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/DbgModelClientEx.cpp'/>
-        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/models/StringExtensions.cpp'/>
-        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/models/ArrayExtensions.cpp'/>
-        <file name='D:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native/models/ArrayObjExtensions.cpp'/>
+        <compilerflag value='-I${DbgEngDir}'/>
+        <file name='${DbgEngDir}/DbgEngObjects.cpp'/>
+        <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
+        <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
+        <file name='${DbgEngDir}/models/StringExtensions.cpp'/>
+        <file name='${DbgEngDir}/models/ArrayExtensions.cpp'/>
+        <file name='${DbgEngDir}/models/ArrayObjExtensions.cpp'/>
     </files>
 
     <files id='dbgeng'>
-        <compilerflag value='-ID:/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/dbgeng/native'/>
+        <compilerflag value='-I${DbgEngDir}'/>
     </files>
 
     <target id="haxe">
         <files id='dbgeng'/>
 
         <lib name = "DbgEng.lib"/>
-        <lib name = "DbgModel.lib"/>
     </target>
 </xml>

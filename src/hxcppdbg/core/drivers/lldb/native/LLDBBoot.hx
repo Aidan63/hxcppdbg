@@ -3,7 +3,7 @@ package hxcppdbg.core.drivers.lldb.native;
 @:keep
 @:unreflective
 @:include('LLDBBoot.hpp')
-@:buildXml('<include name="/mnt/d/programming/haxe/hxcppdbg/src/hxcppdbg/core/drivers/lldb/native/LLDB.xml"/>')
+@:build(hxcppdbg.core.utils.HxcppUtils.xml('LLDB'))
 extern class LLDBBoot
 {
     @:native('hxcppdbg::core::drivers::lldb::native::boot')
