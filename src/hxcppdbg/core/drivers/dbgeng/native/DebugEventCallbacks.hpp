@@ -1,17 +1,16 @@
 #pragma once
 
+#include <hxcpp.h>
 #include <DbgEng.h>
+
+HX_DECLARE_CLASS4(hxcppdbg, core, drivers, native, DbgEngObjects)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
     class DebugEventCallbacks : public DebugBaseEventCallbacksWide
     {
-    private:
-        PDEBUG_CLIENT7 client;
-        Dynamic onBreakpointCb;
-
     public:
-        DebugEventCallbacks(PDEBUG_CLIENT7 _client, Dynamic _onBreakpointCb);
+        DebugEventCallbacks();
 
         STDMETHOD_(ULONG, AddRef)();
         STDMETHOD_(ULONG, Release)();

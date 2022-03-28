@@ -12,7 +12,7 @@ import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
 extern class DbgEngObjects
 {
     @:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile')
-    static function createFromFile(_file : String, _onBreakpointCb : Int->Int->Void) : Result<DbgEngObjects, HResultException>;
+    static function createFromFile(_file : String) : Result<DbgEngObjects, HResultException>;
 
     function createBreakpoint(_file : String, _line : Int) : Result<Int, HResultException>;
 
@@ -26,7 +26,7 @@ extern class DbgEngObjects
 
     function getArguments(_thread : Int, _frame : Int) : Result<Array<NativeLocal>, HResultException>;
 
-    function start(_status : Int) : Option<HResultException>;
+    function start(_status : Int) : Result<StopReason, HResultException>;
 
     function step(_thread : Int, _status : Int) : Option<HResultException>;
 }

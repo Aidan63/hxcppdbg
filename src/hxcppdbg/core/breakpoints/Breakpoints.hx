@@ -20,12 +20,15 @@ class Breakpoints
 
     public final onBreakpointHit : Signal<BreakpointHit>;
 
+    public final onExceptionThrown : Signal<Int>;
+
     public function new(_sourcemap, _driver)
     {
-        sourcemap       = _sourcemap;
-        driver          = _driver;
-        active          = [];
-        onBreakpointHit = new Signal();
+        sourcemap         = _sourcemap;
+        driver            = _driver;
+        active            = [];
+        onBreakpointHit   = new Signal();
+        onExceptionThrown = new Signal();
     }
 
     public function create(_hxFile, _hxLine, _hxChar = 0)

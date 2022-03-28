@@ -16,6 +16,10 @@
 #include <hxcppdbg/core/stack/NativeFrame.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_drivers_StopReason
+#include <hxcppdbg/core/drivers/StopReason.h>
+#endif
+
 #ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_NativeFrameReturn
 #include <hxcppdbg/core/drivers/dbgeng/NativeFrameReturn.h>
 #endif
@@ -37,7 +41,7 @@ IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::m
 
 IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::host = nullptr;
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile(String file, Dynamic _onBreakpointCb)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile(String file)
 {
 	auto result = HRESULT{ S_OK };
 
@@ -78,7 +82,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get data model manager and debug host"), result));
 	}
 
-	auto events = std::make_unique<DebugEventCallbacks>(client, _onBreakpointCb);
+	auto events = std::make_unique<DebugEventCallbacks>();
 	if (!SUCCEEDED(result = client->SetEventCallbacksWide(events.get())))
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set events callback"), result));
@@ -116,11 +120,11 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 		return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING(""), nullptr, nullptr));
 	}
 
-	return hxcppdbg::core::ds::Result_obj::Success(new DbgEngObjects_obj(client, control, symbols, system, std::move(events), _onBreakpointCb));
+	return hxcppdbg::core::ds::Result_obj::Success(new DbgEngObjects_obj(client, control, symbols, system, std::move(events)));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Dynamic _onBreakpointCb)
-	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), onBreakpointCb(_onBreakpointCb)
+hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events)
+	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events))
 {
 	//
 }
@@ -262,22 +266,6 @@ bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::endsWith(std::w
         return false;
     }
 }
-
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::__Mark(HX_MARK_PARAMS)
-{
-	HX_MARK_BEGIN_CLASS(DbgEngObjects);
-	HX_MARK_MEMBER_NAME(onBreakpointCb, "onBreakpointCb");
-	HX_MARK_END_CLASS();
-}
-
-#ifdef HXCPP_VISIT_ALLOCS
-
-void hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::__Visit(HX_VISIT_PARAMS)
-{
-	HX_VISIT_MEMBER_NAME(onBreakpointCb, "onBreakpointCb");
-}
-
-#endif
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createBreakpoint(String _file, int _line)
 {
@@ -431,13 +419,13 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Not Implemented"), S_FALSE));
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::start(int status)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::start(int status)
 {
 	auto result = HRESULT{ S_OK };
 
 	if (!SUCCEEDED(result = control->SetExecutionStatus(status)))
 	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
 	}
 
 	hx::EnterGCFreeZone();
@@ -446,12 +434,49 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::sta
 	{
 		hx::ExitGCFreeZone();
 
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
 	}
 
 	hx::ExitGCFreeZone();
 
-	return haxe::ds::Option_obj::None;
+	// Get the last event
+	auto type      = ULONG{ 0 };
+	auto processID = ULONG{ 0 };
+	auto threadID  = ULONG{ 0 };
+	if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, nullptr, 0, nullptr, nullptr, 0, nullptr)))
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get last event"), result));		
+	}
+
+	switch (type)
+	{
+		case DEBUG_EVENT_BREAKPOINT:
+			DEBUG_LAST_EVENT_INFO_BREAKPOINT breakpoint;
+
+			if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, &breakpoint, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get last event"), result));		
+			}
+			else
+			{
+				return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::BreakpointHit(breakpoint.Id, threadID));
+			}
+
+		case DEBUG_EVENT_EXCEPTION:
+			DEBUG_LAST_EVENT_INFO_EXCEPTION exception;
+
+			if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, &exception, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get last event"), result));		
+			}
+			else
+			{
+				return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::ExceptionThrown(threadID));
+			}
+
+		default:
+			return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::Natural);
+	}
 }
 
 haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _status)
@@ -465,5 +490,22 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::ste
 		hx::Throw(HX_CSTRING("Unable to set current thread"));
 	}
 
-	return start(_status);
+	if (!SUCCEEDED(result = control->SetExecutionStatus(_status)))
+	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
+	}
+
+
+	hx::EnterGCFreeZone();
+
+	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
+	{
+		hx::ExitGCFreeZone();
+
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
+	}
+
+	hx::ExitGCFreeZone();
+
+	return haxe::ds::Option_obj::None;
 }

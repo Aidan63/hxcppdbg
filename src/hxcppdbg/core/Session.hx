@@ -35,7 +35,7 @@ class Session
         sourcemap   = parser.fromJson(File.getContent(_sourcemap));
         driver      =
 #if HX_WINDOWS
-        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target, onNativeBreakpointHit);
+        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target);
 #else
         new hxcppdbg.core.drivers.lldb.LLDBDriver(_target, onNativeBreakpointHit);
 #end
@@ -46,12 +46,52 @@ class Session
 
     public function start()
     {
-        driver.start();
+        switch driver.start()
+        {
+            case Success(v):
+                switch v
+                {
+                    case ExceptionThrown(_thread):
+                        breakpoints.onExceptionThrown.notify(_thread);
+                    case BreakpointHit(_id, _thread):
+                        switch breakpoints.list().find(bp -> bp.id == _id)
+                        {
+                            case null:
+                                throw new Exception('Unable to find breakpoint with ID $_id');
+                            case breakpoint:
+                                breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
+                        }
+                    case Natural:
+                        //
+                }
+            case Error(e):
+                //
+        }
     }
 
     public function resume()
     {
-        driver.resume();
+        switch driver.resume()
+        {
+            case Success(v):
+                switch v
+                {
+                    case ExceptionThrown(_thread):
+                        breakpoints.onExceptionThrown.notify(_thread);
+                    case BreakpointHit(_id, _thread):
+                        switch breakpoints.list().find(bp -> bp.id == _id)
+                        {
+                            case null:
+                                throw new Exception('Unable to find breakpoint with ID $_id');
+                            case breakpoint:
+                                breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
+                        }
+                    case Natural:
+                        //
+                }
+            case Error(e):
+                //
+        }
     }
 
     public function pause()
@@ -108,23 +148,6 @@ class Session
                 Option.None;
             case Error(e):
                 Option.Some(e);
-        }
-    }
-
-    /**
-     * This function is invoked by the driver whenever a native breakpoint is hit.
-     * We then attempt to map that native breakpoint onto a haxe one and emit an event.
-     * @param _breakpointID Native driver specific breakpoint ID.
-     * @param _threadID Native driver specific thread ID.
-     */
-    function onNativeBreakpointHit(_breakpointID : Int, _threadID : Int)
-    {
-        switch breakpoints.list().find(bp -> bp.id == _breakpointID)
-        {
-            case null:
-                throw new Exception('Unable to find breakpoint with ID $_breakpointID');
-            case breakpoint:
-                breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _threadID));
         }
     }
 }

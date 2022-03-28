@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import hxcppdbg.core.ds.Result;
 import haxe.Exception;
 import haxe.ds.Option;
 import haxe.exceptions.NotImplementedException;
@@ -18,9 +19,9 @@ class DbgEngDriver extends Driver
 
 	final objects : DbgEngObjects;
 
-	public function new(_file, _onBreakpointCb)
+	public function new(_file)
 	{
-		objects     = DbgEngObjects.createFromFile(_file, _onBreakpointCb).resultOrThrow();
+		objects     = DbgEngObjects.createFromFile(_file).resultOrThrow();
 		breakpoints = new DbgEngBreakpoints(objects);
 		stack       = new DbgEngStack(objects);
 		locals      = new DbgEngLocals(objects);
@@ -28,12 +29,12 @@ class DbgEngDriver extends Driver
 
 	public function start()
 	{
-		return objects.start(GO).asExceptionOption();
+		return objects.start(GO).asExceptionResult();
 	}
 
 	public function resume()
 	{
-		return objects.start(GO).asExceptionOption();
+		return objects.start(GO).asExceptionResult();
 	}
 
 	public function pause() : Option<Exception>
