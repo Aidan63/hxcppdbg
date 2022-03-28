@@ -295,7 +295,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	}
 
 	auto id = ULONG{ 0 };
-	if (!SUCCEEDED(breakpoint->GetId(&id)))
+	if (!SUCCEEDED(result = breakpoint->GetId(&id)))
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get breakpoint ID"), result));
 	}
