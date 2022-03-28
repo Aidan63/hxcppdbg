@@ -59,6 +59,17 @@ class Breakpoints
         return driver.remove(_id);
     }
 
+    public function get(_id)
+    {
+        return switch active.get(_id)
+        {
+            case null:
+                Option.None;
+            case bp:
+                Option.Some(bp);
+        }
+    }
+
     public function list()
     {
         return active.array();

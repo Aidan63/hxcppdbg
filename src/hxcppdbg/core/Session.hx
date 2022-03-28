@@ -1,14 +1,14 @@
 package hxcppdbg.core;
 
-import haxe.ds.Option;
-import hxcppdbg.core.ds.Result;
-import haxe.Exception;
 import sys.io.File;
+import haxe.Exception;
+import haxe.ds.Option;
 import json2object.JsonParser;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.breakpoints.Breakpoints;
 import hxcppdbg.core.breakpoints.BreakpointHit;
 import hxcppdbg.core.drivers.Driver;
+import hxcppdbg.core.drivers.StopReason;
 import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.locals.Locals;
 
@@ -46,52 +46,18 @@ class Session
 
     public function start()
     {
-        switch driver.start()
-        {
-            case Success(v):
-                switch v
-                {
-                    case ExceptionThrown(_thread):
-                        breakpoints.onExceptionThrown.notify(_thread);
-                    case BreakpointHit(_id, _thread):
-                        switch breakpoints.list().find(bp -> bp.id == _id)
-                        {
-                            case null:
-                                throw new Exception('Unable to find breakpoint with ID $_id');
-                            case breakpoint:
-                                breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
-                        }
-                    case Natural:
-                        //
-                }
-            case Error(e):
-                //
-        }
+        return
+            driver
+                .start()
+                .act(dispatchStopCallbacks);
     }
 
     public function resume()
     {
-        switch driver.resume()
-        {
-            case Success(v):
-                switch v
-                {
-                    case ExceptionThrown(_thread):
-                        breakpoints.onExceptionThrown.notify(_thread);
-                    case BreakpointHit(_id, _thread):
-                        switch breakpoints.list().find(bp -> bp.id == _id)
-                        {
-                            case null:
-                                throw new Exception('Unable to find breakpoint with ID $_id');
-                            case breakpoint:
-                                breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
-                        }
-                    case Natural:
-                        //
-                }
-            case Error(e):
-                //
-        }
+        return
+            driver
+                .resume()
+                .act(dispatchStopCallbacks);
     }
 
     public function pause()
@@ -148,6 +114,25 @@ class Session
                 Option.None;
             case Error(e):
                 Option.Some(e);
+        }
+    }
+
+    function dispatchStopCallbacks(_reason : StopReason)
+    {
+        switch _reason
+        {
+            case ExceptionThrown(_thread):
+                breakpoints.onExceptionThrown.notify(_thread);
+            case BreakpointHit(_id, _thread):
+                switch breakpoints.get(_id)
+                {
+                    case None:
+                        throw new Exception('Unable to find breakpoint with ID $_id');
+                    case Some(breakpoint):
+                        breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
+                }
+            case Natural:
+                //
         }
     }
 }
