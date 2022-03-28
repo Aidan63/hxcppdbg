@@ -33,7 +33,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         PDEBUG_SYMBOLS5 symbols;
         PDEBUG_SYSTEM_OBJECTS4 system;
         std::unique_ptr<DebugEventCallbacks> events;
-        Dynamic onBreakpointCb;
 
         DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events);
 
@@ -42,6 +41,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static String cleanSymbolName(std::wstring _input);
         static int backtickCount(std::wstring _input);
         static bool endsWith(std::wstring const &_input, std::wstring const &_ending);
+
+        hxcppdbg::core::ds::Result processLastEvent();
 
     public:
         hxcppdbg::core::ds::Result createBreakpoint(String file, int line);
@@ -54,7 +55,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result getArguments(int _thread, int _frame);
 
         hxcppdbg::core::ds::Result start(int status);
-        haxe::ds::Option step(int thread, int status);
+        hxcppdbg::core::ds::Result step(int thread, int status);
 
         static hxcppdbg::core::ds::Result createFromFile(String file);
         static IDataModelManager* manager;

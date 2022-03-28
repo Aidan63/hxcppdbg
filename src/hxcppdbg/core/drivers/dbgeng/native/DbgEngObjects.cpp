@@ -439,7 +439,41 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 	hx::ExitGCFreeZone();
 
+	return processLastEvent();
+}
+
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _status)
+{
+	auto result = HRESULT{ S_OK };
+
+	if (!SUCCEEDED(result = system->SetCurrentThreadId(_thread)))
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set current thread"), result));
+	}
+
+	if (!SUCCEEDED(result = control->SetExecutionStatus(_status)))
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
+	}
+
+	hx::EnterGCFreeZone();
+
+	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
+	{
+		hx::ExitGCFreeZone();
+
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
+	}
+
+	hx::ExitGCFreeZone();
+
+	return processLastEvent();
+}
+
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::processLastEvent()
+{
 	// Get the last event
+	auto result    = HRESULT{ 0 };
 	auto type      = ULONG{ 0 };
 	auto processID = ULONG{ 0 };
 	auto threadID  = ULONG{ 0 };
@@ -477,35 +511,4 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 		default:
 			return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::Natural);
 	}
-}
-
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _status)
-{
-	auto result = HRESULT{ S_OK };
-
-	if (!SUCCEEDED(result = system->SetCurrentThreadId(_thread)))
-	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set current thread"), result));
-
-		hx::Throw(HX_CSTRING("Unable to set current thread"));
-	}
-
-	if (!SUCCEEDED(result = control->SetExecutionStatus(_status)))
-	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
-	}
-
-
-	hx::EnterGCFreeZone();
-
-	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
-	{
-		hx::ExitGCFreeZone();
-
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
-	}
-
-	hx::ExitGCFreeZone();
-
-	return haxe::ds::Option_obj::None;
 }

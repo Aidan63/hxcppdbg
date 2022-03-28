@@ -18,10 +18,12 @@ class Step
     {
         switch session.step(thread, In)
         {
-            case Some(v):
-                Sys.println(v.message);
-            case None:
+            case Error(e):
+                Sys.println(e.message);
+            case Success(Natural):
                 printLocation();
+            case _:
+            //
         }
     }
 
@@ -29,10 +31,12 @@ class Step
     {
         switch session.step(thread, Out)
         {
-            case Some(v):
-                Sys.println(v.message);
-            case None:
+            case Error(e):
+                Sys.println(e.message);
+            case Success(Natural):
                 printLocation();
+            case _:
+                //
         }
     }
 
@@ -40,10 +44,12 @@ class Step
     {
         switch session.step(thread, Over)
         {
-            case Some(v):
-                Sys.println(v.message);
-            case None:
+            case Error(e):
+                Sys.println(e.message);
+            case Success(Natural):
                 printLocation();
+            case _:
+                //
         }
     }
 

@@ -4,6 +4,7 @@ import sys.io.File;
 import haxe.Exception;
 import haxe.ds.Option;
 import json2object.JsonParser;
+import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.breakpoints.Breakpoints;
 import hxcppdbg.core.breakpoints.BreakpointHit;
@@ -82,9 +83,7 @@ class Session
                 {
                     switch driver.step(_thread, _type)
                     {
-                        case Some(v):
-                            return Option.Some(v);
-                        case None:
+                        case Success(Natural):
                             switch stack.getFrame(_thread, 0)
                             {
                                 case Success(top):
@@ -106,14 +105,20 @@ class Session
                                     }
                                     
                                 case Error(e):
-                                    return Option.Some(e);
+                                    return Result.Error(e);
                             }
+                        case Success(other):
+                            dispatchStopCallbacks(other);
+                            
+                            return Result.Success(other);
+                        case Error(e):
+                            return Result.Error(e);
                     }
                 }
 
-                Option.None;
+                Result.Success(Natural);
             case Error(e):
-                Option.Some(e);
+                Result.Error(e);
         }
     }
 

@@ -20,5 +20,5 @@ abstract class Driver
 
     public abstract function resume() : Result<StopReason, Exception>;
 
-    public abstract function step(_thread : Int, _type : StepType) : Option<Exception>;
+    public abstract function step(_thread : Int, _type : StepType) : Result<StopReason, Exception>;
 }
