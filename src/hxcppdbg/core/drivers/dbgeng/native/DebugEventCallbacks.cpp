@@ -1,9 +1,13 @@
 #include <hxcpp.h>
 
 #include "DebugEventCallbacks.hpp"
+#include "DbgEngObjects.hpp"
 
-hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::DebugEventCallbacks(PDEBUG_CLIENT7 _client, Dynamic _onBreakpointCb)
-    : client(_client), onBreakpointCb(_onBreakpointCb)
+#ifndef INCLUDED_hxcppdbg_core_drivers_StopReason
+#include <hxcppdbg/core/drivers/StopReason.h>
+#endif
+
+hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::DebugEventCallbacks()
 {
     //
 }
@@ -30,48 +34,12 @@ HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::GetInteres
 
 HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::Breakpoint(PDEBUG_BREAKPOINT2 bp)
 {
-    hx::ExitGCFreeZone();
-
-    auto sys = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
-    if (!SUCCEEDED(client->QueryInterface(__uuidof(IDebugSystemObjects4), (void**)&sys)))
-    {
-        hx::Throw(HX_CSTRING("Unable to get IDebugSystemObjects4"));
-    }
-
-    auto threadID = ULONG{ 0 };
-    if (!SUCCEEDED(sys->GetEventThread(&threadID)))
-    {
-        hx::Throw(HX_CSTRING("Unable to get thread ID"));
-    }
-
-    auto breakpointID = ULONG{ 0 };
-    if (!SUCCEEDED(bp->GetId(&breakpointID)))
-    {
-        hx::Throw(HX_CSTRING("Unable to get breakpoint ID"));
-    }
-
-    try
-    {
-        onBreakpointCb(breakpointID, threadID);
-    }
-    catch (Dynamic)
-    {
-        // If this has thrown a haxe exception we're probably still in a GC zone.
-    }
-    catch (...)
-    {
-        // If a non Dynamic exception was thrown we're probably in a GC free zone?
-        hx::ExitGCFreeZone();
-    }
-
-    hx::EnterGCFreeZone();
-
     return DEBUG_STATUS_BREAK;
 }
 
 HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::Exception(PEXCEPTION_RECORD64, ULONG firstChance)
 {
-    return DEBUG_STATUS_NO_CHANGE;
+    return DEBUG_STATUS_BREAK;
 }
 
 HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::CreateProcess(

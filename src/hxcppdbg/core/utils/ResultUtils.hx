@@ -48,3 +48,15 @@ function apply<A, B, E : Exception>(_result : Result<A, E>, f : (item : A) -> B)
             Result.Error(e);
     }
 }
+
+function act<T, E : Exception>(_result : Result<T, E>, f : (item : T) -> Void) : Result<T, E>
+{
+    return switch _result
+    {
+        case Success(v):
+            f(v);
+            _result;
+        case Error(_):
+            _result;
+    }
+}

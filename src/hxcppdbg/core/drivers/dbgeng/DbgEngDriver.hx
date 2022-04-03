@@ -1,5 +1,7 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import tink.cli.Result;
+import hxcppdbg.core.ds.Result;
 import haxe.Exception;
 import haxe.ds.Option;
 import haxe.exceptions.NotImplementedException;
@@ -18,9 +20,9 @@ class DbgEngDriver extends Driver
 
 	final objects : DbgEngObjects;
 
-	public function new(_file, _onBreakpointCb)
+	public function new(_file)
 	{
-		objects     = DbgEngObjects.createFromFile(_file, _onBreakpointCb).resultOrThrow();
+		objects     = DbgEngObjects.createFromFile(_file).resultOrThrow();
 		breakpoints = new DbgEngBreakpoints(objects);
 		stack       = new DbgEngStack(objects);
 		locals      = new DbgEngLocals(objects);
@@ -28,12 +30,12 @@ class DbgEngDriver extends Driver
 
 	public function start()
 	{
-		return objects.start(GO).asExceptionOption();
+		return objects.start(GO).asExceptionResult();
 	}
 
 	public function resume()
 	{
-		return objects.start(GO).asExceptionOption();
+		return objects.start(GO).asExceptionResult();
 	}
 
 	public function pause() : Option<Exception>
@@ -51,9 +53,9 @@ class DbgEngDriver extends Driver
 		return switch _type
 		{
 			case In:
-				return objects.step(_thread, STEP_INTO).asExceptionOption();
+				return objects.step(_thread, STEP_INTO).asExceptionResult();
 			case Over:
-				return objects.step(_thread, STEP_OVER).asExceptionOption();
+				return objects.step(_thread, STEP_OVER).asExceptionResult();
 			case Out:
 				// Dbgeng doesn't seem to have a build in step out? Are we suppose to inspect the return
 				// address and continue to that somehow?
@@ -65,30 +67,36 @@ class DbgEngDriver extends Driver
 						switch stack.length
 						{
 							case 0, 1:
-								Option.Some(new Exception('No frame to step out into'));
+								Result.Error(new Exception('No frame to step out into'));
 							case _:
 								final previous = stack[1];
 		
 								while (true)
 								{
-									objects.step(_thread, STEP_OVER);
-		
-									switch objects.getFrame(_thread, 0)
+									switch objects.step(_thread, STEP_OVER)
 									{
-										case Success(top):
-											if (top.address == previous.address)
+										case Success(Natural):
+											switch objects.getFrame(_thread, 0)
 											{
-												return Option.None;
+												case Success(top):
+													if (top.address == previous.address)
+													{
+														return Result.Success(StopReason.Natural);
+													}
+												case Error(e):
+													return Result.Error((e : Exception));
 											}
+										case Success(other):
+											return Success(other);
 										case Error(e):
-											return Option.Some(e);
+											return Result.Error((e : Exception));
 									}
 								}
 
-								return Option.None;
+								return Result.Success(StopReason.Natural);
 						}
 					case Error(e):
-						Option.Some((e : Exception));
+						Result.Error((e : Exception));
 				}
 		}
 	}

@@ -1,14 +1,15 @@
 package hxcppdbg.core;
 
-import haxe.ds.Option;
-import hxcppdbg.core.ds.Result;
-import haxe.Exception;
 import sys.io.File;
+import haxe.Exception;
+import haxe.ds.Option;
 import json2object.JsonParser;
+import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.breakpoints.Breakpoints;
 import hxcppdbg.core.breakpoints.BreakpointHit;
 import hxcppdbg.core.drivers.Driver;
+import hxcppdbg.core.drivers.StopReason;
 import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.locals.Locals;
 
@@ -35,9 +36,9 @@ class Session
         sourcemap   = parser.fromJson(File.getContent(_sourcemap));
         driver      =
 #if HX_WINDOWS
-        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target, onNativeBreakpointHit);
+        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target);
 #else
-        new hxcppdbg.core.drivers.lldb.LLDBDriver(_target, onNativeBreakpointHit);
+        new hxcppdbg.core.drivers.lldb.LLDBDriver(_target);
 #end
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
         stack       = new Stack(sourcemap, driver.stack);
@@ -46,12 +47,18 @@ class Session
 
     public function start()
     {
-        driver.start();
+        return
+            driver
+                .start()
+                .act(dispatchStopCallbacks);
     }
 
     public function resume()
     {
-        driver.resume();
+        return
+            driver
+                .resume()
+                .act(dispatchStopCallbacks);
     }
 
     public function pause()
@@ -76,9 +83,7 @@ class Session
                 {
                     switch driver.step(_thread, _type)
                     {
-                        case Some(v):
-                            return Option.Some(v);
-                        case None:
+                        case Success(Natural):
                             switch stack.getFrame(_thread, 0)
                             {
                                 case Success(top):
@@ -100,31 +105,39 @@ class Session
                                     }
                                     
                                 case Error(e):
-                                    return Option.Some(e);
+                                    return Result.Error(e);
                             }
+                        case Success(other):
+                            dispatchStopCallbacks(other);
+                            
+                            return Result.Success(other);
+                        case Error(e):
+                            return Result.Error(e);
                     }
                 }
 
-                Option.None;
+                Result.Success(Natural);
             case Error(e):
-                Option.Some(e);
+                Result.Error(e);
         }
     }
 
-    /**
-     * This function is invoked by the driver whenever a native breakpoint is hit.
-     * We then attempt to map that native breakpoint onto a haxe one and emit an event.
-     * @param _breakpointID Native driver specific breakpoint ID.
-     * @param _threadID Native driver specific thread ID.
-     */
-    function onNativeBreakpointHit(_breakpointID : Int, _threadID : Int)
+    function dispatchStopCallbacks(_reason : StopReason)
     {
-        switch breakpoints.list().find(bp -> bp.id == _breakpointID)
+        switch _reason
         {
-            case null:
-                throw new Exception('Unable to find breakpoint with ID $_breakpointID');
-            case breakpoint:
-                breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _threadID));
+            case ExceptionThrown(_thread):
+                breakpoints.onExceptionThrown.notify(_thread);
+            case BreakpointHit(_id, _thread):
+                switch breakpoints.get(_id)
+                {
+                    case None:
+                        throw new Exception('Unable to find breakpoint with ID $_id');
+                    case Some(breakpoint):
+                        breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
+                }
+            case Natural:
+                //
         }
     }
 }

@@ -1,5 +1,6 @@
 package hxcppdbg;
 
+import hxcppdbg.core.stack.StackFrame;
 import haxe.io.Eof;
 import sys.io.File;
 import hxcppdbg.core.breakpoints.BreakpointHit;
@@ -8,6 +9,9 @@ import tink.cli.Prompt.PromptType;
 import tink.cli.prompt.SysPrompt;
 import hxcppdbg.cli.Hxcppdbg;
 import hxcppdbg.core.Session;
+
+using Lambda;
+using haxe.EnumTools;
 
 class Cli
 {
@@ -35,6 +39,11 @@ class Cli
             .breakpoints
             .onBreakpointHit
             .subscribe(printBreakpointHitLocation);
+
+        session
+            .breakpoints
+            .onExceptionThrown
+            .subscribe(printExceptionLocation);
 
         while (true)
         {
@@ -71,28 +80,105 @@ class Cli
 
         // Read all lines up until the ones we're actually interested in.
         var i = 0;
-        while (i < minLine) {
+        while (i < minLine)
+        {
             input.readLine();
             i++;
         }
 
-        for (i in 0...(maxLine - minLine)) {
-            try {
+        for (i in 0...(maxLine - minLine))
+        {
+            try
+            {
                 final line    = input.readLine();
                 final absLine = minLine + i + 1;
 
-                if (_event.breakpoint.line == absLine) {
+                if (_event.breakpoint.line == absLine)
+                {
                     Sys.print('=>\t');
-                } else {
+                }
+                else
+                {
                     Sys.print('\t');
                 }
 
                 Sys.println('$absLine: $line');
-            } catch (_ : Eof) {
+            }
+            catch (_ : Eof)
+            {
                 break;
             }
         }
 
         input.close();
+    }
+
+    function printExceptionLocation(_thread : Int)
+    {
+        switch session.stack.getCallStack(_thread)
+        {
+            case Success(stack):
+                switch stack.find(isHaxeFrame)
+                {
+                    case Haxe(haxe, _):
+                        final exnFile = haxe.file.haxe;
+                        final exnLine = haxe.expr.haxe.start.line;
+
+                        Sys.println('Thread $_thread has thrown an exception at $exnFile Line $exnLine');
+
+                        final minLine = Std.int(Math.max(1, exnLine - 3)) - 1;
+                        final maxLine = exnLine + 3;
+                        final input   = File.read(exnFile, false);
+
+                        // Read all lines up until the ones we're actually interested in.
+                        var i = 0;
+                        while (i < minLine)
+                        {
+                            input.readLine();
+                            i++;
+                        }
+
+                        for (i in 0...(maxLine - minLine))
+                        {
+                            try
+                            {
+                                final line    = input.readLine();
+                                final absLine = minLine + i + 1;
+
+                                if (exnLine == absLine)
+                                {
+                                    Sys.print('=>\t');
+                                }
+                                else
+                                {
+                                    Sys.print('\t');
+                                }
+
+                                Sys.println('$absLine: $line');
+                            }
+                            catch (_ : Eof)
+                            {
+                                break;
+                            }
+                        }
+
+                        input.close();
+                    case _:
+                        //
+                }
+            case Error(_):
+                //
+        }
+    }
+
+    function isHaxeFrame(_frame : StackFrame)
+    {
+        return switch _frame
+        {
+            case Haxe(_, _):
+                true;
+            case Native(_):
+                false;
+        }
     }
 }

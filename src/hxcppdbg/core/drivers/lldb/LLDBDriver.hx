@@ -14,7 +14,7 @@ class LLDBDriver extends Driver
 
     final process : LLDBProcess;
 
-    public function new(_file, _onBreakpointCb)
+    public function new(_file)
     {
         LLDBBoot.boot();
 
@@ -23,8 +23,6 @@ class LLDBDriver extends Driver
         breakpoints = new LLDBBreakpoints(objects);
         stack       = new LLDBStack(process);
         locals      = new LLDBLocals(process);
-
-        objects.onBreakpointHitCallback = _onBreakpointCb;
     }
 
 	public function start()
