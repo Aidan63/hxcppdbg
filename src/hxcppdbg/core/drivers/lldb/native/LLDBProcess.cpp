@@ -254,19 +254,27 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_ob
         for (auto i = 0; i < threadCount; i++)
         {
             auto thread = process.GetThreadAtIndex(i);
+            auto reason = thread.GetStopReason();
 
-            if (thread.GetStopReason() == ::lldb::StopReason::eStopReasonBreakpoint)
+            switch (reason)
             {
-                auto breakpointID = thread.GetStopReasonDataAtIndex(0);
+                case ::lldb::StopReason::eStopReasonBreakpoint:
+                    {
+                        auto breakpointID = thread.GetStopReasonDataAtIndex(0);
 
-                if (breakpointID == exceptionBreakpoint)
-                {
-                    return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::ExceptionThrown(i));
-                }
-                else
-                {
-                    return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::BreakpointHit(breakpointID, i));
-                }
+                        if (breakpointID == exceptionBreakpoint)
+                        {
+                            return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::ExceptionThrown(i));
+                        }
+                        else
+                        {
+                            return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::BreakpointHit(breakpointID, i));
+                        }
+                    }
+                case ::lldb::StopReason::eStopReasonPlanComplete:
+                    return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::Natural);
+                default:
+                    continue;
             }
         }
 
