@@ -13,15 +13,15 @@ extern class LLDBProcess
 {
     function getState() : Int;
 
-    function start(cwd : String) : Option<Exception>;
+    function start(cwd : String) : Result<StopReason, Exception>;
 
-    function resume() : Option<Exception>;
+    function resume() : Result<StopReason, Exception>;
 
-    function stepIn(_threadIndex : Int) : Option<Exception>;
+    function stepIn(_threadIndex : Int) : Result<StopReason, Exception>;
 
-    function stepOver(_threadIndex : Int) : Option<Exception>;
+    function stepOver(_threadIndex : Int) : Result<StopReason, Exception>;
 
-    function stepOut(_threadIndex : Int) : Option<Exception>;
+    function stepOut(_threadIndex : Int) : Result<StopReason, Exception>;
 
     function getStackFrame(_threadIndex : Int, _frameIndex : Int) : Result<NativeFrame, Exception>;
 

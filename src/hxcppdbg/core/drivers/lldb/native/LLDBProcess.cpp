@@ -4,10 +4,6 @@
 #include <haxe/Exception.h>
 #endif
 
-#ifndef INCLUDED_haxe_ds_Option
-#include <haxe/ds/Option.h>
-#endif
-
 #ifndef INCLUDED_hxcppdbg_core_ds_Result
 #include <hxcppdbg/core/ds/Result.h>
 #endif
@@ -24,6 +20,10 @@
 #include <haxe/io/Path.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_drivers_StopReason
+#include <hxcppdbg/core/drivers/StopReason.h>
+#endif
+
 #include "LLDBProcess.hpp"
 #include <SBTypeSummary.h>
 #include <SBStream.h>
@@ -35,8 +35,8 @@ void hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::finalise(Dynamic ob
     static_cast<hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj*>(obj.mPtr)->destroy();
 }
 
-hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::LLDBProcess_obj(::lldb::SBTarget t)
-    : target(t)
+hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::LLDBProcess_obj(::lldb::SBTarget t) :
+    target(t), exceptionBreakpoint(target.BreakpointCreateForException(::lldb::LanguageType::eLanguageTypeC_plus_plus, false, true).GetID())
 {
     _hx_set_finalizer(this, finalise);
 }
@@ -46,7 +46,7 @@ int hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::getState()
     return process.GetState();
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::start(String cwd)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::start(String cwd)
 {
     auto options = target.GetLaunchInfo();
     options.SetWorkingDirectory(cwd.utf8_str());
@@ -60,13 +60,13 @@ haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::start(S
 
     if (error.Fail())
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
     }
 
-    return haxe::ds::Option_obj::None;
+    return findStopReason();
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::resume()
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::resume()
 {
     hx::EnterGCFreeZone();
     auto error = process.Continue();
@@ -74,23 +74,23 @@ haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::resume(
 
     if (error.Fail())
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
     }
 
-    return haxe::ds::Option_obj::None;
+    return findStopReason();
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepIn(int threadIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepIn(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
     }
 
     hx::EnterGCFreeZone();
@@ -99,20 +99,20 @@ haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepIn(
 
     hx::ExitGCFreeZone();
 
-    return haxe::ds::Option_obj::None;
+    return findStopReason();
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepOver(int threadIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepOver(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
     }
 
     hx::EnterGCFreeZone();
@@ -124,23 +124,23 @@ haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepOve
 
     if (error.Fail())
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
     }
 
-    return haxe::ds::Option_obj::None;
+    return findStopReason();
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepOut(int threadIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepOut(int threadIndex)
 {
     if (process.GetState() != ::lldb::StateType::eStateStopped)
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
     }
 
     auto thread = process.GetThreadAtIndex(threadIndex);
     if (!thread.IsValid())
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Thread is not valid"), nullptr, nullptr));
     }
 
     hx::EnterGCFreeZone();
@@ -152,10 +152,10 @@ haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepOut
 
     if (error.Fail())
     {
-        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
     }
 
-    return haxe::ds::Option_obj::None;
+    return findStopReason();
 }
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::getStackFrame(int threadIndex, int frameIndex)
@@ -243,6 +243,39 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_ob
     }
     
     return hxcppdbg::core::ds::Result_obj::Success(output);
+}
+
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::findStopReason()
+{
+    if (process.GetState() == ::lldb::StateType::eStateStopped)
+    {
+        // Figure out what caused us to be suspended.
+        auto threadCount = process.GetNumThreads();
+        for (auto i = 0; i < threadCount; i++)
+        {
+            auto thread = process.GetThreadAtIndex(i);
+
+            if (thread.GetStopReason() == ::lldb::StopReason::eStopReasonBreakpoint)
+            {
+                auto breakpointID = thread.GetStopReasonDataAtIndex(0);
+
+                if (breakpointID == exceptionBreakpoint)
+                {
+                    return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::ExceptionThrown(i));
+                }
+                else
+                {
+                    return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::BreakpointHit(breakpointID, i));
+                }
+            }
+        }
+
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("No thread is stopped at a breakpoint"), nullptr, nullptr));
+    }
+    else
+    {
+        return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Process is not stopped"), nullptr, nullptr));
+    }
 }
 
 hxcppdbg::core::stack::NativeFrame hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::createNativeFrame(::lldb::SBFrame _frame)

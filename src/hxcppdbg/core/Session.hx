@@ -38,7 +38,7 @@ class Session
 #if HX_WINDOWS
         new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target);
 #else
-        new hxcppdbg.core.drivers.lldb.LLDBDriver(_target, onNativeBreakpointHit);
+        new hxcppdbg.core.drivers.lldb.LLDBDriver(_target);
 #end
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
         stack       = new Stack(sourcemap, driver.stack);
