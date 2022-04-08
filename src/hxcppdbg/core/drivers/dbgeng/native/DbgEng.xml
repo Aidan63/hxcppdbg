@@ -9,6 +9,9 @@
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/models/StringExtensions.cpp'/>
+        <file name='${DbgEngDir}/models/map/ModelHash.cpp'/>
+        <file name='${DbgEngDir}/models/map/ModelHashElement.cpp'/>
+        <file name='${DbgEngDir}/models/map/ModelIntMapObj.cpp'/>
         <file name='${DbgEngDir}/models/array/ModelArrayObj.cpp'/>
         <file name='${DbgEngDir}/models/array/ModelVirtualArrayObj.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>

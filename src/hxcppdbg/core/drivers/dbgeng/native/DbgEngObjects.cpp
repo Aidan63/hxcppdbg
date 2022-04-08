@@ -39,6 +39,9 @@
 #include "models/dynamic/ModelReferenceDynamic.hpp"
 #include "models/array/ModelArrayObj.hpp"
 #include "models/array/ModelVirtualArrayObj.hpp"
+#include "models/map/ModelHash.hpp"
+#include "models/map/ModelHashElement.hpp"
+#include "models/map/ModelIntMapObj.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -396,6 +399,13 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 	auto mVirtualArray    = models::ModelObjectPtr(std::wstring(L"cpp::VirtualArray"));
 	auto mVirtualArrayObj = models::array::ModelVirtualArrayObj();
+
+	// map visualisers
+	auto mHash      = models::map::ModelHash();
+	auto mHashIntEl = models::map::ModelHashElement(std::wstring(L"hx::TIntElement<*>"));
+
+	auto mIntMap    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::IntMap_obj>"));
+	auto mIntMapObj = models::map::ModelIntMapObj();
 
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
