@@ -33,10 +33,10 @@
 #endif
 
 #include "DbgEngObjects.hpp"
+#include "models/ModelObjectPtr.hpp"
 #include "models/StringExtensions.hpp"
 #include "models/dynamic/ModelDynamic.hpp"
 #include "models/dynamic/ModelReferenceDynamic.hpp"
-#include "models/array/ModelArray.hpp"
 #include "models/array/ModelArrayObj.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
@@ -390,7 +390,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	auto mDynPointer = models::dynamic::ModelReferenceDynamic(L"hx::PointerData");
 
 	// Array visualisers
-	auto mArray    = models::array::ModelArray();
+	auto mArray    = models::ModelObjectPtr(std::wstring(L"Array<*>"));
 	auto mArrayObj = models::array::ModelArrayObj();
 
 	auto result = HRESULT{ S_OK };
