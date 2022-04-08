@@ -38,6 +38,7 @@
 #include "models/dynamic/ModelDynamic.hpp"
 #include "models/dynamic/ModelReferenceDynamic.hpp"
 #include "models/array/ModelArrayObj.hpp"
+#include "models/array/ModelVirtualArrayObj.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -392,6 +393,9 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	// Array visualisers
 	auto mArray    = models::ModelObjectPtr(std::wstring(L"Array<*>"));
 	auto mArrayObj = models::array::ModelArrayObj();
+
+	auto mVirtualArray    = models::ModelObjectPtr(std::wstring(L"cpp::VirtualArray"));
+	auto mVirtualArrayObj = models::array::ModelVirtualArrayObj();
 
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
