@@ -11,8 +11,8 @@ hxcppdbg::core::drivers::dbgeng::native::models::ArrayExtensions::ArrayExtension
 std::wstring hxcppdbg::core::drivers::dbgeng::native::models::ArrayExtensions::getDisplayString(const Debugger::DataModel::ClientEx::Object& _array, const Debugger::DataModel::ClientEx::Metadata& _metadata)
 {
     auto mptr = _array.FieldValue(L"mPtr");
-    auto obj  = mptr.Dereference().GetValue();
-    auto str  = obj.ToDisplayString();
+    auto obj  = mptr.Dereference().GetValue().TryCastToRuntimeType();
+    auto str  = obj.TryToDisplayString().value_or(std::wstring(L"unable to display object"));
 
     return str;
 }

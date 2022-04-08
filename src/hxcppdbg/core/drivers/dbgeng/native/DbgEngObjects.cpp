@@ -36,6 +36,9 @@
 #include "models/StringExtensions.hpp"
 #include "models/ArrayExtensions.hpp"
 #include "models/ArrayObjExtensions.hpp"
+#include "models/dynamic/ModelDynamic.hpp"
+#include "models/dynamic/ModelReferenceDynamic.hpp"
+#include "models/array/ModelArrayObj.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -377,9 +380,19 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int _threadIndex, int _frameIndex)
 {
-	auto strExt = models::StringExtensions();
-	auto arrExt = models::ArrayExtensions();
-	auto objExt = models::ArrayObjExtensions();
+	auto mString  = models::StringExtensions();
+	auto mDynamic = models::dynamic::ModelDynamic();
+
+	// Visualisers for "primitive" data types boxed in a hx::Object
+	auto mDynInt     = models::dynamic::ModelReferenceDynamic(L"hx::IntData");
+	auto mDynBool    = models::dynamic::ModelReferenceDynamic(L"hx::BoolData");
+	auto mDynDouble  = models::dynamic::ModelReferenceDynamic(L"hx::DoubleData");
+	auto mDynInt64   = models::dynamic::ModelReferenceDynamic(L"hx::Int64Data");
+	auto mDynPointer = models::dynamic::ModelReferenceDynamic(L"hx::PointerData");
+
+	// Array visualisers
+	auto mArray    = models::ArrayExtensions();
+	auto mArrayObj = models::array::ModelArrayObj();
 
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
