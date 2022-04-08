@@ -6,12 +6,12 @@
 
 #include "DbgModelClientEx.hpp"
 
-namespace hxcppdbg::core::drivers::dbgeng::native::models
+namespace hxcppdbg::core::drivers::dbgeng::native::models::array
 {
-    class ArrayObjExtensions : public Debugger::DataModel::ProviderEx::ExtensionModel
+    class ModelArray : public Debugger::DataModel::ProviderEx::ExtensionModel
     {
     public:
-        ArrayObjExtensions();
+        ModelArray();
 
         std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& _string, const Debugger::DataModel::ClientEx::Metadata& _metadata);
     };
