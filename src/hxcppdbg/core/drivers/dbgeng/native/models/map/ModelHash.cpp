@@ -21,7 +21,7 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ge
         auto hashPtr = buckets.Dereference().GetValue();
         auto hash    = hashPtr.Dereference().GetValue();
         auto type    = hash.TryCastToRuntimeType();
-        auto display = type.TryToDisplayString().value_or(std::wstring(L"unable to read map item"));
+        auto display = type.TryToDisplayString().value_or(std::wstring(L"{ unable to read element }"));
 
         output.append(display);
         output.append(i < bucketCount - 1 ? L", " : L" ");

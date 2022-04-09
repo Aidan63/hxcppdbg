@@ -15,18 +15,18 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElem
     auto nextPtr = object.FieldValue(L"next");
 
     auto output = std::wstring();
-    output.append(L"( ");
+    output.append(L"{ ");
     output.append(key);
     output.append(L" => ");
     output.append(value);
-    output.append(L" )");
+    output.append(L" }");
 
     if (nextPtr.As<ULONG64>() != NULL)
     {
         output.append(L", ");
 
         auto next    = nextPtr.Dereference().GetValue();
-        auto display = next.TryToDisplayString().value_or(std::wstring(L"( unable to read element )"));
+        auto display = next.TryToDisplayString().value_or(std::wstring(L"{ unable to read element }"));
         
         output.append(display);
     }
