@@ -1,17 +1,20 @@
 <xml>
+    <include name='${DbgEngDir}/../../../../../libs/fmt/Build.xml'/>
+
     <compiler id="MSVC" exe="cl.exe">
         <flag value = "/std:c++17"/>
     </compiler>
 
     <files id='haxe'>
         <compilerflag value='-I${DbgEngDir}'/>
+
         <file name='${DbgEngDir}/DbgEngObjects.cpp'/>
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/models/StringExtensions.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHash.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHashElement.cpp'/>
-        <file name='${DbgEngDir}/models/map/ModelIntMapObj.cpp'/>
+        <file name='${DbgEngDir}/models/map/ModelMapObj.cpp'/>
         <file name='${DbgEngDir}/models/array/ModelArrayObj.cpp'/>
         <file name='${DbgEngDir}/models/array/ModelVirtualArrayObj.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>

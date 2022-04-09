@@ -8,10 +8,10 @@
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models::map
 {
-    class ModelIntMapObj : public Debugger::DataModel::ProviderEx::ExtensionModel
+    class ModelMapObj : public Debugger::DataModel::ProviderEx::ExtensionModel
     {
     public:
-        ModelIntMapObj();
+        ModelMapObj(std::wstring signature);
 
         std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& _string, const Debugger::DataModel::ClientEx::Metadata& _metadata);
     };

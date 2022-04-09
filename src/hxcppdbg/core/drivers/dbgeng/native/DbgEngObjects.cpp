@@ -41,7 +41,7 @@
 #include "models/array/ModelVirtualArrayObj.hpp"
 #include "models/map/ModelHash.hpp"
 #include "models/map/ModelHashElement.hpp"
-#include "models/map/ModelIntMapObj.hpp"
+#include "models/map/ModelMapObj.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -401,11 +401,20 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	auto mVirtualArrayObj = models::array::ModelVirtualArrayObj();
 
 	// map visualisers
-	auto mHash      = models::map::ModelHash();
-	auto mHashIntEl = models::map::ModelHashElement(std::wstring(L"hx::TIntElement<*>"));
+	auto mHash          = models::map::ModelHash();
+	auto mHashIntEl     = models::map::ModelHashElement(std::wstring(L"hx::TIntElement<*>"));
+	auto mHashInt64El   = models::map::ModelHashElement(std::wstring(L"hx::TInt64Element<*>"));
+	auto mHashStringEl  = models::map::ModelHashElement(std::wstring(L"hx::TStringElement<*>"));
+	auto mHashDynamicEl = models::map::ModelHashElement(std::wstring(L"hx::TDynamicElement<*>"));
 
 	auto mIntMap    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::IntMap_obj>"));
-	auto mIntMapObj = models::map::ModelIntMapObj();
+	auto mIntMapObj = models::map::ModelMapObj(std::wstring(L"Int"));
+
+	auto mStringMap    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::StringMap_obj>"));
+	auto mStringMapObj = models::map::ModelMapObj(std::wstring(L"String"));
+
+	auto mObjectMap    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::ObjectMap_obj>"));
+	auto mObjectMapObj = models::map::ModelMapObj(std::wstring(L"Object"));
 
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
