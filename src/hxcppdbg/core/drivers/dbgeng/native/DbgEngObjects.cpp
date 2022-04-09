@@ -42,6 +42,8 @@
 #include "models/map/ModelHash.hpp"
 #include "models/map/ModelHashElement.hpp"
 #include "models/map/ModelMapObj.hpp"
+#include "models/enums/ModelEnumObj.hpp"
+#include "models/enums/ModelVariant.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -415,6 +417,11 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 	auto mObjectMap    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::ObjectMap_obj>"));
 	auto mObjectMapObj = models::map::ModelMapObj(std::wstring(L"Object"));
+
+	// enums
+
+	auto mVariant   = models::enums::ModelVariant();
+	auto mOptionObj = models::enums::ModelEnumObj(std::wstring(L"haxe::ds::Option_obj"));
 
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };

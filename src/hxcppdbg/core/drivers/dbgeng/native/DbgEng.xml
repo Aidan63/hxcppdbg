@@ -11,15 +11,17 @@
         <file name='${DbgEngDir}/DbgEngObjects.cpp'/>
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
+        <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>
         <file name='${DbgEngDir}/models/StringExtensions.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHash.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHashElement.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelMapObj.cpp'/>
         <file name='${DbgEngDir}/models/array/ModelArrayObj.cpp'/>
         <file name='${DbgEngDir}/models/array/ModelVirtualArrayObj.cpp'/>
-        <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>
         <file name='${DbgEngDir}/models/dynamic/ModelDynamic.cpp'/>
         <file name='${DbgEngDir}/models/dynamic/ModelReferenceDynamic.cpp'/>
+        <file name='${DbgEngDir}/models/enums/ModelEnumObj.cpp'/>
+        <file name='${DbgEngDir}/models/enums/ModelVariant.cpp'/>
     </files>
 
     <files id='dbgeng'>
