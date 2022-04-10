@@ -33,6 +33,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         PDEBUG_SYMBOLS5 symbols;
         PDEBUG_SYSTEM_OBJECTS4 system;
         std::unique_ptr<DebugEventCallbacks> events;
+        std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
 
         DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events);
 

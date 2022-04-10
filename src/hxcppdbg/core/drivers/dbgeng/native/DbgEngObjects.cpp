@@ -134,9 +134,50 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 }
 
 hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events)
-	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events))
+	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), models(std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>())
 {
-	//
+	// Core hxcpp type models
+	models->push_back(std::make_unique<models::ModelString>());
+	models->push_back(std::make_unique<models::dynamic::ModelDynamic>());
+
+	// Visualisers for "primitive" data types boxed in a hx::Object
+	models->push_back(std::make_unique<models::dynamic::ModelReferenceDynamic>(std::wstring(L"hx::IntData")));
+	models->push_back(std::make_unique<models::dynamic::ModelReferenceDynamic>(std::wstring(L"hx::BoolData")));
+	models->push_back(std::make_unique<models::dynamic::ModelReferenceDynamic>(std::wstring(L"hx::DoubleData")));
+	models->push_back(std::make_unique<models::dynamic::ModelReferenceDynamic>(std::wstring(L"hx::Int64Data")));
+	models->push_back(std::make_unique<models::dynamic::ModelReferenceDynamic>(std::wstring(L"hx::PointerData")));
+
+	// Array visualisers
+	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"Array<*>")));
+	models->push_back(std::make_unique<models::array::ModelArrayObj>());
+
+	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"cpp::VirtualArray")));
+	models->push_back(std::make_unique<models::array::ModelVirtualArrayObj>());
+
+	// map visualisers
+	models->push_back(std::make_unique<models::map::ModelHash>());
+	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TIntElement<*>")));
+	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TInt64Element<*>")));
+	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TStringElement<*>")));
+	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TDynamicElement<*>")));
+
+	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<haxe::ds::IntMap_obj>")));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Int")));
+
+	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<haxe::ds::StringMap_obj>")));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"String")));
+
+	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<haxe::ds::ObjectMap_obj>")));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Object")));
+
+	// enums
+	models->push_back(std::make_unique<models::enums::ModelVariant>());
+	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<haxe::ds::Option_obj>")));
+	models->push_back(std::make_unique<models::enums::ModelEnumObj>(std::wstring(L"haxe::ds::Option_obj")));
+
+	// anon
+	models->push_back(std::make_unique<models::anon::ModelAnonObj>());
+	models->push_back(std::make_unique<models::anon::ModelVariantKey>());
 }
 
 hxcppdbg::core::drivers::dbgeng::NativeFrameReturn hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& _frame)
@@ -387,50 +428,6 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int _threadIndex, int _frameIndex)
 {
-	auto mString  = models::ModelString();
-	auto mDynamic = models::dynamic::ModelDynamic();
-
-	// Visualisers for "primitive" data types boxed in a hx::Object
-	auto mDynInt     = models::dynamic::ModelReferenceDynamic(L"hx::IntData");
-	auto mDynBool    = models::dynamic::ModelReferenceDynamic(L"hx::BoolData");
-	auto mDynDouble  = models::dynamic::ModelReferenceDynamic(L"hx::DoubleData");
-	auto mDynInt64   = models::dynamic::ModelReferenceDynamic(L"hx::Int64Data");
-	auto mDynPointer = models::dynamic::ModelReferenceDynamic(L"hx::PointerData");
-
-	// Array visualisers
-	auto mArray    = models::ModelObjectPtr(std::wstring(L"Array<*>"));
-	auto mArrayObj = models::array::ModelArrayObj();
-
-	auto mVirtualArray    = models::ModelObjectPtr(std::wstring(L"cpp::VirtualArray"));
-	auto mVirtualArrayObj = models::array::ModelVirtualArrayObj();
-
-	// map visualisers
-	auto mHash          = models::map::ModelHash();
-	auto mHashIntEl     = models::map::ModelHashElement(std::wstring(L"hx::TIntElement<*>"));
-	auto mHashInt64El   = models::map::ModelHashElement(std::wstring(L"hx::TInt64Element<*>"));
-	auto mHashStringEl  = models::map::ModelHashElement(std::wstring(L"hx::TStringElement<*>"));
-	auto mHashDynamicEl = models::map::ModelHashElement(std::wstring(L"hx::TDynamicElement<*>"));
-
-	auto mIntMap    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::IntMap_obj>"));
-	auto mIntMapObj = models::map::ModelMapObj(std::wstring(L"Int"));
-
-	auto mStringMap    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::StringMap_obj>"));
-	auto mStringMapObj = models::map::ModelMapObj(std::wstring(L"String"));
-
-	auto mObjectMap    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::ObjectMap_obj>"));
-	auto mObjectMapObj = models::map::ModelMapObj(std::wstring(L"Object"));
-
-	// enums
-
-	auto mVariant   = models::enums::ModelVariant();
-	auto mOption    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::Option_obj>"));
-	auto mOptionObj = models::enums::ModelEnumObj(std::wstring(L"haxe::ds::Option_obj"));
-
-	// anon
-
-	auto mAnon       = models::anon::ModelAnonObj();
-	auto mVariantKey = models::anon::ModelVariantKey();
-
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
 	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
