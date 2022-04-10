@@ -34,7 +34,7 @@
 
 #include "DbgEngObjects.hpp"
 #include "models/ModelObjectPtr.hpp"
-#include "models/StringExtensions.hpp"
+#include "models/ModelString.hpp"
 #include "models/dynamic/ModelDynamic.hpp"
 #include "models/dynamic/ModelReferenceDynamic.hpp"
 #include "models/array/ModelArrayObj.hpp"
@@ -387,7 +387,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int _threadIndex, int _frameIndex)
 {
-	auto mString  = models::StringExtensions();
+	auto mString  = models::ModelString();
 	auto mDynamic = models::dynamic::ModelDynamic();
 
 	// Visualisers for "primitive" data types boxed in a hx::Object

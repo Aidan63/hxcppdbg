@@ -12,7 +12,7 @@
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>
-        <file name='${DbgEngDir}/models/StringExtensions.cpp'/>
+        <file name='${DbgEngDir}/models/ModelString.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHash.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHashElement.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelMapObj.cpp'/>

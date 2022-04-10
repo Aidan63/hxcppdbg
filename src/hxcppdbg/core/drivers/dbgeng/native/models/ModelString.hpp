@@ -8,10 +8,10 @@
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class StringExtensions : public Debugger::DataModel::ProviderEx::ExtensionModel
+    class ModelString : public Debugger::DataModel::ProviderEx::ExtensionModel
     {
     public:
-        StringExtensions();
+        ModelString();
 
         std::wstring getString(const Debugger::DataModel::ClientEx::Object& _string);
         bool getIsUtf16(const Debugger::DataModel::ClientEx::Object& _string);
