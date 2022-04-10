@@ -19,6 +19,11 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ge
     for (auto i = 0; i < bucketCount; i++)
     {
         auto hashPtr = buckets.Dereference().GetValue();
+        if (hashPtr.As<ULONG64>() != NULL)
+        {
+            continue;
+        }
+
         auto hash    = hashPtr.Dereference().GetValue();
         auto type    = hash.TryCastToRuntimeType();
         auto display = type.TryToDisplayString().value_or(std::wstring(L"{ unable to read element }"));
