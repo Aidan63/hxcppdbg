@@ -22,6 +22,8 @@
         <file name='${DbgEngDir}/models/dynamic/ModelReferenceDynamic.cpp'/>
         <file name='${DbgEngDir}/models/enums/ModelEnumObj.cpp'/>
         <file name='${DbgEngDir}/models/enums/ModelVariant.cpp'/>
+        <file name='${DbgEngDir}/models/anon/ModelAnonObj.cpp'/>
+        <file name='${DbgEngDir}/models/anon/ModelVariantKey.cpp'/>
     </files>
 
     <files id='dbgeng'>

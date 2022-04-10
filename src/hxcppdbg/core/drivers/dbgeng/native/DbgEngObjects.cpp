@@ -44,6 +44,8 @@
 #include "models/map/ModelMapObj.hpp"
 #include "models/enums/ModelEnumObj.hpp"
 #include "models/enums/ModelVariant.hpp"
+#include "models/anon/ModelAnonObj.hpp"
+#include "models/anon/ModelVariantKey.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -422,6 +424,11 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 	auto mVariant   = models::enums::ModelVariant();
 	auto mOptionObj = models::enums::ModelEnumObj(std::wstring(L"haxe::ds::Option_obj"));
+
+	// anon
+
+	auto mAnon       = models::anon::ModelAnonObj();
+	auto mVariantKey = models::anon::ModelVariantKey();
 
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
