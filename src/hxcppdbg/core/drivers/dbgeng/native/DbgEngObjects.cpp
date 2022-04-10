@@ -423,6 +423,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	// enums
 
 	auto mVariant   = models::enums::ModelVariant();
+	auto mOption    = models::ModelObjectPtr(std::wstring(L"hx::ObjectPtr<haxe::ds::Option_obj>"));
 	auto mOptionObj = models::enums::ModelEnumObj(std::wstring(L"haxe::ds::Option_obj"));
 
 	// anon
