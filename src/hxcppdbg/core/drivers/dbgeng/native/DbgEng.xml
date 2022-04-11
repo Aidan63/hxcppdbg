@@ -11,6 +11,8 @@
         <file name='${DbgEngDir}/DbgEngObjects.cpp'/>
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
+        <file name='${DbgEngDir}/models/extensions/HxcppdbgExtensionModel.cpp'/>
+        <file name='${DbgEngDir}/models/extensions/HxcppdbgModelDataFactory.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>
         <file name='${DbgEngDir}/models/ModelString.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHash.cpp'/>

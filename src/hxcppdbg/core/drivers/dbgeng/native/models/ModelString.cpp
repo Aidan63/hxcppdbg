@@ -2,13 +2,16 @@
 
 #include "models/ModelString.hpp"
 
+#ifndef INCLUDED_hxcppdbg_core_model_ModelData
+#include <hxcppdbg/core/model/ModelData.h>
+#endif
+
 hxcppdbg::core::drivers::dbgeng::native::models::ModelString::ModelString()
-    : Debugger::DataModel::ProviderEx::ExtensionModel(Debugger::DataModel::ProviderEx::TypeSignatureRegistration(L"String"))
+    : extensions::HxcppdbgExtensionModel(std::wstring(L"String"))
 {
     AddReadOnlyProperty(L"Length" , this, &hxcppdbg::core::drivers::dbgeng::native::models::ModelString::getLength);
     AddReadOnlyProperty(L"IsUtf16", this, &hxcppdbg::core::drivers::dbgeng::native::models::ModelString::getIsUtf16);
     AddReadOnlyProperty(L"String" , this, &hxcppdbg::core::drivers::dbgeng::native::models::ModelString::getString);
-    AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::ModelString::getDisplayString);
 }
 
 int hxcppdbg::core::drivers::dbgeng::native::models::ModelString::getLength(const Debugger::DataModel::ClientEx::Object& _string)
@@ -31,21 +34,12 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::ModelString::getSt
         : readString<char>(length, _string.FieldValue(L"__s"));
 }
 
-std::wstring hxcppdbg::core::drivers::dbgeng::native::models::ModelString::getDisplayString(const Debugger::DataModel::ClientEx::Object& _string, const Debugger::DataModel::ClientEx::Metadata& metadata)
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::ModelString::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
-    auto isUtf16 = getIsUtf16(_string);
-    auto length  = getLength(_string);
-    auto value   = getString(_string);
-    auto output  = std::wstring();
+    auto str   = getString(object);
+    auto hxStr = String::create(str.c_str());
 
-    output.append(L"( length = ");
-    output.append(std::to_wstring(length));
-    output.append(L", utf16 = ");
-    output.append(std::to_wstring(isUtf16));
-    output.append(L" ) ");
-    output.append(value);
-
-    return output;
+    return hxcppdbg::core::model::ModelData_obj::MString(hxStr);
 }
 
 template<typename TChar>

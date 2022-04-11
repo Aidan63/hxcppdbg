@@ -33,6 +33,7 @@
 #endif
 
 #include "DbgEngObjects.hpp"
+#include "models/extensions/HxcppdbgModelDataFactory.hpp"
 #include "models/ModelObjectPtr.hpp"
 #include "models/ModelString.hpp"
 #include "models/dynamic/ModelDynamic.hpp"
@@ -136,6 +137,8 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events)
 	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), models(std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>())
 {
+	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory();
+
 	// Core hxcpp type models
 	models->push_back(std::make_unique<models::ModelString>());
 	models->push_back(std::make_unique<models::dynamic::ModelDynamic>());
