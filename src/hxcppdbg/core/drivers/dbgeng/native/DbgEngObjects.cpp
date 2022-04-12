@@ -32,10 +32,18 @@
 #include <haxe/io/Path.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_model_ModelData
+#include <hxcppdbg/core/model/ModelData.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_model_Model
+#include <hxcppdbg/core/model/Model.h>
+#endif
+
 #include "DbgEngObjects.hpp"
 #include "models/extensions/HxcppdbgModelDataFactory.hpp"
 #include "models/ModelObjectPtr.hpp"
-#include "models/ModelString.hpp"
+#include "models/basic/ModelString.hpp"
 #include "models/dynamic/ModelDynamic.hpp"
 #include "models/dynamic/ModelReferenceDynamic.hpp"
 #include "models/array/ModelArrayObj.hpp"
@@ -140,7 +148,7 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PD
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory();
 
 	// Core hxcpp type models
-	models->push_back(std::make_unique<models::ModelString>());
+	models->push_back(std::make_unique<models::basic::ModelString>());
 	models->push_back(std::make_unique<models::dynamic::ModelDynamic>());
 
 	// Visualisers for "primitive" data types boxed in a hx::Object
@@ -443,20 +451,60 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 		auto findThread = [sysID](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object thread) { return int{ thread.KeyValue(L"Id") } == sysID; };
 		auto thread     = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads").CallMethod(L"First", findThread);
 		auto findFrame  = [_frameIndex](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object frame) { return ULONG{ frame.KeyValue(L"Attributes").KeyValue(L"FrameNumber") } == _frameIndex; };
-		auto locals     = thread.KeyValue(L"Stack").KeyValue(L"Frames").CallMethod(L"First", findFrame).KeyValue(L"LocalVariables");
+		auto frame      = thread.KeyValue(L"Stack").KeyValue(L"Frames").CallMethod(L"First", findFrame);
 
-		auto output = Array<hxcppdbg::core::locals::NativeLocal>(0, 0);
-		for (auto&& local : locals.Keys())
+		try
 		{
-			auto name  = std::get<0>(local);
-			auto obj   = std::get<1>(local).GetValue();
-			auto type  = obj.Type().Name();
-			auto value = obj.TryToDisplayString().value_or(L"unknown");
+			auto locals = frame.KeyValue(L"LocalVariables");
+			auto output = Array<hxcppdbg::core::model::Model>(0, 0);
 
-			output->Add(hxcppdbg::core::locals::NativeLocal_obj::__new(String::create(name.c_str()), String::create(type.c_str()), String::create(value.c_str())));
+			for (auto&& local : locals.Keys())
+			{
+				auto object = std::get<1>(local).GetValue();
+				auto name   = String::create(std::get<0>(local).c_str());
+				auto type   = object.Type();
+
+				try
+				{
+					// We can't seem to create custom model extensions for these intrinsic types, so we just have to check them manually.
+					if (type.IsIntrinsic())
+					{
+						switch (type.IntrinsicKind())
+						{
+							case IntrinsicKind::IntrinsicBool:
+								output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MBool(object.As<bool>())));
+								break;
+							case IntrinsicKind::IntrinsicInt:
+								output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MInt(object.As<int>())));
+								break;
+							case IntrinsicKind::IntrinsicFloat:
+								output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MFloat(object.As<double>())));
+								break;
+							default:
+								throw std::exception("unsupported intrinsic");
+						}
+					}
+					else
+					{
+						output->Add(hxcppdbg::core::model::Model_obj::__new(name, object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>()));
+					}
+				}
+				catch (const std::exception& exn)
+				{
+					// If its not a supported intrinsic and it doesn't have the HxcppdbgModelData property then its not something we really know about, so report it as unknown.
+
+					output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(type.Name().c_str()))));
+				}		
+			}
+
+			return hxcppdbg::core::ds::Result_obj::Success(output);
 		}
+		catch (const std::exception& exn)
+		{
+			// If getting the local variables throws then there are no locals in this frame.
 
-		return hxcppdbg::core::ds::Result_obj::Success(output);
+			return hxcppdbg::core::ds::Result_obj::Success(Array<hxcppdbg::core::locals::NativeLocal>(0, 0));
+		}
 	}
 	catch (const std::exception& exn)
 	{

@@ -27,8 +27,8 @@ class Locals
                     {
                         case Native(_):
                             continue;
-                        case Haxe(_haxe, _native):
-                            Sys.println('\t${ _haxe.haxe }\t\t${ _haxe.type }\t\t${ _native.value }');
+                        case Haxe(model):
+                            Sys.println('\t${ model.name }\t\t${ model.data }');
                     }
                 }
             case Error(e):

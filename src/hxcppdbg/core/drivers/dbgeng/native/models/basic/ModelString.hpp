@@ -6,9 +6,9 @@
 
 #include "models/extensions/HxcppdbgExtensionModel.hpp"
 
-namespace hxcppdbg::core::drivers::dbgeng::native::models
+namespace hxcppdbg::core::drivers::dbgeng::native::models::basic
 {
-    class ModelString : public extensions::HxcppdbgExtensionModel
+    class ModelString : public hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel
     {
     public:
         ModelString();

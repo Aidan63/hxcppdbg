@@ -1,5 +1,6 @@
 package hxcppdbg.core.locals;
 
+import hxcppdbg.core.model.Model;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.stack.Stack;
@@ -35,7 +36,7 @@ class Locals
         }
     }
 
-    function mapNativeLocal(_frame : StackFrame, _native : NativeLocal)
+    function mapNativeLocal(_frame : StackFrame, _native : Model)
     {
         return switch _frame
         {
@@ -44,8 +45,8 @@ class Locals
                 {
                     case null:
                         LocalVariable.Native(_native);
-                    case found:
-                        LocalVariable.Haxe(found, _native);
+                    case _:
+                        LocalVariable.Haxe(_native);
                 }
             case Native(_):
                 LocalVariable.Native(_native);

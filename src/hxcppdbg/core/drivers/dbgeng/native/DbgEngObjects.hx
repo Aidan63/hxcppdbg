@@ -2,6 +2,7 @@ package hxcppdbg.core.drivers.dbgeng.native;
 
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.Model;
 import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
 
@@ -22,7 +23,7 @@ extern class DbgEngObjects
 
     function getFrame(_thread : Int, _index : Int) : Result<NativeFrameReturn, HResultException>;
 
-    function getVariables(_thread : Int, _frame : Int) : Result<Array<NativeLocal>, HResultException>;
+    function getVariables(_thread : Int, _frame : Int) : Result<Array<Model>, HResultException>;
 
     function getArguments(_thread : Int, _frame : Int) : Result<Array<NativeLocal>, HResultException>;
 
