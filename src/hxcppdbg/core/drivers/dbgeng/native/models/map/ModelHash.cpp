@@ -3,10 +3,19 @@
 #include "models/map/ModelHash.hpp"
 #include "fmt/xchar.h"
 
+#ifndef INCLUDED_hxcppdbg_core_model_ModelData
+#include <hxcppdbg/core/model/ModelData.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_model_Model
+#include <hxcppdbg/core/model/Model.h>
+#endif
+
 hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ModelHash()
-    : Debugger::DataModel::ProviderEx::ExtensionModel(Debugger::DataModel::ProviderEx::TypeSignatureRegistration(L"hx::Hash<*>"))
+    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(L"hx::Hash<*>")
 {
     AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getDisplayString);
+    AddGeneratorFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getIterator);
 }
 
 std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)
@@ -19,7 +28,7 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ge
     for (auto i = 0; i < bucketCount; i++)
     {
         auto hashPtr = buckets.Dereference().GetValue();
-        if (hashPtr.As<ULONG64>() != NULL)
+        if (hashPtr.As<ULONG64>() == NULL)
         {
             continue;
         }
@@ -37,4 +46,40 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ge
     output.append(L"]");
 
     return output;
+}
+
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+{
+    auto output = Array<hxcppdbg::core::model::Model>(0, 0);
+
+    for (auto&& element : object)
+    {
+        output->Add(element.As<hxcppdbg::core::model::Model>());
+    }
+
+    return hxcppdbg::core::model::ModelData_obj::MMap(output);
+}
+
+std::experimental::generator<hxcppdbg::core::model::Model> hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getIterator(const Debugger::DataModel::ClientEx::Object& object)
+{
+    auto bucketCount = object.FieldValue(L"bucketCount").As<int>();
+    auto buckets     = object.FieldValue(L"bucket");
+
+    for (auto i = 0; i < bucketCount; i++)
+    {
+        // If the current hash pointer is null, skip, not sure if we can exit early or not.
+        auto pointer = buckets.Dereference().GetValue();
+        if (pointer.As<ULONG64>() == NULL)
+        {
+            continue;
+        }
+
+        auto elements = pointer.Dereference().GetValue();
+        for (auto&& element : elements)
+        {
+            co_yield(element.As<hxcppdbg::core::model::Model>());
+        }
+
+        buckets++;
+    }
 }

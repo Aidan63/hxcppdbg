@@ -3,6 +3,7 @@
 
     <compiler id="MSVC" exe="cl.exe">
         <flag value = "/std:c++17"/>
+        <flag value = "/await"/>
     </compiler>
 
     <files id='haxe'>
@@ -12,7 +13,9 @@
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgExtensionModel.cpp'/>
+        <file name='${DbgEngDir}/models/extensions/HxcppdbgModelFactory.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgModelDataFactory.cpp'/>
+        <file name='${DbgEngDir}/models/extensions/Utils.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>
         <file name='${DbgEngDir}/models/basic/ModelString.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHash.cpp'/>

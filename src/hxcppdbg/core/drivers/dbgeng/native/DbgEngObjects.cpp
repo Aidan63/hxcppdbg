@@ -1,5 +1,23 @@
 #include <hxcpp.h>
 
+#include "DbgEngObjects.hpp"
+#include "models/extensions/HxcppdbgModelFactory.hpp"
+#include "models/extensions/HxcppdbgModelDataFactory.hpp"
+#include "models/extensions/Utils.hpp"
+#include "models/ModelObjectPtr.hpp"
+#include "models/basic/ModelString.hpp"
+#include "models/dynamic/ModelDynamic.hpp"
+#include "models/dynamic/ModelReferenceDynamic.hpp"
+#include "models/array/ModelArrayObj.hpp"
+#include "models/array/ModelVirtualArrayObj.hpp"
+#include "models/map/ModelHash.hpp"
+#include "models/map/ModelHashElement.hpp"
+#include "models/map/ModelMapObj.hpp"
+#include "models/enums/ModelEnumObj.hpp"
+#include "models/enums/ModelVariant.hpp"
+#include "models/anon/ModelAnonObj.hpp"
+#include "models/anon/ModelVariantKey.hpp"
+
 #ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_utils_HResultException
 #include <hxcppdbg/core/drivers/dbgeng/utils/HResultException.h>
 #endif
@@ -39,22 +57,6 @@
 #ifndef INCLUDED_hxcppdbg_core_model_Model
 #include <hxcppdbg/core/model/Model.h>
 #endif
-
-#include "DbgEngObjects.hpp"
-#include "models/extensions/HxcppdbgModelDataFactory.hpp"
-#include "models/ModelObjectPtr.hpp"
-#include "models/basic/ModelString.hpp"
-#include "models/dynamic/ModelDynamic.hpp"
-#include "models/dynamic/ModelReferenceDynamic.hpp"
-#include "models/array/ModelArrayObj.hpp"
-#include "models/array/ModelVirtualArrayObj.hpp"
-#include "models/map/ModelHash.hpp"
-#include "models/map/ModelHashElement.hpp"
-#include "models/map/ModelMapObj.hpp"
-#include "models/enums/ModelEnumObj.hpp"
-#include "models/enums/ModelVariant.hpp"
-#include "models/anon/ModelAnonObj.hpp"
-#include "models/anon/ModelVariantKey.hpp"
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
@@ -145,6 +147,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events)
 	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), models(std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>())
 {
+	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory();
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory();
 
 	// Core hxcpp type models
@@ -463,26 +466,14 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 				auto object = std::get<1>(local).GetValue();
 				auto name   = String::create(std::get<0>(local).c_str());
 				auto type   = object.Type();
+				auto tName  = type.Name();
 
 				try
 				{
 					// We can't seem to create custom model extensions for these intrinsic types, so we just have to check them manually.
 					if (type.IsIntrinsic())
 					{
-						switch (type.IntrinsicKind())
-						{
-							case IntrinsicKind::IntrinsicBool:
-								output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MBool(object.As<bool>())));
-								break;
-							case IntrinsicKind::IntrinsicInt:
-								output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MInt(object.As<int>())));
-								break;
-							case IntrinsicKind::IntrinsicFloat:
-								output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MFloat(object.As<double>())));
-								break;
-							default:
-								throw std::exception("unsupported intrinsic");
-						}
+						output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)));
 					}
 					else
 					{
@@ -493,7 +484,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 				{
 					// If its not a supported intrinsic and it doesn't have the HxcppdbgModelData property then its not something we really know about, so report it as unknown.
 
-					output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(type.Name().c_str()))));
+					output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(tName.c_str()))));
 				}		
 			}
 

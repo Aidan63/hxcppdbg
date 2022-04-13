@@ -4,7 +4,10 @@
 #include <hxcpp.h>
 #endif
 
-#include "DbgModelClientEx.hpp"
+#include "models/extensions/HxcppdbgExtensionModel.hpp"
+#include <experimental/generator>
+
+HX_DECLARE_CLASS3(hxcppdbg, core, model, Model)
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models::map
 {
@@ -13,6 +16,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::map
     public:
         ModelHashElement(std::wstring signature);
 
-        std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& _string, const Debugger::DataModel::ClientEx::Metadata& _metadata);
+        std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata);
+
+        std::experimental::generator<hxcppdbg::core::model::Model> getIterator(const Debugger::DataModel::ClientEx::Object& object);
     };
 }

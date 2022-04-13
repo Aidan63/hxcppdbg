@@ -3,14 +3,14 @@ package hxcppdbg.core.model;
 enum ModelData
 {
     MNull;
-    MInt(v : Int);
-    MFloat(v : Float);
-    MBool(v : Bool);
-    MString(v : String);
-    MArray(v : Array<ModelData>);
-    MMap(v : Array<Model>);
-    MEnum(tag : String, arguments : Array<Model>);
-    MDynamic(v : ModelData);
-    MAnon(v : Array<ModelData>);
-    MUnknown(v : String);
+    MInt(i : Int);
+    MFloat(f : Float);
+    MBool(b : Bool);
+    MString(s : String);
+    MArray(items : Array<ModelData>);
+    MMap(items : Array<Model>);
+    MEnum(name : String, arguments : Array<Model>);
+    MDynamic(inner : ModelData);
+    MAnon(fields : Array<Model>);
+    MUnknown(type : String);
 }

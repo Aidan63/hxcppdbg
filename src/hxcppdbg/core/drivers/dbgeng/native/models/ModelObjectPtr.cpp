@@ -6,6 +6,10 @@
 #include <hxcppdbg/core/model/ModelData.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_model_Model
+#include <hxcppdbg/core/model/Model.h>
+#endif
+
 hxcppdbg::core::drivers::dbgeng::native::models::ModelObjectPtr::ModelObjectPtr(std::wstring signature)
     : extensions::HxcppdbgExtensionModel(signature)
 {
@@ -23,9 +27,19 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::ModelObjectPtr::ge
 
 hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::ModelObjectPtr::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
-    auto mPtr = object.FieldValue(L"mPtr");
-    auto obj  = mPtr.Dereference().GetValue().TryCastToRuntimeType();
-    auto data = obj.KeyValue(L"HxcppModelData");
+    auto pointee =
+        object
+            .FieldValue(L"mPtr")
+            .Dereference()
+            .GetValue()
+            .TryCastToRuntimeType();
+    auto name =
+        pointee
+            .Type()
+            .Name();
 
-    return data.As<hxcppdbg::core::model::ModelData>();
+    return
+        pointee
+            .KeyValue(L"HxcppdbgModelData")
+            .As<hxcppdbg::core::model::ModelData>();
 }

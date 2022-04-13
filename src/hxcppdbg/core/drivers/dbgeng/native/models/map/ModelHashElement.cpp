@@ -2,6 +2,14 @@
 
 #include "models/map/ModelHashElement.hpp"
 
+#ifndef INCLUDED_hxcppdbg_core_model_ModelData
+#include <hxcppdbg/core/model/ModelData.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_model_Model
+#include <hxcppdbg/core/model/Model.h>
+#endif
+
 hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::ModelHashElement(std::wstring signature)
     : Debugger::DataModel::ProviderEx::ExtensionModel(Debugger::DataModel::ProviderEx::TypeSignatureRegistration(signature))
 {
@@ -32,4 +40,27 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElem
     }
 
     return output;
+}
+
+std::experimental::generator<hxcppdbg::core::model::Model> hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::getIterator(const Debugger::DataModel::ClientEx::Object& object)
+{
+    auto nextPtr = ULONG64{ NULL };
+    auto current = object;
+
+    while (true)
+    {
+        auto key     = current.FieldValue(L"key").KeyValue(L"String").As<std::wstring>();
+        auto value   = current.FieldValue(L"value").As<hxcppdbg::core::model::ModelData>();
+        auto model   = hxcppdbg::core::model::Model_obj::__new(String::create(key.c_str()), value);
+
+        co_yield(model);
+
+        auto next = current.FieldValue(L"next");
+        if (next.As<ULONG64>() == NULL)
+        {
+            break;
+        }
+
+        current = next.Dereference().GetValue();
+    }
 }
