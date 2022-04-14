@@ -14,7 +14,7 @@
 hxcppdbg::core::drivers::dbgeng::native::models::map::ModelMapObj::ModelMapObj(std::wstring signature)
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(fmt::to_wstring(fmt::format(L"haxe::ds::{0}Map_obj", signature)))
 {
-    AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::map::ModelMapObj::getDisplayString);
+    AddStringDisplayableFunction(this, &ModelMapObj::getDisplayString);
 }
 
 std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelMapObj::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)

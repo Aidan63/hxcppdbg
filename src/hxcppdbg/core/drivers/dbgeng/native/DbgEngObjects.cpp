@@ -464,27 +464,27 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 			for (auto&& local : locals.Keys())
 			{
 				auto object = std::get<1>(local).GetValue();
-				auto name   = String::create(std::get<0>(local).c_str());
+				auto key    = hxcppdbg::core::model::ModelData_obj::MString(String::create(std::get<0>(local).c_str()));
 				auto type   = object.Type();
-				auto tName  = type.Name();
+				auto name   = type.Name();
 
 				try
 				{
 					// We can't seem to create custom model extensions for these intrinsic types, so we just have to check them manually.
 					if (type.IsIntrinsic())
 					{
-						output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)));
+						output->Add(hxcppdbg::core::model::Model_obj::__new(key, hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)));
 					}
 					else
 					{
-						output->Add(hxcppdbg::core::model::Model_obj::__new(name, object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>()));
+						output->Add(hxcppdbg::core::model::Model_obj::__new(key, object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>()));
 					}
 				}
 				catch (const std::exception& exn)
 				{
 					// If its not a supported intrinsic and it doesn't have the HxcppdbgModelData property then its not something we really know about, so report it as unknown.
 
-					output->Add(hxcppdbg::core::model::Model_obj::__new(name, hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(tName.c_str()))));
+					output->Add(hxcppdbg::core::model::Model_obj::__new(key, hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(name.c_str()))));
 				}		
 			}
 

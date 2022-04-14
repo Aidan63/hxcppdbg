@@ -2,13 +2,13 @@ package hxcppdbg.core.model;
 
 class Model
 {
-    public final name : String;
+    public final key : ModelData;
 
     public final data : ModelData;
 
-    public function new(_name, _data)
+    public function new(_key, _data)
     {
-        name = _name;
+        key  = _key;
         data = _data;
     }
 }

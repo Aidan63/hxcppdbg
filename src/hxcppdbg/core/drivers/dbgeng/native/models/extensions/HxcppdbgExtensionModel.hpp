@@ -5,6 +5,7 @@
 #endif
 
 #include "DbgModelClientEx.hpp"
+#include "models/extensions/HxcppdbgModelFactory.hpp"
 #include "models/extensions/HxcppdbgModelDataFactory.hpp"
 
 HX_DECLARE_CLASS3(hxcppdbg, core, model, Model)
@@ -45,12 +46,12 @@ namespace Debugger::DataModel::ClientEx::Boxing
     {
         static Object Box(const hxcppdbg::core::model::Model& model)
         {
-            return hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance->CreateInstance(model);
+            return hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance->CreateInstance(model);
         }
 
         static hxcppdbg::core::model::Model Unbox(const Object& src)
         {
-            return hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance->GetStoredInstance(src);
+            return hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance->GetStoredInstance(src);
         }
     };
 }

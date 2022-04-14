@@ -14,8 +14,8 @@
 hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ModelHash()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(L"hx::Hash<*>")
 {
-    AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getDisplayString);
-    AddGeneratorFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getIterator);
+    AddStringDisplayableFunction(this, &ModelHash::getDisplayString);
+    AddGeneratorFunction(this, &ModelHash::getIterator);
 }
 
 std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)
@@ -54,9 +54,11 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models
 
     for (auto&& element : object)
     {
-        output->Add(element.As<hxcppdbg::core::model::Model>());
-    }
+        auto m = element.As<hxcppdbg::core::model::Model>();
 
+        output->Add(m);
+    }
+    
     return hxcppdbg::core::model::ModelData_obj::MMap(output);
 }
 
@@ -74,8 +76,8 @@ std::experimental::generator<hxcppdbg::core::model::Model> hxcppdbg::core::drive
             continue;
         }
 
-        auto elements = pointer.Dereference().GetValue();
-        for (auto&& element : elements)
+        auto bucket = pointer.Dereference().GetValue();
+        for (auto&& element : bucket)
         {
             co_yield(element.As<hxcppdbg::core::model::Model>());
         }

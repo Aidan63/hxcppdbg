@@ -41,7 +41,7 @@ class Locals
         return switch _frame
         {
             case Haxe(haxe, _):
-                switch haxe.func.variables.find(v -> v.cpp == _native.name)
+                switch haxe.func.variables.find(v -> isLocalVar(v.cpp, _native))
                 {
                     case null:
                         LocalVariable.Native(_native);
@@ -50,6 +50,17 @@ class Locals
                 }
             case Native(_):
                 LocalVariable.Native(_native);
+        }
+    }
+
+    function isLocalVar(_variable : String, _native : Model)
+    {
+        return switch _native.key
+        {
+            case MString(s):
+                s == _variable;
+            case _:
+                false;
         }
     }
 }
