@@ -13,8 +13,6 @@
 hxcppdbg::core::drivers::dbgeng::native::models::basic::ModelString::ModelString()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"String"))
 {
-    AddReadOnlyProperty(L"Length" , this, &hxcppdbg::core::drivers::dbgeng::native::models::basic::ModelString::getLength);
-    AddReadOnlyProperty(L"IsUtf16", this, &hxcppdbg::core::drivers::dbgeng::native::models::basic::ModelString::getIsUtf16);
     AddReadOnlyProperty(L"String" , this, &hxcppdbg::core::drivers::dbgeng::native::models::basic::ModelString::getString);
 }
 
