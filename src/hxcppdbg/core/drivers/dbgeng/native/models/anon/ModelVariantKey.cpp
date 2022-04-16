@@ -3,17 +3,29 @@
 #include "models/anon/ModelVariantKey.hpp"
 #include "fmt/xchar.h"
 
+#ifndef INCLUDED_hxcppdbg_core_model_ModelData
+#include <hxcppdbg/core/model/ModelData.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_model_Model
+#include <hxcppdbg/core/model/Model.h>
+#endif
+
 hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelVariantKey::ModelVariantKey()
-    : Debugger::DataModel::ProviderEx::ExtensionModel(Debugger::DataModel::ProviderEx::TypeSignatureRegistration(L"hx::Anon_obj::VariantKey"))
+    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"hx::Anon_obj::VariantKey"))
 {
-    AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelVariantKey::getDisplayString);
+    AddReadOnlyProperty(L"HxcppdbgModel", this, &ModelVariantKey::getHxcppdbgModel);
 }
 
-std::wstring hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelVariantKey::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelVariantKey::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
-    auto key    = object.FieldValue(L"key").KeyValue(L"String").As<std::wstring>();
-    auto value  = object.FieldValue(L"value").ToDisplayString();
-    auto output = fmt::to_wstring(fmt::format(L"( {0} : {1} )", key, value));
+    throw std::exception("");
+}
 
-    return output;
+hxcppdbg::core::model::Model hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelVariantKey::getHxcppdbgModel(const Debugger::DataModel::ClientEx::Object& object)
+{
+    auto key   = object.FieldValue(L"key").KeyValue(L"String").As<std::wstring>();
+    auto value = object.FieldValue(L"value").KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
+
+    return hxcppdbg::core::model::Model_obj::__new(hxcppdbg::core::model::ModelData_obj::MString(String::create(key.c_str(), key.length())), value);
 }

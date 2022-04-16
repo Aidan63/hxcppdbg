@@ -4,15 +4,15 @@
 #include <hxcpp.h>
 #endif
 
-#include "DbgModelClientEx.hpp"
+#include "models/extensions/HxcppdbgExtensionModel.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models::anon
 {
-    class ModelAnonObj : public Debugger::DataModel::ProviderEx::ExtensionModel
+    class ModelAnonObj : public hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel
     {
     public:
         ModelAnonObj();
 
-        std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata);
+        hxcppdbg::core::model::ModelData getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
     };
 }
