@@ -59,12 +59,13 @@ std::experimental::generator<hxcppdbg::core::model::Model> hxcppdbg::core::drive
         auto key       = current.FieldValue(L"key");
         auto keyData   = key.Type().IsIntrinsic()
             ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(key)
-            : key.As<hxcppdbg::core::model::ModelData>();
+            : key.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
 
         auto value     = current.FieldValue(L"value");
+        auto type      = value.Type().Name();
         auto valueData = value.Type().IsIntrinsic()
             ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(value)
-            : value.As<hxcppdbg::core::model::ModelData>();
+            : value.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
 
         auto model = hxcppdbg::core::model::Model_obj::__new(keyData, valueData);
 
