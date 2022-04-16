@@ -1,40 +1,40 @@
 #include <hxcpp.h>
 
 #include "models/enums/ModelEnumObj.hpp"
-
 #include "fmt/xchar.h"
 
+#ifndef INCLUDED_hxcppdbg_core_model_ModelData
+#include <hxcppdbg/core/model/ModelData.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_model_Model
+#include <hxcppdbg/core/model/Model.h>
+#endif
+
 hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::ModelEnumObj(std::wstring signature)
-    : Debugger::DataModel::ProviderEx::ExtensionModel(Debugger::DataModel::ProviderEx::TypeSignatureRegistration(signature))
+    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(signature)
 {
-    AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::getDisplayString);
+    //
 }
 
-std::wstring hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
     auto tag        = object.FieldValue(L"_hx_tag").KeyValue(L"String").As<std::wstring>();
     auto fieldCount = object.FieldValue(L"mFixedFields").As<int>();
+    auto fields     = Array<Dynamic>(fieldCount, fieldCount);
 
     if (fieldCount == 0)
     {
-        return tag;
+        return hxcppdbg::core::model::ModelData_obj::MEnum(String::create(tag.c_str(), tag.size()), fields);
     }
-
-    tag.push_back(L'(');
 
     auto variants = object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, object, L"(cpp::Variant *)(self + 1)");
     for (auto i = 0; i < fieldCount; i++)
     {
-        auto variant = variants.Dereference().GetValue();
-        auto display = variant.ToDisplayString();
-
-        tag.append(display);
-        tag.append(i < fieldCount - 1 ? L", " : L"");
+        fields[i] = variants.Dereference().GetValue().KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
 
         variants++;
     }
 
-    tag.push_back(L')');
-
-    return tag;
+    return hxcppdbg::core::model::ModelData_obj::MEnum(String::create(tag.c_str(), tag.size()), fields);
 }

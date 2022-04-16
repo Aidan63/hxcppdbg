@@ -1,6 +1,15 @@
 #include <hxcpp.h>
 
 #include "models/enums/ModelVariant.hpp"
+#include "models/extensions/Utils.hpp"
+
+#ifndef INCLUDED_hxcppdbg_core_model_ModelData
+#include <hxcppdbg/core/model/ModelData.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_model_Model
+#include <hxcppdbg/core/model/Model.h>
+#endif
 
 enum VariantType
 {
@@ -13,12 +22,12 @@ enum VariantType
 };
 
 hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelVariant::ModelVariant()
-    : Debugger::DataModel::ProviderEx::ExtensionModel(Debugger::DataModel::ProviderEx::TypeSignatureRegistration(L"cpp::Variant"))
+    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"cpp::Variant"))
 {
-    AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelVariant::getDisplayString);
+    //
 }
 
-std::wstring hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelVariant::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelVariant::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
     switch (object.FieldValue(L"type").As<int>())
     {
@@ -30,46 +39,44 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelVarian
                         .Dereference()
                         .GetValue()
                         .TryCastToRuntimeType()
-                        .TryToDisplayString()
-                        .value_or(L"unable to read object");
+                        .KeyValue(L"HxcppdbgModelData")
+                        .As<hxcppdbg::core::model::ModelData>();
             }
 
         case VariantType::typeString:
             {
                 auto strPointer = object.FieldValue(L"valStringPtr");
                 auto strLength  = object.FieldValue(L"valStringLen").As<int>();
-                auto string     = std::wstring();
+                auto string     = std::vector<char>(strLength);
 
                 for (auto i = 0; i < strLength; i++)
                 {
-                    auto c = strPointer.Dereference().As<char>();
-
-                    string.push_back(c);
+                    string[i] = strPointer.Dereference().As<char>();
 
                     strPointer++;
                 }
 
-                return string;
+                return hxcppdbg::core::model::ModelData_obj::MString(String::create(string.data(), string.size()));
             }
 
         case VariantType::typeDouble:
             {
-                return std::to_wstring(object.FieldValue(L"valDouble").As<double>());
+                return hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object.FieldValue(L"valDouble"));
             }
 
         case VariantType::typeInt:
             {
-                return std::to_wstring(object.FieldValue(L"valInt").As<int>());
+                return hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object.FieldValue(L"valInt"));
             }
 
         case VariantType::typeInt64:
             {
-                return std::to_wstring(object.FieldValue(L"valInt64").As<int64_t>());
+                return hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object.FieldValue(L"valInt64"));
             }
 
         case VariantType::typeBool:
             {
-                return std::to_wstring(object.FieldValue(L"valBool").As<bool>());
+                return hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object.FieldValue(L"valBool"));
             }
 
         default:
