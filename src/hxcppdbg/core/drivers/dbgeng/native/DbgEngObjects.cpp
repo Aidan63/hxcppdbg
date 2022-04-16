@@ -6,6 +6,7 @@
 #include "models/extensions/Utils.hpp"
 #include "models/ModelObjectPtr.hpp"
 #include "models/basic/ModelString.hpp"
+#include "models/basic/ModelStringData.hpp"
 #include "models/dynamic/ModelDynamic.hpp"
 #include "models/dynamic/ModelReferenceDynamic.hpp"
 #include "models/array/ModelArrayObj.hpp"
@@ -152,6 +153,7 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PD
 
 	// Core hxcpp type models
 	models->push_back(std::make_unique<models::basic::ModelString>());
+	models->push_back(std::make_unique<models::basic::ModelStringData>());
 	models->push_back(std::make_unique<models::dynamic::ModelDynamic>());
 
 	// Visualisers for "primitive" data types boxed in a hx::Object

@@ -18,6 +18,7 @@
         <file name='${DbgEngDir}/models/extensions/Utils.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>
         <file name='${DbgEngDir}/models/basic/ModelString.cpp'/>
+        <file name='${DbgEngDir}/models/basic/ModelStringData.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHash.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHashElement.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelMapObj.cpp'/>
