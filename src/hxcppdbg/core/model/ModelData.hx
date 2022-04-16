@@ -9,7 +9,7 @@ enum ModelData
     MString(s : String);
     MArray(items : Array<ModelData>);
     MMap(items : Array<Model>);
-    MEnum(name : String, arguments : Array<Model>);
+    MEnum(name : String, arguments : Array<ModelData>);
     MDynamic(inner : ModelData);
     MAnon(fields : Array<Model>);
     MUnknown(type : String);

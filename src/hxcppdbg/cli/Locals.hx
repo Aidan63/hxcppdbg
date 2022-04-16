@@ -1,6 +1,7 @@
 package hxcppdbg.cli;
 
 import hxcppdbg.core.locals.Locals in CoreLocals;
+import hxcppdbg.core.model.Printer;
 
 using Lambda;
 using StringTools;
@@ -28,7 +29,7 @@ class Locals
                         case Native(_):
                             continue;
                         case Haxe(model):
-                            Sys.println('\t${ model.key }\t\t${ model.data }');
+                            Sys.println('\t${ printModel(model) }');
                     }
                 }
             case Error(e):
