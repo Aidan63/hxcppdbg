@@ -14,12 +14,7 @@
 hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelReferenceDynamic::ModelReferenceDynamic(std::wstring signature)
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(signature)
 {
-    AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelReferenceDynamic::getDisplayString);
-}
-
-std::wstring hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelReferenceDynamic::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)
-{
-    return object.FieldValue(L"mValue").TryToDisplayString().value_or(std::wstring(L"unable to print object"));
+    //
 }
 
 hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelReferenceDynamic::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)

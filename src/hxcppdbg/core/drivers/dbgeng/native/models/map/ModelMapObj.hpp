@@ -13,8 +13,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::map
     public:
         ModelMapObj(std::wstring signature);
 
-        std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& _string, const Debugger::DataModel::ClientEx::Metadata& _metadata);
-
         hxcppdbg::core::model::ModelData getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
     };
 }

@@ -14,34 +14,7 @@
 hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::ModelHashElement(std::wstring signature)
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(signature)
 {
-    AddStringDisplayableFunction(this, &ModelHashElement::getDisplayString);
     AddGeneratorFunction(this, &ModelHashElement::getIterator);
-}
-
-std::wstring hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)
-{
-    auto key     = object.FieldValue(L"key").TryToDisplayString().value_or(std::wstring(L"unable to read key"));
-    auto value   = object.FieldValue(L"value").TryToDisplayString().value_or(std::wstring(L"unable to read key"));
-    auto nextPtr = object.FieldValue(L"next");
-
-    auto output = std::wstring();
-    output.append(L"{ ");
-    output.append(key);
-    output.append(L" => ");
-    output.append(value);
-    output.append(L" }");
-
-    if (nextPtr.As<ULONG64>() != NULL)
-    {
-        output.append(L", ");
-
-        auto next    = nextPtr.Dereference().GetValue();
-        auto display = next.TryToDisplayString().value_or(std::wstring(L"{ unable to read element }"));
-        
-        output.append(display);
-    }
-
-    return output;
 }
 
 hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
@@ -62,7 +35,6 @@ std::experimental::generator<hxcppdbg::core::model::Model> hxcppdbg::core::drive
             : key.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
 
         auto value     = current.FieldValue(L"value");
-        auto type      = value.Type().Name();
         auto valueData = value.Type().IsIntrinsic()
             ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(value)
             : value.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();

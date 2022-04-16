@@ -13,8 +13,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::dynamic
     public:
         ModelDynamic();
 
-        std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata);
-
         hxcppdbg::core::model::ModelData getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
     };
 }

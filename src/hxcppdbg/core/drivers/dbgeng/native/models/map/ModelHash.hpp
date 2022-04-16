@@ -16,8 +16,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::map
     public:
         ModelHash();
 
-        std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& _string, const Debugger::DataModel::ClientEx::Metadata& _metadata);
-
         hxcppdbg::core::model::ModelData getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
 
         std::experimental::generator<hxcppdbg::core::model::Model> getIterator(const Debugger::DataModel::ClientEx::Object& object);
