@@ -73,6 +73,8 @@ std::experimental::generator<hxcppdbg::core::model::Model> hxcppdbg::core::drive
         auto pointer = buckets.Dereference().GetValue();
         if (pointer.As<ULONG64>() == NULL)
         {
+            buckets++;
+
             continue;
         }
 
