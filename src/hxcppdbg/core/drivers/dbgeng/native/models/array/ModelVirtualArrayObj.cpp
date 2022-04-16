@@ -25,25 +25,7 @@ enum StoreType {
 hxcppdbg::core::drivers::dbgeng::native::models::array::ModelVirtualArrayObj::ModelVirtualArrayObj()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(L"cpp::VirtualArray_obj")
 {
-    AddStringDisplayableFunction(this, &hxcppdbg::core::drivers::dbgeng::native::models::array::ModelVirtualArrayObj::getDisplayString);
-}
-
-std::wstring hxcppdbg::core::drivers::dbgeng::native::models::array::ModelVirtualArrayObj::getDisplayString(const Debugger::DataModel::ClientEx::Object& object, const Debugger::DataModel::ClientEx::Metadata& metadata)
-{
-    auto storeType = object.FieldValue(L"store").As<int>();
-
-    if (storeType == StoreType::arrayEmpty)
-    {
-        return std::wstring(L"( length = 0 allocated = 0 ) []");
-    }
-    if (storeType == StoreType::arrayNull)
-    {
-        return std::wstring(L"null");
-    }
-
-    auto arrayBase = object.FieldValue(L"base").Dereference().GetValue().TryCastToRuntimeType();
-
-    return arrayBase.TryToDisplayString().value_or(std::wstring(L"Unable to display array"));
+    //
 }
 
 hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::array::ModelVirtualArrayObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
