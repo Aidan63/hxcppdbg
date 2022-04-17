@@ -18,6 +18,7 @@
 #include "models/enums/ModelVariant.hpp"
 #include "models/anon/ModelAnonObj.hpp"
 #include "models/anon/ModelVariantKey.hpp"
+#include "fmt/xchar.h"
 
 #ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_utils_HResultException
 #include <hxcppdbg/core/drivers/dbgeng/utils/HResultException.h>
@@ -63,7 +64,7 @@ IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::m
 
 IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::host = nullptr;
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile(String file)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile(String file, Array<String> enums)
 {
 	auto result = HRESULT{ S_OK };
 
@@ -142,10 +143,10 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 		return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING(""), nullptr, nullptr));
 	}
 
-	return hxcppdbg::core::ds::Result_obj::Success(new DbgEngObjects_obj(client, control, symbols, system, std::move(events)));
+	return hxcppdbg::core::ds::Result_obj::Success(new DbgEngObjects_obj(client, control, symbols, system, std::move(events), enums));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events)
+hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Array<String> enums)
 	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), models(std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>())
 {
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory();
@@ -188,8 +189,15 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PD
 
 	// enums
 	models->push_back(std::make_unique<models::enums::ModelVariant>());
-	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<haxe::ds::Option_obj>")));
-	models->push_back(std::make_unique<models::enums::ModelEnumObj>(std::wstring(L"haxe::ds::Option_obj")));
+
+	for (auto i = 0; i < enums->length; i++)
+	{
+		auto cStr = std::wstring(enums[i].wchar_str());
+		auto oPtr = fmt::to_wstring(fmt::format(L"hx::ObjectPtr<{0}>", cStr));
+
+		models->push_back(std::make_unique<models::ModelObjectPtr>(oPtr));
+		models->push_back(std::make_unique<models::enums::ModelEnumObj>(cStr));
+	}
 
 	// anon
 	models->push_back(std::make_unique<models::anon::ModelAnonObj>());

@@ -2,7 +2,6 @@ package hxcppdbg.core;
 
 import sys.io.File;
 import haxe.Exception;
-import haxe.ds.Option;
 import json2object.JsonParser;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
@@ -36,7 +35,7 @@ class Session
         sourcemap   = parser.fromJson(File.getContent(_sourcemap));
         driver      =
 #if HX_WINDOWS
-        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target);
+        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target, sourcemap.enums.map(e -> e.name.cpp));
 #else
         new hxcppdbg.core.drivers.lldb.LLDBDriver(_target);
 #end

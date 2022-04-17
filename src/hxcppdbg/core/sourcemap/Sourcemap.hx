@@ -3,6 +3,10 @@ package hxcppdbg.core.sourcemap;
 @:structInit class Sourcemap
 {
     public final files : Array<GeneratedFile>;
+
+    public final classes : Array<GeneratedClass>;
+
+    public final enums : Array<GeneratedEnum>;
 }
 
 @:structInit class GeneratedFile
@@ -14,6 +18,20 @@ package hxcppdbg.core.sourcemap;
     public final type : String;
 
     public final functions : Array<Function>;
+}
+
+@:structInit class GeneratedClass
+{
+    public final name : NameMap;
+
+    public final fields : Array<NameMap>;
+}
+
+@:structInit class GeneratedEnum
+{
+    public final name : NameMap;
+
+    public final constructors : Array<NameMap>;
 }
 
 @:structInit class Closure
