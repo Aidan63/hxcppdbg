@@ -2,8 +2,6 @@ package hxcppdbg.core.model;
 
 function printModel(_model : Model)
 {
-    trace(_model);
-
     return '${ printModelData(_model.key) } : ${ printModelData(_model.data) }';
 }
 
