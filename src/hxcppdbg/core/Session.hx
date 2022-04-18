@@ -1,5 +1,6 @@
 package hxcppdbg.core;
 
+import hxcppdbg.core.evaluator.Evaluator;
 import sys.io.File;
 import haxe.Exception;
 import json2object.JsonParser;
@@ -29,6 +30,8 @@ class Session
 
     public final locals : Locals;
 
+    public final eval : Evaluator;
+
     public function new(_target : String, _sourcemap : String)
     {
         parser      = new JsonParser<Sourcemap>();
@@ -42,6 +45,7 @@ class Session
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
         stack       = new Stack(sourcemap, driver.stack);
         locals      = new Locals(sourcemap, driver.locals, stack);
+        eval        = new Evaluator(sourcemap, driver.locals, stack);
     }
 
     public function start()

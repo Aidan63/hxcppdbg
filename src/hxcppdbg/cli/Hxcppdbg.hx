@@ -14,6 +14,8 @@ class Hxcppdbg
 
     @:command public final locals : Locals;
 
+    @:command public final eval : Eval;
+
     public function new(_session)
     {
         session = _session;
@@ -22,6 +24,7 @@ class Hxcppdbg
         stack       = new Stack(session.stack);
         step        = new Step(session);
         locals      = new Locals(session.locals);
+        eval        = new Eval(session.eval);
     }
 
     @:command public function start()
