@@ -18,7 +18,7 @@ function printModelData(_data : ModelData)
         case MBool(b):
             Std.string(b);
         case MString(s):
-            s;
+            '"$s"';
         case MArray(items):
             '[ ${ items.map(printModelData).join(', ') } ]';
         case MMap(items):

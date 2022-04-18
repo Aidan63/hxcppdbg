@@ -12,6 +12,8 @@ class Locals
 
     public var native = false;
 
+    public var json = false;
+
     public function new(_locals)
     {
         locals = _locals;
@@ -29,7 +31,7 @@ class Locals
                         case Native(_):
                             continue;
                         case Haxe(model):
-                            Sys.println('\t${ printModel(model) }');
+                            Sys.println('\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
                     }
                 }
             case Error(e):
