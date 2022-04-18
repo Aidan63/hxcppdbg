@@ -116,6 +116,28 @@ class Evaluator
                                     case _:
                                         Result.Error(new Exception('Only integer liters are supported for array indexing'));
                                 }
+                            case MMap(items):
+                                switch items.find(m -> keysearch(index, m.key))
+                                {
+                                    case null:
+                                        switch index
+                                        {
+                                            case EConst(CInt(v)):
+                                                // Fallback array access by indexing, useful for object maps
+                                                if (v < 0 || v >= items.length)
+                                                {
+                                                    Result.Error(new Exception('Index outside of array range'));
+                                                }
+                                                else
+                                                {
+                                                    Result.Success(items[v].data);
+                                                }
+                                            case _:
+                                                Result.Error(new Exception('Unable to find item with key $index'));
+                                        }
+                                    case model:
+                                        Result.Success(model.data);
+                                }
                             case other:
                                 Result.Error(new Exception('Cannot index onto ${ other.getName() }'));
                         }
@@ -134,6 +156,61 @@ class Evaluator
             case MString(s):
                 s == _key;
             case _:
+                false;
+        }
+    }
+
+    function keysearch(_key : hscript.Expr, _data : ModelData)
+    {
+        return switch _key
+        {
+            case EConst(c):
+                switch c
+                {
+                    case CInt(v):
+                        switch _data
+                        {
+                            case MInt(i):
+                                v == i;
+                            case MFloat(f):
+                                v == f;
+                            case _:
+                                false;
+                        }
+                    case CFloat(v):
+                        switch _data
+                        {
+                            case MFloat(f):
+                                v == f;
+                            case _:
+                                false;
+                        }
+                    case CString(v):
+                        switch _data
+                        {
+                            case MString(s):
+                                v == s;
+                            case _:
+                                false;
+                        }
+                }
+            case EIdent('true'):
+                switch _data
+                {
+                    case MBool(true):
+                        true;
+                    case _:
+                        false;
+                }
+            case EIdent('false'):
+                switch _data
+                {
+                    case MBool(false):
+                        true;
+                    case _:
+                        false;
+                }
+            case other:
                 false;
         }
     }
