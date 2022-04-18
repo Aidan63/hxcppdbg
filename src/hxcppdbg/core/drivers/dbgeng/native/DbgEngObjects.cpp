@@ -153,7 +153,26 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PD
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory();
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory();
 
+	// enums
+	models->push_back(std::make_unique<models::enums::ModelVariant>());
+
+	for (auto i = 0; i < enums->length; i++)
+	{
+		auto cStr = std::wstring(enums[i].wchar_str());
+		
+		models->push_back(std::make_unique<models::enums::ModelEnumObj>(cStr));
+	}
+
+	// classes
+	for (auto i = 0; i < classes->length; i++)
+	{
+		auto cStr = std::wstring(classes[i].wchar_str());
+
+		models->push_back(std::make_unique<models::classes::ModelClassObj>(cStr));
+	}
+
 	// Core hxcpp type models
+	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<*>")));
 	models->push_back(std::make_unique<models::basic::ModelString>());
 	models->push_back(std::make_unique<models::basic::ModelStringData>());
 	models->push_back(std::make_unique<models::dynamic::ModelDynamic>());
@@ -178,37 +197,9 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PD
 	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TInt64Element<*>")));
 	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TStringElement<*>")));
 	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TDynamicElement<*>")));
-
-	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<haxe::ds::IntMap_obj>")));
 	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Int")));
-
-	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<haxe::ds::StringMap_obj>")));
 	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"String")));
-
-	models->push_back(std::make_unique<models::ModelObjectPtr>(std::wstring(L"hx::ObjectPtr<haxe::ds::ObjectMap_obj>")));
 	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Object")));
-
-	// enums
-	models->push_back(std::make_unique<models::enums::ModelVariant>());
-
-	for (auto i = 0; i < enums->length; i++)
-	{
-		auto cStr = std::wstring(enums[i].wchar_str());
-		auto oPtr = fmt::to_wstring(fmt::format(L"hx::ObjectPtr<{0}>", cStr));
-
-		models->push_back(std::make_unique<models::ModelObjectPtr>(oPtr));
-		models->push_back(std::make_unique<models::enums::ModelEnumObj>(cStr));
-	}
-
-	// classes
-	for (auto i = 0; i < classes->length; i++)
-	{
-		auto cStr = std::wstring(classes[i].wchar_str());
-		auto oPtr = fmt::to_wstring(fmt::format(L"hx::ObjectPtr<{0}>", cStr));
-
-		models->push_back(std::make_unique<models::ModelObjectPtr>(oPtr));
-		models->push_back(std::make_unique<models::classes::ModelClassObj>(cStr));
-	}
 
 	// anon
 	models->push_back(std::make_unique<models::anon::ModelAnonObj>());

@@ -12,7 +12,7 @@
 #endif
 
 hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ModelHash()
-    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(L"hx::Hash<*>")
+    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"hx::Hash<*>"))
 {
     AddGeneratorFunction(this, &ModelHash::getIterator);
 }

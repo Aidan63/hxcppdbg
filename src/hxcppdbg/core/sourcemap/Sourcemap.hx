@@ -17,10 +17,7 @@ using Lambda;
 
     public function cppClassNames()
     {
-        return
-            classes
-                .filter(c -> c.name.type != 'haxe.ds.ObjectMap' && c.name.type != 'haxe.ds.StringMap' && c.name.type != 'haxe.ds.IntMap')
-                .map(c -> c.name.cpp);
+        return classes.map(c -> c.name.cpp);
     }
 }
 

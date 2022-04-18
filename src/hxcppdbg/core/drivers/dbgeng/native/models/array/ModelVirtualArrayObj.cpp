@@ -23,7 +23,7 @@ enum StoreType {
 };
 
 hxcppdbg::core::drivers::dbgeng::native::models::array::ModelVirtualArrayObj::ModelVirtualArrayObj()
-    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(L"cpp::VirtualArray_obj")
+    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"cpp::VirtualArray_obj"))
 {
     //
 }

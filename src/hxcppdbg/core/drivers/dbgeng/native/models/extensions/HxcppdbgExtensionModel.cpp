@@ -11,7 +11,7 @@
 #endif
 
 hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel::HxcppdbgExtensionModel(std::wstring signature)
-    : Debugger::DataModel::ProviderEx::ExtensionModel::ExtensionModel(Debugger::DataModel::ProviderEx::TypeSignatureRegistration(signature))
+    : Debugger::DataModel::ProviderEx::ExtensionModel::ExtensionModel(Debugger::DataModel::ProviderEx::TypeSignatureExtension(signature))
 {
     AddReadOnlyProperty(L"HxcppdbgModelData", this, &HxcppdbgExtensionModel::getHxcppdbgModelData);
 }
