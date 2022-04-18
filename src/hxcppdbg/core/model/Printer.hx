@@ -29,6 +29,8 @@ function printModelData(_data : ModelData)
             printModelData(inner);
         case MAnon(fields):
             '{ ${ fields.map(printModel).join(', ') } }';
+        case MClass(_, fields):
+            '{ ${ fields.map(printModel).join(', ') } }';
         case MUnknown(type):
             'unknown ($type)';
     }

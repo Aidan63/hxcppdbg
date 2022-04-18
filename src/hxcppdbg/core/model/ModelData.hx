@@ -12,5 +12,6 @@ enum ModelData
     MEnum(name : String, arguments : Array<ModelData>);
     MDynamic(inner : ModelData);
     MAnon(fields : Array<Model>);
+    MClass(name : String, fields : Array<Model>);
     MUnknown(type : String);
 }

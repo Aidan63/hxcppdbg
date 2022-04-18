@@ -42,7 +42,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
             PDEBUG_SYMBOLS5 _symbols,
             PDEBUG_SYSTEM_OBJECTS4 _system,
             std::unique_ptr<DebugEventCallbacks> _events,
-            Array<String> enums);
+            Array<String> enums,
+            Array<String> classes);
 
         hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
 
@@ -65,7 +66,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result start(int status);
         hxcppdbg::core::ds::Result step(int thread, int status);
 
-        static hxcppdbg::core::ds::Result createFromFile(String file, Array<String> enums);
+        static hxcppdbg::core::ds::Result createFromFile(String file, Array<String> enums, Array<String> classes);
         static IDataModelManager* manager;
         static IDebugHost* host;
     };

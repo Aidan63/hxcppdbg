@@ -30,6 +30,7 @@
         <file name='${DbgEngDir}/models/enums/ModelVariant.cpp'/>
         <file name='${DbgEngDir}/models/anon/ModelAnonObj.cpp'/>
         <file name='${DbgEngDir}/models/anon/ModelVariantKey.cpp'/>
+        <file name='${DbgEngDir}/models/classes/ModelClassObj.cpp'/>
     </files>
 
     <files id='dbgeng'>

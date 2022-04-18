@@ -35,7 +35,7 @@ class Session
         sourcemap   = parser.fromJson(File.getContent(_sourcemap));
         driver      =
 #if HX_WINDOWS
-        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target, sourcemap.enums.map(e -> e.name.cpp));
+        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target, sourcemap.cppEnumNames(), sourcemap.cppClassNames());
 #else
         new hxcppdbg.core.drivers.lldb.LLDBDriver(_target);
 #end
