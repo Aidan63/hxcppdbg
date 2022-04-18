@@ -105,7 +105,14 @@ class Evaluator
                                 switch index
                                 {
                                     case EConst(CInt(v)):
-                                        Result.Success(items[v]);
+                                        if (v < 0 || v >= items.length)
+                                        {
+                                            Result.Error(new Exception('Index outside of array range'));
+                                        }
+                                        else
+                                        {
+                                            Result.Success(items[v]);
+                                        }
                                     case _:
                                         Result.Error(new Exception('Only integer liters are supported for array indexing'));
                                 }
