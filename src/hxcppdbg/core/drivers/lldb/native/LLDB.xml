@@ -1,4 +1,6 @@
 <xml>
+    <include name='${LLDBDir}/../../../../../libs/fmt/Build.xml'/>
+
     <files id='haxe'>
         <compilerflag value='-I${LLDBDir}'/>
         <compilerflag value='-I/usr/lib/llvm-10/include/lldb/API'/>

@@ -20,5 +20,7 @@ namespace hxcppdbg::core::drivers::lldb::native
         static hxcppdbg::core::model::ModelData valueAsString(::lldb::SBValue value);
 
         static hxcppdbg::core::model::ModelData valueAsDynamic(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData valueAsArray(::lldb::SBValue value);
     };
 }

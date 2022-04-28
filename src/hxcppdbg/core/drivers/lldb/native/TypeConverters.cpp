@@ -7,6 +7,7 @@
 #include <SBTypeCategory.h>
 #include <SBExpressionOptions.h>
 #include <SBAddress.h>
+#include "fmt/format.h"
 
 #ifndef INCLUDED_hxcppdbg_core_model_Model
 #include <hxcppdbg/core/model/Model.h>
@@ -67,6 +68,32 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
     }
 }
 
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::valueAsArray(::lldb::SBValue value)
+{
+    auto lengthValue = value.GetChildMemberWithName("length");
+    if (!lengthValue.IsValid())
+    {
+        throw std::runtime_error(lengthValue.GetError().GetCString());
+    }
+
+    auto element     = value.GetType().GetTemplateArgumentType(0);
+    auto elementName = element.GetName();
+    auto elementSize = element.GetByteSize();
+
+    auto length = lengthValue.GetValueAsSigned();
+    auto output = Array<hxcppdbg::core::model::ModelData>(length, length);
+
+    for (auto i = 0; i < length; i++)
+    {
+        auto expr      = fmt::format("({0}*)(mBase + {1})", elementName, i * elementSize);
+        auto evaluated = value.EvaluateExpression(expr.c_str());
+
+        output[i] = convertValue(evaluated.Dereference());
+    }
+
+    return hxcppdbg::core::model::ModelData_obj::MArray(output);
+}
+
 hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::convertValue(::lldb::SBValue value)
 {
     auto type  = value.GetType();
@@ -84,14 +111,35 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
                     return valueAsString(value);
                 }
 
-                if (name == std::string("hx::StringData"))
+                if (name == std::string("Dynamic"))
+                {
+                    return valueAsString(value);
+                }
+
+                if (name == std::string("hx::StringData") ||
+                    name == std::string("hx::IntData") ||
+                    name == std::string("hx::BoolData") ||
+                    name == std::string("hx::DoubleData") ||
+                    name == std::string("hx::Int64Data") ||
+                    name == std::string("hx::PointerData"))
                 {
                     return valueAsString(value.GetChildMemberWithName("mValue"));
                 }
 
-                if (name == std::string("Dynamic"))
+                if (name.rfind("Array_obj<", 0) == 0)
                 {
-                    return valueAsString(value);
+                    return valueAsArray(value);
+                }
+
+                for (auto i = 0; i < type.GetNumberOfDirectBaseClasses(); i++)
+                {
+                    auto ancestor     = type.GetDirectBaseClassAtIndex(i);
+                    auto ancestorType = std::string(ancestor.GetName());
+
+                    if (ancestorType.rfind("hx::ObjectPtr<", 0) == 0)
+                    {
+                        return convertValue(value.GetChildMemberWithName("mPtr").Dereference());
+                    }
                 }
 
                 // If its a class see if it descends from hx::Enum_obj, if so read the object as an enum.
