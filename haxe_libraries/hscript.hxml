@@ -1,0 +1,4 @@
+# @install: lix --silent download "gh://github.com/HaxeFoundation/hscript#7124b6c4cefddfd05809f829902f87e5677fe454" into hscript/2.4.0/github/7124b6c4cefddfd05809f829902f87e5677fe454
+-cp ${HAXE_LIBCACHE}/hscript/2.4.0/github/7124b6c4cefddfd05809f829902f87e5677fe454/
+-D hscript=2.4.0
+--macro keep('IntIterator')

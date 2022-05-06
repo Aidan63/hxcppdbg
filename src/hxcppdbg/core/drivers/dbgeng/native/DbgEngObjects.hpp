@@ -17,11 +17,12 @@
 #include "DbgModelClientEx.hpp"
 #include "DebugEventCallbacks.hpp"
 
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
-HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
-HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
 HX_DECLARE_CLASS2(haxe, ds, Option)
+HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
+HX_DECLARE_CLASS3(hxcppdbg, core, model, ModelData)
 HX_DECLARE_CLASS3(hxcppdbg, core, drivers, StopReason)
+HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
@@ -33,8 +34,16 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         PDEBUG_SYMBOLS5 symbols;
         PDEBUG_SYSTEM_OBJECTS4 system;
         std::unique_ptr<DebugEventCallbacks> events;
+        std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
 
-        DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events);
+        DbgEngObjects_obj(
+            PDEBUG_CLIENT7 _client,
+            PDEBUG_CONTROL _control,
+            PDEBUG_SYMBOLS5 _symbols,
+            PDEBUG_SYSTEM_OBJECTS4 _system,
+            std::unique_ptr<DebugEventCallbacks> _events,
+            Array<String> enums,
+            Array<String> classes);
 
         hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
 
@@ -57,7 +66,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result start(int status);
         hxcppdbg::core::ds::Result step(int thread, int status);
 
-        static hxcppdbg::core::ds::Result createFromFile(String file);
+        static hxcppdbg::core::ds::Result createFromFile(String file, Array<String> enums, Array<String> classes);
         static IDataModelManager* manager;
         static IDebugHost* host;
     };

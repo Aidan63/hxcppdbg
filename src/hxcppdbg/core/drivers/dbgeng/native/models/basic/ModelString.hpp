@@ -4,19 +4,20 @@
 #include <hxcpp.h>
 #endif
 
-#include "DbgModelClientEx.hpp"
+#include "models/extensions/HxcppdbgExtensionModel.hpp"
 
-namespace hxcppdbg::core::drivers::dbgeng::native::models
+namespace hxcppdbg::core::drivers::dbgeng::native::models::basic
 {
-    class StringExtensions : public Debugger::DataModel::ProviderEx::ExtensionModel
+    class ModelString : public hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel
     {
     public:
-        StringExtensions();
+        ModelString();
 
         std::wstring getString(const Debugger::DataModel::ClientEx::Object& _string);
         bool getIsUtf16(const Debugger::DataModel::ClientEx::Object& _string);
         int getLength(const Debugger::DataModel::ClientEx::Object& _string);
-        std::wstring getDisplayString(const Debugger::DataModel::ClientEx::Object& _string, const Debugger::DataModel::ClientEx::Metadata& _metadata);
+
+        hxcppdbg::core::model::ModelData getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
 
     private:
         template<typename TChar>

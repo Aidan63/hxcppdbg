@@ -4402,6 +4402,13 @@ public:
         return Details::DereferenceReference<Object>(*this);
     }
 
+    Object TryCastToRuntimeType()
+    {
+        ComPtr<IModelObject> spValue;
+        CheckHr(m_spObject->TryCastToRuntimeType(&spValue));
+        return Object(std::move(spValue));
+    }
+
     // operator=:
     //
     // Copy another object.

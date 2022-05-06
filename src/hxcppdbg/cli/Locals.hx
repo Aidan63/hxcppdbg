@@ -1,6 +1,7 @@
 package hxcppdbg.cli;
 
 import hxcppdbg.core.locals.Locals in CoreLocals;
+import hxcppdbg.core.model.Printer;
 
 using Lambda;
 using StringTools;
@@ -10,6 +11,8 @@ class Locals
     final locals : CoreLocals;
 
     public var native = false;
+
+    public var json = false;
 
     public function new(_locals)
     {
@@ -27,8 +30,8 @@ class Locals
                     {
                         case Native(_):
                             continue;
-                        case Haxe(_haxe, _native):
-                            Sys.println('\t${ _haxe.haxe }\t\t${ _haxe.type }\t\t${ _native.value }');
+                        case Haxe(model):
+                            Sys.println('\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
                     }
                 }
             case Error(e):

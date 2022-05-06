@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.lldb.native;
 
+import hxcppdbg.core.model.Model;
 import haxe.ds.Option;
 import haxe.Exception;
 import hxcppdbg.core.ds.Result;
@@ -27,5 +28,5 @@ extern class LLDBProcess
 
     function getStackFrames(_threadIndex : Int) : Result<Array<NativeFrame>, Exception>;
 
-    function getStackVariables(_threadIndex : Int, _frameIndex : Int) : Result<Array<NativeLocal>, Exception>;
+    function getStackVariables(_threadIndex : Int, _frameIndex : Int) : Result<Array<Model>, Exception>;
 }

@@ -1,8 +1,27 @@
 package hxcppdbg.core.sourcemap;
 
+using Lambda;
+
 @:structInit class Sourcemap
 {
     public final files : Array<GeneratedFile>;
+
+    public final classes : Array<GeneratedClass>;
+
+    public final enums : Array<GeneratedEnum>;
+
+    public function cppEnumNames()
+    {
+        return enums.map(e -> e.name.cpp);
+    }
+
+    public function cppClassNames()
+    {
+        return
+            classes
+                .filter(c -> c.name.type != 'haxe.ds.ObjectMap' && c.name.type != 'haxe.ds.StringMap' && c.name.type != 'haxe.ds.IntMap')
+                .map(c -> c.name.cpp);
+    }
 }
 
 @:structInit class GeneratedFile
@@ -14,6 +33,20 @@ package hxcppdbg.core.sourcemap;
     public final type : String;
 
     public final functions : Array<Function>;
+}
+
+@:structInit class GeneratedClass
+{
+    public final name : NameMap;
+
+    public final fields : Array<NameMap>;
+}
+
+@:structInit class GeneratedEnum
+{
+    public final name : NameMap;
+
+    public final constructors : Array<NameMap>;
 }
 
 @:structInit class Closure

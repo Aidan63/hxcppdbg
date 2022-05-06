@@ -20,9 +20,9 @@ class DbgEngDriver extends Driver
 
 	final objects : DbgEngObjects;
 
-	public function new(_file)
+	public function new(_file, _enums, _classes)
 	{
-		objects     = DbgEngObjects.createFromFile(_file).resultOrThrow();
+		objects     = DbgEngObjects.createFromFile(_file, _enums, _classes).resultOrThrow();
 		breakpoints = new DbgEngBreakpoints(objects);
 		stack       = new DbgEngStack(objects);
 		locals      = new DbgEngLocals(objects);

@@ -1,8 +1,8 @@
 package hxcppdbg.core;
 
+import hxcppdbg.core.evaluator.Evaluator;
 import sys.io.File;
 import haxe.Exception;
-import haxe.ds.Option;
 import json2object.JsonParser;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
@@ -30,19 +30,22 @@ class Session
 
     public final locals : Locals;
 
+    public final eval : Evaluator;
+
     public function new(_target : String, _sourcemap : String)
     {
         parser      = new JsonParser<Sourcemap>();
         sourcemap   = parser.fromJson(File.getContent(_sourcemap));
         driver      =
 #if HX_WINDOWS
-        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target);
+        new hxcppdbg.core.drivers.dbgeng.DbgEngDriver(_target, sourcemap.cppEnumNames(), sourcemap.cppClassNames());
 #else
         new hxcppdbg.core.drivers.lldb.LLDBDriver(_target);
 #end
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
         stack       = new Stack(sourcemap, driver.stack);
         locals      = new Locals(sourcemap, driver.locals, stack);
+        eval        = new Evaluator(sourcemap, driver.locals, stack);
     }
 
     public function start()

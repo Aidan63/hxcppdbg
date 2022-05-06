@@ -24,6 +24,15 @@
 #include <hxcppdbg/core/drivers/StopReason.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_model_Model
+#include <hxcppdbg/core/model/Model.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_model_ModelData
+#include <hxcppdbg/core/model/ModelData.h>
+#endif
+
+
 #include "LLDBProcess.hpp"
 #include <SBTypeSummary.h>
 #include <SBStream.h>
@@ -230,16 +239,15 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_ob
         return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(HX_CSTRING("Unable to get local variables"), nullptr, nullptr));
     }
 
-    auto output = Array<hxcppdbg::core::locals::NativeLocal>(0, variables.GetSize());
+    auto output = Array<hxcppdbg::core::model::Model>(0, variables.GetSize());
     for (int i = 0; i < variables.GetSize(); i++)
     {
-        auto variable = variables.GetValueAtIndex(i);
-        auto name     = variable.GetName();
-        auto type     = variable.GetTypeName();
-        auto value    = String::create(variable.GetSummary());
-        auto local    = hxcppdbg::core::locals::NativeLocal_obj::__new(String::create(name), value, String::create(value));
+        auto value = variables.GetValueAtIndex(i);
+        auto name  = value.GetName();
+        auto data  = hxcppdbg::core::drivers::lldb::native::TypeConverters::convertValue(value);
+        auto model = hxcppdbg::core::model::Model_obj::__new(hxcppdbg::core::model::ModelData_obj::MString(String::create(name)), data);
 
-        output->__SetItem(i, local);
+        output[i] = model;
     }
     
     return hxcppdbg::core::ds::Result_obj::Success(output);

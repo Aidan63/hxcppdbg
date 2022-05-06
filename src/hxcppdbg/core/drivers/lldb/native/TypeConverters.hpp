@@ -5,19 +5,28 @@
 #endif
 
 #include <SBValue.h>
-#include <SBError.h>
 #include <SBStream.h>
-#include <SBTypeSummary.h>
+
+HX_DECLARE_CLASS3(hxcppdbg, core, model, Model)
+HX_DECLARE_CLASS3(hxcppdbg, core, model, ModelData)
 
 namespace hxcppdbg::core::drivers::lldb::native
 {
     class TypeConverters
     {
     public:
-        /**
-         * Given an LLDB value which contains a HXCPP string extract the value of the string
-         * and return a hxcpp string with that value.
-         */
-        static bool extractString(::lldb::SBValue value, ::lldb::SBTypeSummaryOptions options, ::lldb::SBStream& stream);
+        static String readString(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData convertValue(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData valueAsString(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData valueAsDynamic(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData valueAsArray(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData valueAsVariant(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData valueAsEnum(::lldb::SBValue value);
     };
 }

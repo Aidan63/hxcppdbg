@@ -1,5 +1,6 @@
 package hxcppdbg.core.locals;
 
+import hxcppdbg.core.model.Model;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.stack.Stack;
@@ -35,20 +36,31 @@ class Locals
         }
     }
 
-    function mapNativeLocal(_frame : StackFrame, _native : NativeLocal)
+    function mapNativeLocal(_frame : StackFrame, _native : Model)
     {
         return switch _frame
         {
             case Haxe(haxe, _):
-                switch haxe.func.variables.find(v -> v.cpp == _native.name)
+                switch haxe.func.variables.find(v -> isLocalVar(v.cpp, _native))
                 {
                     case null:
                         LocalVariable.Native(_native);
-                    case found:
-                        LocalVariable.Haxe(found, _native);
+                    case _:
+                        LocalVariable.Haxe(_native);
                 }
             case Native(_):
                 LocalVariable.Native(_native);
+        }
+    }
+
+    function isLocalVar(_variable : String, _native : Model)
+    {
+        return switch _native.key
+        {
+            case MString(s):
+                s == _variable;
+            case _:
+                false;
         }
     }
 }
