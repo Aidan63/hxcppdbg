@@ -17,7 +17,7 @@
 #include <hxcppdbg/core/model/ModelData.h>
 #endif
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::valueAsString(::lldb::SBValue value)
+String hxcppdbg::core::drivers::lldb::native::TypeConverters::readString(::lldb::SBValue value)
 {
     auto lengthValue = value.GetChildMemberWithName("length");
     if (!lengthValue.IsValid())
@@ -36,12 +36,13 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
     auto error      = ::lldb::SBError();
     auto buffer     = std::vector<char>(length);
     auto string     = stringData.ReadRawData(error, 0, buffer.data(), length);
-    if (error.Fail())
-    {
-        throw std::runtime_error(error.GetCString());
-    }
-    
-    return hxcppdbg::core::model::ModelData_obj::MString(String::create(buffer.data(), length));
+
+    return String::create(buffer.data(), length);
+}
+
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::valueAsString(::lldb::SBValue value)
+{  
+    return hxcppdbg::core::model::ModelData_obj::MString(readString(value));
 }
 
 hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::valueAsDynamic(::lldb::SBValue value)
@@ -58,7 +59,7 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
         throw std::runtime_error("Invalid address");
     }
 
-    if (address.GetOffset() == NULL)
+    if (address.GetOffset() == uint64_t{ 0 })
     {
         return hxcppdbg::core::model::ModelData_obj::MNull;
     }
@@ -94,6 +95,86 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
     return hxcppdbg::core::model::ModelData_obj::MArray(output);
 }
 
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::valueAsVariant(::lldb::SBValue value)
+{
+    enum VariantType
+    {
+        typeObject = 0,
+        typeString,
+        typeDouble,
+        typeInt,
+        typeInt64,
+        typeBool,
+    };
+
+    auto type = (VariantType)(value.GetChildMemberWithName("type").GetValueAsSigned());
+
+    switch (type)
+    {
+        case VariantType::typeObject:
+            {
+                return convertValue(value.GetChildMemberWithName("valObject").Dereference());
+            }
+
+        case VariantType::typeString:
+            {
+                auto strPointer = value.GetChildMemberWithName("valStringPtr");
+                auto strLength  = value.GetChildMemberWithName("valStringLen").GetValueAsSigned();
+                auto string     = std::vector<char>(strLength);
+
+                auto error = ::lldb::SBError();
+                strPointer.GetPointeeData().ReadRawData(error, 0, string.data(), strLength);
+
+                return hxcppdbg::core::model::ModelData_obj::MString(String::create(string.data(), string.size()));
+            }
+
+        case VariantType::typeDouble:
+            {
+                return convertValue(value.GetChildMemberWithName("valDouble"));
+            }
+
+        case VariantType::typeInt:
+            {
+                return convertValue(value.GetChildMemberWithName("valInt"));
+            }
+
+        case VariantType::typeInt64:
+            {
+                return convertValue(value.GetChildMemberWithName("valInt64"));
+            }
+
+        case VariantType::typeBool:
+            {
+                return convertValue(value.GetChildMemberWithName("valBool"));
+            }
+
+        default:
+            {
+                throw std::runtime_error("unknown variant type");
+            }
+    }
+}
+
+hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::valueAsEnum(::lldb::SBValue value)
+{
+    auto tag        = readString(value.GetChildMemberWithName("_hx_tag"));
+    auto fieldCount = value.GetChildMemberWithName("mFixedFields").GetValueAsSigned();
+    auto fields     = Array<Dynamic>(fieldCount, fieldCount);
+
+    if (fieldCount == 0)
+    {
+        return hxcppdbg::core::model::ModelData_obj::MEnum(tag, fields);
+    }
+
+    auto variants = value.EvaluateExpression("(cpp::Variant*)(this + 1)");
+    for (auto i = 0; i < fieldCount; i++)
+    {
+        fields[i] = convertValue(value.EvaluateExpression(fmt::format("(cpp::Variant*)(this + {0})", i + 1).c_str()));
+    }
+
+    return hxcppdbg::core::model::ModelData_obj::MEnum(tag, fields);
+}
+
 hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::convertValue(::lldb::SBValue value)
 {
     auto type  = value.GetType();
@@ -126,6 +207,11 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
                     return valueAsString(value.GetChildMemberWithName("mValue"));
                 }
 
+                if (name == std::string("cpp::Variant"))
+                {
+                    return valueAsVariant(value);
+                }
+
                 if (name.rfind("Array_obj<", 0) == 0)
                 {
                     return valueAsArray(value);
@@ -140,12 +226,15 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
                     {
                         return convertValue(value.GetChildMemberWithName("mPtr").Dereference());
                     }
+                    if (ancestorType == std::string("hx::EnumBase_obj"))
+                    {
+                        return valueAsEnum(value.GetChildMemberWithName("mPtr").Dereference());
+                    }
+                    if (ancestorType == std::string("hx::Object"))
+                    {
+                        //
+                    }
                 }
-
-                // If its a class see if it descends from hx::Enum_obj, if so read the object as an enum.
-
-                // If it is not an enum but still inherits from hx::Object then read it as a class.
-                
                 
                 return hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(name.c_str()));
             }

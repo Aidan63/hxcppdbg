@@ -15,6 +15,8 @@ namespace hxcppdbg::core::drivers::lldb::native
     class TypeConverters
     {
     public:
+        static String readString(::lldb::SBValue value);
+
         static hxcppdbg::core::model::ModelData convertValue(::lldb::SBValue value);
 
         static hxcppdbg::core::model::ModelData valueAsString(::lldb::SBValue value);
@@ -22,5 +24,9 @@ namespace hxcppdbg::core::drivers::lldb::native
         static hxcppdbg::core::model::ModelData valueAsDynamic(::lldb::SBValue value);
 
         static hxcppdbg::core::model::ModelData valueAsArray(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData valueAsVariant(::lldb::SBValue value);
+
+        static hxcppdbg::core::model::ModelData valueAsEnum(::lldb::SBValue value);
     };
 }
