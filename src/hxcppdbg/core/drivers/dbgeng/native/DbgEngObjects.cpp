@@ -71,32 +71,32 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 	// Should we request the highest version or not?
 	// Don't know what the required windows version is for the different versions.
-	auto client = PDEBUG_CLIENT7{ nullptr };
-	if (!SUCCEEDED(result = DebugCreate(__uuidof(PDEBUG_CLIENT7), (void**)&client)))
+	auto client = ComPtr<IDebugClient7>();
+	if (!SUCCEEDED(result = DebugCreate(__uuidof(IDebugClient7), &client)))
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to create IDebugClient object"), result));
 	}
 
-	auto control = PDEBUG_CONTROL{ nullptr };
-	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(PDEBUG_CONTROL), (void**)&control)))
+	auto control = ComPtr<IDebugControl7>();
+	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(IDebugControl7), &control)))
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get IDebugControl object from client"), result));
 	}
 
-	auto symbols = PDEBUG_SYMBOLS5{ nullptr };
-	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(PDEBUG_SYMBOLS5), (void**)&symbols)))
+	auto symbols = ComPtr<IDebugSymbols5>();
+	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(IDebugSymbols5), &symbols)))
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get IDebugSymbol object from client"), result));
 	}
 
-	auto system = PDEBUG_SYSTEM_OBJECTS4{ nullptr };
-	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(PDEBUG_SYSTEM_OBJECTS4), (void**)&system)))
+	auto system = ComPtr<IDebugSystemObjects4>();
+	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(IDebugSystemObjects4), &system)))
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get IDebugSystemObjects object from client"), result));
 	}
 
-	auto hostDataModelAccess = (IHostDataModelAccess*) nullptr;
-	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(IHostDataModelAccess), (void**)&hostDataModelAccess)))
+	auto hostDataModelAccess = ComPtr<IHostDataModelAccess>();
+	if (!SUCCEEDED(result = client->QueryInterface(__uuidof(IHostDataModelAccess), &hostDataModelAccess)))
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get data model access"), result));
 	}
@@ -147,7 +147,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return hxcppdbg::core::ds::Result_obj::Success(new DbgEngObjects_obj(client, control, symbols, system, std::move(events), enums, classes));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(PDEBUG_CLIENT7 _client, PDEBUG_CONTROL _control, PDEBUG_SYMBOLS5 _symbols, PDEBUG_SYSTEM_OBJECTS4 _system, std::unique_ptr<DebugEventCallbacks> _events, Array<String> enums, Array<String> classes)
+hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(ComPtr<IDebugClient7> _client, ComPtr<IDebugControl7> _control, ComPtr<IDebugSymbols5> _symbols, ComPtr<IDebugSystemObjects4> _system, std::unique_ptr<DebugEventCallbacks> _events, Array<String> enums, Array<String> classes)
 	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), models(std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>())
 {
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory();

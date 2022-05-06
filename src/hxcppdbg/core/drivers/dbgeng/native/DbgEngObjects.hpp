@@ -29,18 +29,18 @@ namespace hxcppdbg::core::drivers::dbgeng::native
     class DbgEngObjects_obj : public hx::Object
     {
     private:
-        PDEBUG_CLIENT7 client;
-        PDEBUG_CONTROL control;
-        PDEBUG_SYMBOLS5 symbols;
-        PDEBUG_SYSTEM_OBJECTS4 system;
+        ComPtr<IDebugClient7> client;
+        ComPtr<IDebugControl7> control;
+        ComPtr<IDebugSymbols5> symbols;
+        ComPtr<IDebugSystemObjects4> system;
         std::unique_ptr<DebugEventCallbacks> events;
         std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
 
         DbgEngObjects_obj(
-            PDEBUG_CLIENT7 _client,
-            PDEBUG_CONTROL _control,
-            PDEBUG_SYMBOLS5 _symbols,
-            PDEBUG_SYSTEM_OBJECTS4 _system,
+            ComPtr<IDebugClient7> _client,
+            ComPtr<IDebugControl7> _control,
+            ComPtr<IDebugSymbols5> _symbols,
+            ComPtr<IDebugSystemObjects4> _system,
             std::unique_ptr<DebugEventCallbacks> _events,
             Array<String> enums,
             Array<String> classes);
