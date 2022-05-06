@@ -81,7 +81,7 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models
 
         default:
             {
-                throw std::exception("unknown variant type");
+                throw std::runtime_error("unknown variant type");
             }
     }
 }
