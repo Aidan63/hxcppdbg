@@ -11,8 +11,12 @@
 #include <hxcppdbg/core/model/Model.h>
 #endif
 
-hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::ModelEnumObj(std::wstring signature)
-    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(signature)
+#ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
+#include <hxcppdbg/core/sourcemap/GeneratedType.h>
+#endif
+
+hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::ModelEnumObj(hxcppdbg::core::sourcemap::GeneratedType _type)
+    : type(_type), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_type->cpp.wc_str())
 {
     //
 }
@@ -25,7 +29,7 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models
 
     if (fieldCount == 0)
     {
-        return hxcppdbg::core::model::ModelData_obj::MEnum(String::create(tag.c_str(), tag.size()), fields);
+        return hxcppdbg::core::model::ModelData_obj::MEnum(type, String::create(tag.c_str()), fields);
     }
 
     auto variants = object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, object, L"(cpp::Variant *)(self + 1)");
@@ -36,5 +40,5 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models
         variants++;
     }
 
-    return hxcppdbg::core::model::ModelData_obj::MEnum(String::create(tag.c_str(), tag.size()), fields);
+    return hxcppdbg::core::model::ModelData_obj::MEnum(type, String::create(tag.c_str()), fields);
 }

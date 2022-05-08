@@ -12,7 +12,7 @@ using Lambda;
 
     public function cppEnumNames()
     {
-        return enums.map(e -> e.type.cpp);
+        return enums.map(e -> e.type);
     }
 
     public function cppClassNames()
@@ -20,7 +20,7 @@ using Lambda;
         return
             classes
                 .filter(c -> c.type.cpp != 'haxe::ds::ObjectMap_obj' && c.type.cpp != 'haxe::ds::StringMap_obj' && c.type.cpp != 'haxe::ds::IntMap_obj')
-                .map(c -> c.type.cpp);
+                .map(c -> c.type);
     }
 }
 

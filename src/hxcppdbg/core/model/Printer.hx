@@ -1,5 +1,7 @@
 package hxcppdbg.core.model;
 
+import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
+
 function printModel(_model : Model)
 {
     return '${ printModelData(_model.key) } : ${ printModelData(_model.data) }';
@@ -23,8 +25,8 @@ function printModelData(_data : ModelData)
             '[ ${ items.map(printModelData).join(', ') } ]';
         case MMap(items):
             '[ ${ items.map(printModel).join(', ') } ]';
-        case MEnum(name, arguments):
-            '$name(${ arguments.map(printModelData).join(', ') })';
+        case MEnum(_, constructor, arguments):
+            '$constructor(${ arguments.map(printModelData).join(', ') })';
         case MDynamic(inner):
             printModelData(inner);
         case MAnon(fields):
@@ -33,5 +35,17 @@ function printModelData(_data : ModelData)
             '{ ${ fields.map(printModel).join(', ') } }';
         case MUnknown(type):
             'unknown ($type)';
+    }
+}
+
+function printType(_type : GeneratedType)
+{
+    return if (_type.module == _type.name)
+    {
+        '${ _type.pack.join('.') }.${ _type.name }';
+    }
+    else
+    {
+        '${ _type.pack.join('.') }.${ _type.module }.${ _type.name }';
     }
 }
