@@ -42,10 +42,24 @@ function printType(_type : GeneratedType)
 {
     return if (_type.module == _type.name)
     {
-        '${ _type.pack.join('.') }.${ _type.name }';
+        if (_type.pack.length == 0)
+        {
+            _type.name;
+        }
+        else
+        {
+            '${ _type.pack.join('.') }.${ _type.name }';
+        }
     }
     else
     {
-        '${ _type.pack.join('.') }.${ _type.module }.${ _type.name }';
+        if (_type.pack.length == 0)
+        {
+            '${ _type.module }.${ _type.name }';
+        }
+        else
+        {
+            '${ _type.pack.join('.') }.${ _type.module }.${ _type.name }';
+        }
     }
 }
