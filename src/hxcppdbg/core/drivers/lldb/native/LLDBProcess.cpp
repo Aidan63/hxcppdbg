@@ -32,10 +32,13 @@
 #include <hxcppdbg/core/model/ModelData.h>
 #endif
 
-
 #include "LLDBProcess.hpp"
+#include "models/ModelStorage.hpp"
+#include "models/array/ModelArray.hpp"
+
 #include <SBTypeSummary.h>
 #include <SBStream.h>
+#include <SBTypeNameSpecifier.h>
 
 int hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::lldbProcessType = hxcpp_alloc_kind();
 
@@ -244,7 +247,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_ob
     {
         auto value = variables.GetValueAtIndex(i);
         auto name  = value.GetName();
-        auto data  = hxcppdbg::core::drivers::lldb::native::TypeConverters::convertValue(value);
+        auto data  = hxcppdbg::core::drivers::lldb::native::models::valueAsModel(value);
         auto model = hxcppdbg::core::model::Model_obj::__new(hxcppdbg::core::model::ModelData_obj::MString(String::create(name)), data);
 
         output[i] = model;

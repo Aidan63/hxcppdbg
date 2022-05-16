@@ -14,10 +14,12 @@
 
 #include "LLDBObjects.hpp"
 #include "LLDBProcess.hpp"
-#include "TypeConverters.hpp"
 #include <SBTypeCategory.h>
 #include <SBTypeNameSpecifier.h>
 #include <SBStream.h>
+
+#include "models/ModelStorage.hpp"
+#include "models/array/ModelArray.hpp"
 
 int hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::lldbObjectsType = hxcpp_alloc_kind();
 
@@ -44,6 +46,20 @@ hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::LLDBObjects_obj(::lldb::
     : debugger(dbg), target(tgt)
 {
     _hx_set_finalizer(this, finalise);
+
+    hx::GCAddRoot(hxcppdbg::core::drivers::lldb::native::models::currentModel);
+    hx::GCAddRoot(hxcppdbg::core::drivers::lldb::native::models::classLookup);
+    hx::GCAddRoot(hxcppdbg::core::drivers::lldb::native::models::enumLookup);
+
+    auto category          = debugger.CreateCategory("hxcpp");
+    auto mPtrTypeSummary   = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::models::setObjectPtrHxcppdbgModelData);
+    auto arrayTypeSummary  = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::models::array::setArrayHxcppdbgModelData);
+    auto varrayTypeSummary = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::models::array::setVirtualArrayHxcppdbgModelData);
+
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("^Array<.+>(( )?&)?$", true), mPtrTypeSummary);
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("^Array_obj<.+>(( )?&)?$", true), arrayTypeSummary);
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("cpp::VirtualArray_obj"), varrayTypeSummary);
+    category.SetEnabled(true);
 }
 
 void hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::destroy()

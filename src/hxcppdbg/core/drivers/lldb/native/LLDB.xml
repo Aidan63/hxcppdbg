@@ -7,7 +7,8 @@
         <file name='${LLDBDir}/LLDBBoot.cpp'/>
         <file name='${LLDBDir}/LLDBObjects.cpp'/>
         <file name='${LLDBDir}/LLDBProcess.cpp'/>
-        <file name='${LLDBDir}/TypeConverters.cpp'/>
+        <file name='${LLDBDir}/models/ModelStorage.cpp'/>
+        <file name='${LLDBDir}/models/array/ModelArray.cpp'/>
     </files>
 
     <files id='lldb'>

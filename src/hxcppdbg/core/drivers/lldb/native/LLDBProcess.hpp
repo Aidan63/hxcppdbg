@@ -12,7 +12,6 @@
 #include <SBEvent.h>
 #include <SBSymbol.h>
 #include <SBBreakpoint.h>
-#include "TypeConverters.hpp"
 
 HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, lldb, native, LLDBProcess);
