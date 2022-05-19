@@ -20,6 +20,7 @@
 
 #include "models/ModelStorage.hpp"
 #include "models/array/ModelArray.hpp"
+#include "models/dynamic/ModelDynamic.hpp"
 
 int hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::lldbObjectsType = hxcpp_alloc_kind();
 
@@ -55,10 +56,22 @@ hxcppdbg::core::drivers::lldb::native::LLDBObjects_obj::LLDBObjects_obj(::lldb::
     auto mPtrTypeSummary   = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::models::setObjectPtrHxcppdbgModelData);
     auto arrayTypeSummary  = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::models::array::setArrayHxcppdbgModelData);
     auto varrayTypeSummary = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::models::array::setVirtualArrayHxcppdbgModelData);
+    auto dynTypeSummary    = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::models::dynamic::setDynamicHxcppdbgModelData);
+    auto boxedTypeSummary  = ::lldb::SBTypeSummary::CreateWithCallback(hxcppdbg::core::drivers::lldb::native::models::dynamic::setBoxedHxcppdbgModelData);
 
     category.AddTypeSummary(::lldb::SBTypeNameSpecifier("^Array<.+>(( )?&)?$", true), mPtrTypeSummary);
     category.AddTypeSummary(::lldb::SBTypeNameSpecifier("^Array_obj<.+>(( )?&)?$", true), arrayTypeSummary);
+
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("cpp::VirtualArray"), mPtrTypeSummary);
     category.AddTypeSummary(::lldb::SBTypeNameSpecifier("cpp::VirtualArray_obj"), varrayTypeSummary);
+
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("Dynamic"), dynTypeSummary);
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("hx::IntData"), boxedTypeSummary);
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("hx::BoolData"), boxedTypeSummary);
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("hx::DoubleData"), boxedTypeSummary);
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("hx::Int64Data"), boxedTypeSummary);
+    category.AddTypeSummary(::lldb::SBTypeNameSpecifier("hx::PointerData"), boxedTypeSummary);
+
     category.SetEnabled(true);
 }
 

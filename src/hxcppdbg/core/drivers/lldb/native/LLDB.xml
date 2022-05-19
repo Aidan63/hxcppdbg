@@ -9,6 +9,7 @@
         <file name='${LLDBDir}/LLDBProcess.cpp'/>
         <file name='${LLDBDir}/models/ModelStorage.cpp'/>
         <file name='${LLDBDir}/models/array/ModelArray.cpp'/>
+        <file name='${LLDBDir}/models/dynamic/ModelDynamic.cpp'/>
     </files>
 
     <files id='lldb'>
