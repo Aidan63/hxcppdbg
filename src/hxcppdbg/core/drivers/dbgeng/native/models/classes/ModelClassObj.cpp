@@ -11,8 +11,12 @@
 #include <hxcppdbg/core/model/Model.h>
 #endif
 
-hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::ModelClassObj(std::wstring signature)
-    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(signature)
+#ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
+#include <hxcppdbg/core/sourcemap/GeneratedType.h>
+#endif
+
+hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::ModelClassObj(hxcppdbg::core::sourcemap::GeneratedType _type)
+    : type(_type), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_type->cpp.wc_str())
 {
     //
 }
@@ -44,5 +48,5 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models
         }
     }
 
-    return hxcppdbg::core::model::ModelData_obj::MClass(String::create(object.Type().Name().c_str()), fields);
+    return hxcppdbg::core::model::ModelData_obj::MClass(type, fields);
 }

@@ -12,15 +12,15 @@ using Lambda;
 
     public function cppEnumNames()
     {
-        return enums.map(e -> e.name.cpp);
+        return enums.map(e -> e.type);
     }
 
     public function cppClassNames()
     {
         return
             classes
-                .filter(c -> c.name.type != 'haxe.ds.ObjectMap' && c.name.type != 'haxe.ds.StringMap' && c.name.type != 'haxe.ds.IntMap')
-                .map(c -> c.name.cpp);
+                .filter(c -> c.type.cpp != 'haxe::ds::ObjectMap_obj' && c.type.cpp != 'haxe::ds::StringMap_obj' && c.type.cpp != 'haxe::ds::IntMap_obj')
+                .map(c -> c.type);
     }
 }
 
@@ -35,16 +35,27 @@ using Lambda;
     public final functions : Array<Function>;
 }
 
+@:structInit class GeneratedType
+{
+    public final pack : Array<String>;
+
+    public final module : String;
+
+    public final name : String;
+
+    public final cpp : String;
+}
+
 @:structInit class GeneratedClass
 {
-    public final name : NameMap;
+    public final type : GeneratedType;
 
     public final fields : Array<NameMap>;
 }
 
 @:structInit class GeneratedEnum
 {
-    public final name : NameMap;
+    public final type : GeneratedType;
 
     public final constructors : Array<NameMap>;
 }

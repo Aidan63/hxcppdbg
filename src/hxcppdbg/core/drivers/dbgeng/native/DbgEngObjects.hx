@@ -5,6 +5,7 @@ import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
+import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 @:keep
 @:include('DbgEngObjects.hpp')
@@ -13,7 +14,7 @@ import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
 extern class DbgEngObjects
 {
     @:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile')
-    static function createFromFile(_file : String, _enums : Array<String>, _classes : Array<String>) : Result<DbgEngObjects, HResultException>;
+    static function createFromFile(_file : String, _enums : Array<GeneratedType>, _classes : Array<GeneratedType>) : Result<DbgEngObjects, HResultException>;
 
     function createBreakpoint(_file : String, _line : Int) : Result<Int, HResultException>;
 

@@ -61,11 +61,15 @@
 #include <hxcppdbg/core/model/Model.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
+#include <hxcppdbg/core/sourcemap/GeneratedType.h>
+#endif
+
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
 
 IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::host = nullptr;
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile(String file, Array<String> enums, Array<String> classes)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes)
 {
 	auto result = HRESULT{ S_OK };
 
@@ -147,7 +151,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return hxcppdbg::core::ds::Result_obj::Success(new DbgEngObjects_obj(client, control, symbols, system, std::move(events), enums, classes));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(ComPtr<IDebugClient7> _client, ComPtr<IDebugControl7> _control, ComPtr<IDebugSymbols5> _symbols, ComPtr<IDebugSystemObjects4> _system, std::unique_ptr<DebugEventCallbacks> _events, Array<String> enums, Array<String> classes)
+hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(ComPtr<IDebugClient7> _client, ComPtr<IDebugControl7> _control, ComPtr<IDebugSymbols5> _symbols, ComPtr<IDebugSystemObjects4> _system, std::unique_ptr<DebugEventCallbacks> _events, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes)
 	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), models(std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>())
 {
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory();
@@ -158,17 +162,13 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(Co
 
 	for (auto i = 0; i < enums->length; i++)
 	{
-		auto cStr = std::wstring(enums[i].wchar_str());
-		
-		models->push_back(std::make_unique<models::enums::ModelEnumObj>(cStr));
+		models->push_back(std::make_unique<models::enums::ModelEnumObj>(enums[i]));
 	}
 
 	// classes
 	for (auto i = 0; i < classes->length; i++)
 	{
-		auto cStr = std::wstring(classes[i].wchar_str());
-
-		models->push_back(std::make_unique<models::classes::ModelClassObj>(cStr));
+		models->push_back(std::make_unique<models::classes::ModelClassObj>(classes[i]));
 	}
 
 	// Core hxcpp type models

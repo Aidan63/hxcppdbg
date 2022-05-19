@@ -23,6 +23,7 @@ HX_DECLARE_CLASS3(hxcppdbg, core, model, ModelData)
 HX_DECLARE_CLASS3(hxcppdbg, core, drivers, StopReason)
 HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
+HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
@@ -42,8 +43,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
             ComPtr<IDebugSymbols5> _symbols,
             ComPtr<IDebugSystemObjects4> _system,
             std::unique_ptr<DebugEventCallbacks> _events,
-            Array<String> enums,
-            Array<String> classes);
+            Array<hxcppdbg::core::sourcemap::GeneratedType> enums,
+            Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
 
         hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
 
@@ -66,7 +67,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result start(int status);
         hxcppdbg::core::ds::Result step(int thread, int status);
 
-        static hxcppdbg::core::ds::Result createFromFile(String file, Array<String> enums, Array<String> classes);
+        static hxcppdbg::core::ds::Result createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
         static IDataModelManager* manager;
         static IDebugHost* host;
     };
