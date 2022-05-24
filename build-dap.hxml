@@ -1,0 +1,9 @@
+-p src
+-m hxcppdbg.Main
+-L tink_cli
+-L json2object
+-L hscript
+-D HXCPP_M64
+-D HX_WINDOWS
+--cpp bin/dap/windows
+--debug

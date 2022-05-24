@@ -1,0 +1,34 @@
+<xml>
+    <pragma once='true'/>
+
+    <files id='haxe'>
+        <compilerflag value='-DCPPDAP_JSON_NLOHMANN'/>
+        <compilerflag value='-I${this_dir}/include'/>
+        <compilerflag value='-I${this_dir}/../nlohmann/include'/>
+    </files>
+
+    <files id='cppdap'>
+        <compilerflag value='-DCPPDAP_JSON_NLOHMANN'/>
+        <compilerflag value='-I${this_dir}/include'/>
+        <compilerflag value='-I${this_dir}/src'/>
+        <compilerflag value='-I${this_dir}/../nlohmann/include'/>
+
+        <file name='${this_dir}/src/content_stream.cpp'/>
+        <file name='${this_dir}/src/io.cpp'/>
+        <file name='${this_dir}/src/network.cpp'/>
+        <file name='${this_dir}/src/nlohmann_json_serializer.cpp'/>
+        <file name='${this_dir}/src/null_json_serializer.cpp'/>
+        <file name='${this_dir}/src/protocol_events.cpp'/>
+        <file name='${this_dir}/src/protocol_requests.cpp'/>
+        <file name='${this_dir}/src/protocol_response.cpp'/>
+        <file name='${this_dir}/src/protocol_types.cpp'/>
+        <file name='${this_dir}/src/session.cpp'/>
+        <file name='${this_dir}/src/socket.cpp'/>
+        <file name='${this_dir}/src/typeinfo.cpp'/>
+        <file name='${this_dir}/src/typeof.cpp'/>
+    </files>
+
+    <target id='haxe'>
+        <files id='cppdap'/>
+    </target>
+</xml>

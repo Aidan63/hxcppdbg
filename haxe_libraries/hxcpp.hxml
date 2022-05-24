@@ -1,0 +1,4 @@
+# @install: lix --silent download "haxelib:/hxcpp#4.2.1" into hxcpp/4.2.1/haxelib
+# @run: haxelib run-dir hxcpp D:/projects/flurry/hxcpp
+-cp D:/projects/flurry/hxcpp
+-D hxcpp=4.2.1

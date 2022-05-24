@@ -1,4 +1,5 @@
 #include <hxcpp.h>
+#include <filesystem>
 
 #include "DbgEngObjects.hpp"
 #include "models/extensions/HxcppdbgModelFactory.hpp"
@@ -47,10 +48,6 @@
 
 #ifndef INCLUDED_hxcppdbg_core_locals_NativeVariable
 #include <hxcppdbg/core/locals/NativeLocal.h>
-#endif
-
-#ifndef INCLUDED_haxe_io_Path
-#include <haxe/io/Path.h>
 #endif
 
 #ifndef INCLUDED_hxcppdbg_core_model_ModelData
@@ -236,7 +233,7 @@ hxcppdbg::core::drivers::dbgeng::NativeFrameReturn hxcppdbg::core::drivers::dbge
 	}
 
 	// -1 as the null terminating character is included as part of the size.
-	auto file = haxe::io::Path_obj::normalize(String::create(fileBuffer.data(), fileLength - 1));
+	auto file = String::create(std::filesystem::path(std::wstring(fileBuffer.data(), fileLength - 1)).u8string().c_str());
 	auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameLength - 1));
 
 	return hxcppdbg::core::drivers::dbgeng::NativeFrameReturn_obj::__new(hxcppdbg::core::stack::NativeFrame_obj::__new(file, name, line), address);
