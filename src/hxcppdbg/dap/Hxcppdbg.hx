@@ -1,20 +1,22 @@
 package hxcppdbg.dap;
 
-import hxcppdbg.dap.native.DapSession;
+import haxe.io.Path;
 import sys.thread.Thread;
 import hxcppdbg.core.Session;
 
 class Hxcppdbg
 {
     final debugger : Session;
-
-    final dap : DapSession;
+    final server : DapServer;
 
     public function new()
     {
-        final args = Sys.args();
+        final exe = Sys.args()[0];
+        final map = Path.join([ Path.directory(exe), 'sourcemap.json' ]);
 
-        debugger = new Session(args[0], args[1]);
-        dap      = DapSession.create();
+        debugger = new Session(exe, map);
+        server   = new DapServer();
+
+        Thread.current().events.run(server.listen);
     }
 }
