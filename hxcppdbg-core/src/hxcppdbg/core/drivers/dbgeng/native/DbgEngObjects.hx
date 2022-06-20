@@ -33,4 +33,6 @@ extern class DbgEngObjects
     function start(_status : Int) : Result<StopReason, HResultException>;
 
     function step(_thread : Int, _status : Int) : Result<StopReason, HResultException>;
+
+    function pause() : Option<HResultException>;
 }

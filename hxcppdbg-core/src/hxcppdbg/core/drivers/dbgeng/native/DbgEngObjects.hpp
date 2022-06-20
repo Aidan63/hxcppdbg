@@ -66,6 +66,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         hxcppdbg::core::ds::Result start(int status);
         hxcppdbg::core::ds::Result step(int thread, int status);
+        haxe::ds::Option pause();
 
         static hxcppdbg::core::ds::Result createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
         static IDataModelManager* manager;

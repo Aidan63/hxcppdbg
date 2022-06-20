@@ -38,9 +38,9 @@ class DbgEngDriver extends Driver
 		return objects.start(GO).asExceptionResult();
 	}
 
-	public function pause() : Option<Exception>
+	public function pause()
 	{
-		throw new NotImplementedException();
+		return objects.pause().asExceptionOption();
 	}
 
 	public function stop() : Option<Exception>

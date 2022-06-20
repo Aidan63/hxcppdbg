@@ -568,6 +568,18 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return processLastEvent();
 }
 
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::pause()
+{
+	auto result = HRESULT{ S_OK };
+
+	if (!SUCCEEDED(result = control->SetInterrupt(DEBUG_INTERRUPT_ACTIVE)))
+	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
+	}
+
+	return haxe::ds::Option_obj::None;
+}
+
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::processLastEvent()
 {
 	// Get the last event
