@@ -4,4 +4,4 @@
 -L json2object
 -m Test
 --debug
---interp
+--cpp tests/bin/dap

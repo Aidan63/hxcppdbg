@@ -1,4 +1,5 @@
--p src
+-p hxcppdbg-cli/src
+-p hxcppdbg-core/src
 -m hxcppdbg.Main
 -L tink_cli
 -L json2object
@@ -7,5 +8,5 @@
 -D HXCPP_M64
 -D HX_WINDOWS
 --macro vcpkg.Vcpkg.install('vcpkg_installed/x64-windows')
---cpp bin/dap/windows
+--cpp hxcppdbg-cli/bin/windows
 --debug
