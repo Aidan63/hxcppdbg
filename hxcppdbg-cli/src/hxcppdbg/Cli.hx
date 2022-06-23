@@ -87,7 +87,7 @@ class Cli
             
                                             tink.Cli
                                                 .process(args, new Hxcppdbg(session))
-                                                .handle(_ -> {});
+                                                .handle(_ -> stdout.write.write(Bytes.ofString('hxcppdbg : '), _ -> {}));
                                         case Error(error):
                                             throw new Exception(error.toString());
                                     }
@@ -201,10 +201,10 @@ class Cli
 
                         input.close();
                     case _:
-                        //
+                        Sys.println('exception thrown which contained no haxe frames in thread $_thread');
                 }
             case Error(_):
-                //
+                Sys.println('unable to get the stack for an exception thrown in thread $_thread');
         }
     }
 
