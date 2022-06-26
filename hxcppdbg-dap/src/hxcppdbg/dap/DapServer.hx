@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import sys.thread.EventLoop;
 import cpp.asio.File;
 import cpp.asio.Result;
 import cpp.asio.Code;
@@ -12,6 +13,8 @@ import haxe.Json;
 
 class DapServer
 {
+    final events : EventLoop;
+
     var configured : Bool;
 
     var buffer : InputBuffer;
@@ -22,8 +25,9 @@ class DapServer
 
     var log : File;
 
-    public function new()
+    public function new(_events : EventLoop)
     {
+        events     = _events;
         configured = false;
         buffer     = new InputBuffer();
     }
@@ -33,8 +37,19 @@ class DapServer
         cpp.asio.File.open('log.txt', OpenMode.Create | OpenMode.WriteOnly, AccessMode.UserReadWriteExecute, result -> {
             switch result
             {
-                case Success(data):
-                    log = data;
+                case Success(_log):
+                    log = _log;
+                case Error(error):
+                    throw new Exception(error.toString());
+            }
+        });
+
+        cpp.asio.TTY.open(Stdout, result ->
+        {
+            switch result
+            {
+                case Success(_stdout):
+                    stdout = _stdout;
                 case Error(error):
                     throw new Exception(error.toString());
             }
@@ -45,19 +60,8 @@ class DapServer
             switch result
             {
                 case Success(_stdin):
-                    cpp.asio.TTY.open(Stdout, result ->
-                    {
-                        switch result
-                        {
-                            case Success(_stdout):
-                                stdin  = _stdin;
-                                stdout = _stdout;
-                            
-                                stdin.read.read(onInput);
-                            case Error(error):
-                                throw new Exception(error.toString());
-                        }
-                    });
+                    stdin = _stdin;
+                    stdin.read.read(onInput);
                 case Error(error):
                     throw new Exception(error.toString());
             }
@@ -69,6 +73,7 @@ class DapServer
         final data = Bytes.ofString('Content-Length: ${ _content.length }\r\n\r\n$_content');
 
         log.write(data, _ -> {});
+        
         stdout.write.write(data, _ -> {});
     }
 
