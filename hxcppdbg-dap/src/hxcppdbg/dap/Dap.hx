@@ -1,19 +1,21 @@
 package hxcppdbg.dap;
 
-import sys.thread.EventLoop.EventHandler;
-import haxe.io.Path;
-import sys.thread.Thread;
+import cpp.asio.streams.IReadStream;
+import cpp.asio.streams.IWriteStream;
+import cpp.asio.Result;
+import haxe.Exception;
 import hxcppdbg.core.Session;
+import sys.thread.Thread;
+import cpp.asio.Code;
+import cpp.asio.TcpSocket;
 
 class Dap
 {
-    var session : Null<Session>;
+    var server : TcpSocket;
 
-    var server : Null<DapServer>;
+    final clients : Array<TcpClient>;
 
-    var thread : Null<Thread>;
-
-    var heartbeat : Null<EventHandler>;
+    public var mode : String;
 
     public var target : String;
 
@@ -21,18 +23,73 @@ class Dap
 
     public function new()
     {
-        session   = null;
         server    = null;
-        thread    = null;
-        heartbeat = null;
+        clients   = [];
+
+        mode      = 'stdio';
+        target    = '';
+        sourcemap = '';
     }
 
-    @:defaultCommand public function run()
+    @:defaultCommand
+    public function run()
     {
-        session   = new Session(target, sourcemap);
-        server    = new DapServer(Thread.current().events);
-        thread    = Thread.createWithEventLoop(server.read);
-        heartbeat = Thread.current().events.repeat(noop, 1000);
+        switch mode
+        {
+            case 'stdio':
+                //
+            case 'socket':
+                trace('starting socket');
+
+                cpp.asio.TcpSocket.bind('127.0.0.1', 7777, onSocketListen);
+            case other:
+                throw new Exception('unknown mode $other');
+        }
+    }
+
+    @:command
+    public function help()
+    {
+        //
+    }
+
+    function onSocketListen(_result : Result<TcpSocket, Code>)
+    {
+        switch _result
+        {
+            case Success(socket):
+                server = socket;
+
+                socket.listen(onConnectionRequest);
+            case Error(code):
+                trace('failed to bind to address : $code');
+        }
+    }
+
+    function onConnectionRequest(_result : Result<TcpRequest, Code>)
+    {
+        switch _result
+        {
+            case Success(request):
+                trace('connection request');
+
+                request.accept(onClientConnected);
+            case Error(code):
+                trace('failed to listen for connection requests : $code');
+        }
+    }
+
+    function onClientConnected(_result : Result<TcpClient, Code>)
+    {
+        switch _result
+        {
+            case Success(client):
+                clients.push(client);
+
+                startDebugSession(client.stream, client.stream);
+            case Error(code):
+                trace('failed to connect client : $code');
+        }
     }
 
     function noop()
@@ -40,43 +97,24 @@ class Dap
         //
     }
 
-    function start()
+    function startDebugSession(_input : IReadStream, _output : IWriteStream)
     {
-        switch session.start()
-        {
-            case Success(v):
-                switch v
-                {
-                    case ExceptionThrown(_thread):
-                        final body = {
-                            reason            : 'exception',
-                            threadId          : _thread,
-                            allThreadsStopped : true,
-                            description       : 'paused at exception'
-                        }
-                    case BreakpointHit(_id, _thread):
-                        final body = {
-                            reason            : 'breakpoint',
-                            threadId          : _thread,
-                            allThreadsStopped : true,
-                            description       : 'paused at breakpoint',
-                            hitBreakpointIds  : [ _id ]
-                        }
-                    case Natural:
-                        //
-                }
-            case Error(e):
-                //
-        }
-    }
-
-    function resume()
-    {
-        //
-    }
-
-    function pause()
-    {
-        //
+        final thread    = Thread.createWithEventLoop(() -> new Session(target, sourcemap));
+        final heartbeat = thread.events.repeat(noop, 1000);
+        final dap       = new DapSession(thread.events, _input, _output, () -> {
+            for (client in clients)
+            {
+                client.shutdown(result -> {
+                    switch result
+                    {
+                        case Some(v):
+                            trace(v);
+                        case None:
+                            trace('now closing');
+                            client.close();
+                    }
+                });
+            }
+        });
     }
 }

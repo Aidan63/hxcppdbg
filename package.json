@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "@vscode/debugadapter-testsupport": "^1.51.0",
+    "lix": "^15.12.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^9.1.1",
+    "@types/node": "14.x",
+    "typescript": "^4.6.3",
+    "mocha": "^9.2.2"
+  },
+  "scripts": {
+    "compile": "tsc -p hxcppdbg-dap/tests",
+    "test": "mocha hxcppdbg-dap/tests/bin/js/*.test.js"
+  }
+}

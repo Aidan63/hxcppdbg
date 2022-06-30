@@ -8,8 +8,13 @@ class Main {
 				f(7);
 
 				trace('callback');
-			}, 0);
 
-		trace("Hello, world!");
+				while (true)
+				{
+					haxe.io.Bytes.alloc(Std.random(1000));
+
+					Sys.sleep(1);
+				}
+			}, 0);
 	}
 }
