@@ -15,31 +15,37 @@ import haxe.Json;
 
 class DapSession
 {
-    final events : EventLoop;
-
     final input : IReadStream;
 
     final output : IWriteStream;
 
     final buffer : InputBuffer;
 
-    final shutdown : Void->Void;
-
     var configured : Bool;
 
-    public function new(_events, _input, _output, _shutdown)
+    var outSequence : Int;
+
+    // signals
+
+    public final onDisconnect : Signal<Unit>;
+
+    public final onLaunch : Signal<Unit>;
+
+    public function new(_events, _input, _output)
     {
-        events     = _events;
-        input      = _input;
-        output     = _output;
-        shutdown   = _shutdown;
-        buffer     = new InputBuffer();
-        configured = false;
+        input       = _input;
+        output      = _output;
+        buffer      = new InputBuffer();
+        configured  = false;
+        outSequence = 1;
+
+        onDisconnect = new Signal(_events);
+        onLaunch     = new Signal(_events);
 
         input.read(onInput);
     }
 
-    public function write(_content : String)
+    function write(_content : String)
     {
         final str  = 'Content-Length: ${ _content.length }\r\n\r\n$_content';
         final data = Bytes.ofString(str);
@@ -55,6 +61,33 @@ class DapSession
         });
         
         trace(str);
+    }
+
+    public function sendExited()
+    {
+        write(
+            Json.stringify({
+                seq   : nextOutSequence(),
+                type  : 'event',
+                event : 'exited',
+                body  : {
+                    exitCode : 0
+                }
+            })
+        );
+    }
+
+    public function sendDisconnect(_sequence)
+    {
+        write(
+            Json.stringify({
+                seq         : nextOutSequence(),
+                request_seq : _sequence,
+                type        : 'response',
+                success     : true,
+                command     : 'disconnect',
+            })
+        );
     }
 
     function onInput(_result : Result<Bytes, Code>)
@@ -80,6 +113,8 @@ class DapSession
                                         finishConfiguration(message.seq);
                                     case 'disconnect':
                                         disconnect(message.seq);
+                                    case 'launch':
+                                        launch(message.seq);
                                     case other:
                                         trace(other);
                                 }
@@ -102,7 +137,7 @@ class DapSession
     {
         write(
             Json.stringify({
-                seq         : _sequence,
+                seq         : nextOutSequence(),
                 request_seq : _sequence,
                 type        : 'response',
                 success     : true,
@@ -114,6 +149,14 @@ class DapSession
                 }
             })
         );
+
+        write(
+            Json.stringify({
+                seq   : nextOutSequence(),
+                type  : 'event',
+                event : 'initialized'
+            })
+        );
     }
 
     function finishConfiguration(_sequence : Int)
@@ -122,7 +165,7 @@ class DapSession
 
         write(
             Json.stringify({
-                seq         : _sequence,
+                seq         : nextOutSequence(),
                 request_seq : _sequence,
                 type        : 'response',
                 success     : true,
@@ -135,7 +178,7 @@ class DapSession
     {
         write(
             Json.stringify({
-                seq         : _sequence,
+                seq         : nextOutSequence(),
                 request_seq : _sequence,
                 type        : 'response',
                 success     : true,
@@ -143,6 +186,26 @@ class DapSession
             })
         );
 
-        shutdown();
+        onDisconnect.notify(Unit.value);
+    }
+
+    function launch(_sequence : Int)
+    {
+        write(
+            Json.stringify({
+                seq         : nextOutSequence(),
+                request_seq : _sequence,
+                type        : 'response',
+                success     : true,
+                command     : 'launch',
+            })
+        );
+
+        onLaunch.notify(Unit.value);
+    }
+
+    function nextOutSequence()
+    {
+        return outSequence++;
     }
 }

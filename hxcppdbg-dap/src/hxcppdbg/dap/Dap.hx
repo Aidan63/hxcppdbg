@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import sys.thread.EventLoop.EventHandler;
 import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
 import cpp.asio.Result;
@@ -99,9 +100,38 @@ class Dap
 
     function startDebugSession(_input : IReadStream, _output : IWriteStream)
     {
-        final thread    = Thread.createWithEventLoop(() -> new Session(target, sourcemap));
-        final heartbeat = thread.events.repeat(noop, 1000);
-        final dap       = new DapSession(thread.events, _input, _output, () -> {
+        var session : Session;
+        var heartbeat : EventHandler;
+
+        final main   = Thread.current();
+        final thread = Thread.createWithEventLoop(() -> {
+            session   = new Session(target, sourcemap);
+            heartbeat = Thread.current().events.repeat(noop, 1000);
+        });
+
+        final dap = new DapSession(thread.events, _input, _output);
+
+        dap.onLaunch.subscribe(_ -> {
+            switch session.start()
+            {
+                case Success(reason):
+                    switch reason
+                    {
+                        case ExceptionThrown(_thread):
+                            trace('exception exit');
+                        case BreakpointHit(_id, _thread):
+                            trace('breakpoint exit');
+                        case Natural:
+                            trace('natural exit');
+
+                            main.events.run(dap.sendExited);
+                    }
+                case Error(e):
+                    trace(e.message);
+            }
+        });
+
+        dap.onDisconnect.subscribe(_ -> {
             for (client in clients)
             {
                 client.shutdown(result -> {
@@ -115,6 +145,8 @@ class Dap
                     }
                 });
             }
+
+            clients.resize(0);
         });
     }
 }

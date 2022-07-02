@@ -7,10 +7,6 @@ suite('Hxcppdbg Debug Adapter', () => {
 
 	const DEBUG_ADAPTER = '--mode=stdio --target="D:\\programming\\haxe\\hxcppdbg\\sample\\bin\\windows\\Main-debug.exe" --sourcemap="D:\\programming\\haxe\\hxcppdbg\\sample\\bin\\windows\\sourcemap.json"';
 
-	const PROJECT_ROOT = Path.join(__dirname, '../../');
-	const DATA_ROOT = Path.join(PROJECT_ROOT, 'src/tests/data/');
-
-
 	let dc: DebugClient;
 
 	setup( () => {
@@ -40,44 +36,27 @@ suite('Hxcppdbg Debug Adapter', () => {
 			assert.strictEqual(response.body.supportsConfigurationDoneRequest, true);
 		});
 
-		// test('should produce error for invalid \'pathFormat\'', done => {
-		// 	dc.initializeRequest({
-		// 		adapterID: 'mock',
-		// 		linesStartAt1: true,
-		// 		columnsStartAt1: true,
-		// 		pathFormat: 'url'
-		// 	}).then(response => {
-		// 		done(new Error("does not report error on invalid 'pathFormat' attribute"));
-		// 	}).catch(err => {
-		// 		// error expected
-		// 		done();
-		// 	});
-		// });
+		test('should return an initialized event', async () => {
+			await dc.initializeRequest();
+			await dc.waitForEvent('initialized');
+		});
+
+		test('should respond to the configuration done request', async () => {
+			await dc.initializeRequest();
+			await dc.waitForEvent('initialized');
+			await dc.configurationDoneRequest();
+		});
 	});
 
 	// suite('launch', () => {
 
 	// 	test('should run program to the end', () => {
 
-	// 		const PROGRAM = Path.join(DATA_ROOT, 'test.md');
-
 	// 		return Promise.all([
 	// 			dc.configurationSequence(),
-	// 			dc.launch({ program: PROGRAM }),
-	// 			dc.waitForEvent('terminated')
+	// 			dc.launch({ })
 	// 		]);
-	// 	});
 
-	// 	test('should stop on entry', () => {
-
-	// 		const PROGRAM = Path.join(DATA_ROOT, 'test.md');
-	// 		const ENTRY_LINE = 1;
-
-	// 		return Promise.all([
-	// 			dc.configurationSequence(),
-	// 			dc.launch({ program: PROGRAM, stopOnEntry: true }),
-	// 			dc.assertStoppedLocation('entry', { line: ENTRY_LINE } )
-	// 		]);
 	// 	});
 	// });
 
