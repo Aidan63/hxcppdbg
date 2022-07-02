@@ -1,6 +1,7 @@
 #include <hxcpp.h>
 #include <filesystem>
 
+#include <comdef.h>
 #include "DbgEngObjects.hpp"
 #include "models/extensions/HxcppdbgModelFactory.hpp"
 #include "models/extensions/HxcppdbgModelDataFactory.hpp"
@@ -125,9 +126,12 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
+		auto err = _com_error(result);
+		auto msg = err.ErrorMessage();
+
 		hx::ExitGCFreeZone();
 
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to wait for event"), result));
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(msg), result));
 	}
 
 	hx::ExitGCFreeZone();
@@ -530,9 +534,26 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
 	{
-		hx::ExitGCFreeZone();
+		switch (result)
+		{
+			// https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/dbgeng/nf-dbgeng-idebugcontrol3-waitforevent
+			// If none of the targets are capable of generating events -- for example, all the targets have exited -- this method will end the current session, discard the targets, and then return E_UNEXPECTED.
+			case E_UNEXPECTED:
+				{
+					hx::ExitGCFreeZone();
 
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
+					return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::Natural);
+				}
+			default:
+				{
+					auto err = _com_error(result);
+					auto msg = err.ErrorMessage();
+
+					hx::ExitGCFreeZone();
+
+					return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(msg), result));
+				}
+		}
 	}
 
 	hx::ExitGCFreeZone();
