@@ -43,7 +43,7 @@ class InputBuffer
                                 }
                                 else
                                 {
-                                    buffer.splice(0, header.length + length);
+                                    buffer.splice(0, 4 + header.length + length);
 
                                     return Option.Some(Json.parse(body.substr(0, length)));
                                 }
