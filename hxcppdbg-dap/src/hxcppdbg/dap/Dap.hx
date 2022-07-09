@@ -107,7 +107,7 @@ class Dap
         });
 
         final dap       = new DapSession(_client.stream, _client.stream);
-        final scheduler = new ThreadEventsScheduler(main.events);
+        final scheduler = new ThreadEventsScheduler(thread.events);
 
         dap
             .onLaunch
@@ -146,20 +146,21 @@ class Dap
 
                 thread.events.cancel(heartbeat);
 
-                _client.shutdown(result -> {
-                    switch result
-                    {
-                        case Some(v):
-                            trace(v);
-                        case None:
-                            _client.close();
-                    }
+                main.events.run(() -> {
+                    _client.shutdown(result -> {
+                        switch result
+                        {
+                            case Some(v):
+                                trace(v);
+                            case None:
+                                _client.close();
+                        }
+                    });
                 });
             });
 
         dap
             .onPause
-            .observeOn(scheduler)
             .subscribeFunction(_ -> {
                 switch session.pause()
                 {

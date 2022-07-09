@@ -1,0 +1,3 @@
+[submodule "hxcppdbg-core/libs/fmt"]
+	path = hxcppdbg-core/libs/fmt
+	url = https://github.com/fmtlib/fmt

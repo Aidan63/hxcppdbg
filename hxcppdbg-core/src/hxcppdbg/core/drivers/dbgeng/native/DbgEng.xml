@@ -1,10 +1,18 @@
 <xml>
     <compiler id="MSVC" exe="cl.exe">
-        <flag value = "/std:c++17"/>
         <flag value = "/await"/>
     </compiler>
 
+    <set name='FmtDir' value='${DbgEngDir}/../../../../../../libs/fmt'/>
+
+    <files id='fmt'>
+        <compilerflag value='-I${FmtDir}/include'/>
+        <file name='${FmtDir}/src/format.cc'/>
+        <file name='${FmtDir}/src/os.cc'/>
+    </files>
+
     <files id='haxe'>
+        <compilerflag value='-I${FmtDir}/include'/>
         <compilerflag value='-I${DbgEngDir}'/>
         <compilerflag value='-DWIN32_LEAN_AND_MEAN'/>
 
@@ -32,13 +40,8 @@
         <file name='${DbgEngDir}/models/classes/ModelClassObj.cpp'/>
     </files>
 
-    <files id='dbgeng'>
-        <compilerflag value='-I${DbgEngDir}'/>
-        <compilerflag value='-DWIN32_LEAN_AND_MEAN'/>
-    </files>
-
     <target id="haxe">
-        <files id='dbgeng'/>
+        <files id='fmt'/>
 
         <lib name = "DbgEng.lib"/>
     </target>

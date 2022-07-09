@@ -8,6 +8,5 @@
 -L hxrx
 -D HXCPP_M64
 -D HX_WINDOWS
---macro vcpkg.Vcpkg.install('vcpkg_installed/x64-windows')
 --cpp hxcppdbg-dap/bin/windows
 --debug

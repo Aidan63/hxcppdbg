@@ -7,6 +7,5 @@
 -L hxcpp_luv
 -D HXCPP_M64
 -D HX_WINDOWS
---macro vcpkg.Vcpkg.install('vcpkg_installed/x64-windows')
 --cpp hxcppdbg-cli/bin/windows
 --debug

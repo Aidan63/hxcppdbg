@@ -1,0 +1,3 @@
+# @install: lix --silent download "gh://github.com/aidan63/hxrx#2bef142e7b602f0b086d5843d023f81d9acd09a9" into hxrx/1.0.0/github/2bef142e7b602f0b086d5843d023f81d9acd09a9
+-cp ${HAXE_LIBCACHE}/hxrx/1.0.0/github/2bef142e7b602f0b086d5843d023f81d9acd09a9/src
+-D hxrx=1.0.0

@@ -9,17 +9,6 @@ function delay(timeInMillis: number): Promise<void> {
 
 suite('Hxcppdbg Debug Adapter', () => {
 
-	const DEBUG_ADAPTER = '--mode=stdio --target="D:\\programming\\haxe\\hxcppdbg\\sample\\bin\\windows\\Main-debug.exe" --sourcemap="D:\\programming\\haxe\\hxcppdbg\\sample\\bin\\windows\\sourcemap.json"';
-
-	let dc: DebugClient;
-
-	setup( () => {
-		dc = new DebugClient('D:\\programming\\haxe\\hxcppdbg\\hxcppdbg-dap\\bin\\windows\\Main-debug.exe', DEBUG_ADAPTER, 'mock');
-		return dc.start(7777);
-	} );
-
-	teardown( () => dc.stop() );
-
 	// suite('basic', () => {
 
 	// test('unknown request should produce error', done => {
@@ -33,6 +22,16 @@ suite('Hxcppdbg Debug Adapter', () => {
 	// });
 
 	suite('initialize', () => {
+
+		const DEBUG_ADAPTER = '--mode=socket --target="D:\\programming\\haxe\\hxcppdbg\\sample\\bin\\windows\\Main-debug.exe" --sourcemap="D:\\programming\\haxe\\hxcppdbg\\sample\\bin\\windows\\sourcemap.json"';
+
+		let dc : DebugClient;
+
+		setup(() => {
+			dc = new DebugClient('D:\\programming\\haxe\\hxcppdbg\\hxcppdbg-dap\\bin\\windows\\Main-debug.exe', DEBUG_ADAPTER, 'mock');
+
+			return dc.start(7777);
+		});
 
 		test('should return supported features', async () => {
 			
@@ -56,6 +55,8 @@ suite('Hxcppdbg Debug Adapter', () => {
 			await dc.configurationDoneRequest();
 
 		});
+
+		teardown(() => dc.stop());
 
 	});
 
