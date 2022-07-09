@@ -3,6 +3,10 @@ import * as Path from 'path';
 import {DebugClient} from '@vscode/debugadapter-testsupport';
 import {suite, setup, teardown, test} from 'mocha';
 
+function delay(timeInMillis: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(() => resolve(), timeInMillis));
+}
+
 suite('Hxcppdbg Debug Adapter', () => {
 
 	const DEBUG_ADAPTER = '--mode=stdio --target="D:\\programming\\haxe\\hxcppdbg\\sample\\bin\\windows\\Main-debug.exe" --sourcemap="D:\\programming\\haxe\\hxcppdbg\\sample\\bin\\windows\\sourcemap.json"';
@@ -12,52 +16,84 @@ suite('Hxcppdbg Debug Adapter', () => {
 	setup( () => {
 		dc = new DebugClient('D:\\programming\\haxe\\hxcppdbg\\hxcppdbg-dap\\bin\\windows\\Main-debug.exe', DEBUG_ADAPTER, 'mock');
 		return dc.start(7777);
-	});
+	} );
 
 	teardown( () => dc.stop() );
 
-
 	// suite('basic', () => {
 
-	// 	test('unknown request should produce error', done => {
+	// test('unknown request should produce error', done => {
 	// 		dc.send('illegal_request').then(() => {
 	// 			done(new Error("does not report error on unknown request"));
 	// 		}).catch(() => {
 	// 			done();
 	// 		});
 	// 	});
+
 	// });
 
 	suite('initialize', () => {
 
 		test('should return supported features', async () => {
+			
 			let response = await dc.initializeRequest();
 			response.body = response.body || {};
 			assert.strictEqual(response.body.supportsConfigurationDoneRequest, true);
+
 		});
 
 		test('should return an initialized event', async () => {
+
 			await dc.initializeRequest();
 			await dc.waitForEvent('initialized');
+
 		});
 
 		test('should respond to the configuration done request', async () => {
+
 			await dc.initializeRequest();
 			await dc.waitForEvent('initialized');
 			await dc.configurationDoneRequest();
+
 		});
+
 	});
+
+	// suite('pause', () => {
+
+	// 	test('it will stop the process when paused', async () => {
+
+	// 		await dc.initializeRequest();
+	// 		await dc.waitForEvent('initialized');
+	// 		await dc.configurationDoneRequest();
+
+	// 		await dc.launch({});
+	// 		await delay(100);
+	// 		await dc.pauseRequest({ threadId : 0 });
+
+	// 		let response = await dc.waitForEvent('stopped');
+	// 		response.body = response.body || {};
+	// 		assert.strictEqual(response.body.reason, 'exception');
+
+	// 	});
+	
+	// });
 
 	// suite('launch', () => {
 
-	// 	test('should run program to the end', () => {
+	// 	test('should run program to the end', async () => {
 
-	// 		return Promise.all([
-	// 			dc.configurationSequence(),
-	// 			dc.launch({ })
-	// 		]);
+	// 		await dc.initializeRequest();
+	// 		await dc.waitForEvent('initialized');
+	// 		await dc.configurationDoneRequest();
+	// 		await dc.launch({ });
+
+	// 		let result = await dc.waitForEvent('exited');
+	// 		result.body = result.body || {};
+	// 		assert.strictEqual(result.body.exitCode, 0);
 
 	// 	});
+
 	// });
 
 	// suite('setBreakpoints', () => {

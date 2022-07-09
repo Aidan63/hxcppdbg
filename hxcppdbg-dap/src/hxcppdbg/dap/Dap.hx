@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import cpp.vm.Gc;
 import sys.thread.EventLoop.EventHandler;
 import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
@@ -10,11 +11,11 @@ import sys.thread.Thread;
 import cpp.asio.Code;
 import cpp.asio.TcpSocket;
 
+using hxrx.observables.Observables;
+
 class Dap
 {
     var server : TcpSocket;
-
-    final clients : Array<TcpClient>;
 
     public var mode : String;
 
@@ -25,8 +26,6 @@ class Dap
     public function new()
     {
         server    = null;
-        clients   = [];
-
         mode      = 'stdio';
         target    = '';
         sourcemap = '';
@@ -85,68 +84,90 @@ class Dap
         switch _result
         {
             case Success(client):
-                clients.push(client);
-
-                startDebugSession(client.stream, client.stream);
+                startDebugSession(target, sourcemap, client);
             case Error(code):
                 trace('failed to connect client : $code');
         }
     }
 
-    function noop()
+    static function noop()
     {
         //
     }
 
-    function startDebugSession(_input : IReadStream, _output : IWriteStream)
+    static function startDebugSession(_target : String, _sourcemap : String, _client : TcpClient)
     {
         var session : Session;
         var heartbeat : EventHandler;
 
         final main   = Thread.current();
         final thread = Thread.createWithEventLoop(() -> {
-            session   = new Session(target, sourcemap);
+            session   = new Session(_target, _sourcemap);
             heartbeat = Thread.current().events.repeat(noop, 1000);
         });
 
-        final dap = new DapSession(thread.events, _input, _output);
+        final dap       = new DapSession(_client.stream, _client.stream);
+        final scheduler = new ThreadEventsScheduler(main.events);
 
-        dap.onLaunch.subscribe(_ -> {
-            switch session.start()
-            {
-                case Success(reason):
-                    switch reason
-                    {
-                        case ExceptionThrown(_thread):
-                            trace('exception exit');
-                        case BreakpointHit(_id, _thread):
-                            trace('breakpoint exit');
-                        case Natural:
-                            trace('natural exit');
+        dap
+            .onLaunch
+            .observeOn(scheduler)
+            .subscribeFunction(_ -> {
+                switch session.start()
+                {
+                    case Success(reason):
+                        switch reason
+                        {
+                            case ExceptionThrown(_thread):
+                                main.events.run(() -> dap.sendExceptionThrown(_thread));
+                            case BreakpointHit(_id, _thread):
+                                main.events.run(() -> dap.sendBreakpointHit(_id, _thread));
+                            case Paused:
+                                main.events.run(dap.sendPaused);
+                            case Natural:
+                                main.events.run(dap.sendExited);
+                        }
+                    case Error(e):
+                        trace(e.message);
+                }
+            });
 
-                            main.events.run(dap.sendExited);
-                    }
-                case Error(e):
-                    trace(e.message);
-            }
-        });
+        dap
+            .onDisconnect
+            .observeOn(scheduler)
+            .subscribeFunction(_ -> {
+                switch session.stop()
+                {
+                    case Some(v):
+                        trace(v.message);
+                    case None:
+                        //
+                }
 
-        dap.onDisconnect.subscribe(_ -> {
-            for (client in clients)
-            {
-                client.shutdown(result -> {
+                thread.events.cancel(heartbeat);
+
+                _client.shutdown(result -> {
                     switch result
                     {
                         case Some(v):
                             trace(v);
                         case None:
-                            trace('now closing');
-                            client.close();
+                            _client.close();
                     }
                 });
-            }
+            });
 
-            clients.resize(0);
-        });
+        dap
+            .onPause
+            .observeOn(scheduler)
+            .subscribeFunction(_ -> {
+                switch session.pause()
+                {
+                    case Some(v):
+                        trace(v);
+                    case None:
+                        //
+                }
+            });
     }
 }

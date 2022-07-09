@@ -1,17 +1,13 @@
 package hxcppdbg.dap;
 
-import cpp.asio.streams.IWriteStream;
-import cpp.asio.streams.IReadStream;
-import sys.thread.EventLoop;
-import cpp.asio.File;
-import cpp.asio.Result;
 import cpp.asio.Code;
-import cpp.asio.TTY;
-import cpp.asio.OpenMode;
-import cpp.asio.AccessMode;
-import haxe.Exception;
-import haxe.io.Bytes;
+import cpp.asio.Result;
+import cpp.asio.streams.IReadStream;
+import cpp.asio.streams.IWriteStream;
+import hxrx.IObservable;
+import hxrx.subjects.PublishSubject;
 import haxe.Json;
+import haxe.io.Bytes;
 
 class DapSession
 {
@@ -25,13 +21,27 @@ class DapSession
 
     var outSequence : Int;
 
-    // signals
+    // Observables
 
-    public final onDisconnect : Signal<Unit>;
+    final subjectDisconnect : PublishSubject<Unit>;
 
-    public final onLaunch : Signal<Unit>;
+    final subjectLaunch : PublishSubject<Unit>;
 
-    public function new(_events, _input, _output)
+    final subjectPause : PublishSubject<Unit>;
+
+    public var onDisconnect (get, never) : IObservable<Unit>;
+
+    inline function get_onDisconnect() return subjectDisconnect;
+
+    public var onLaunch (get, never) : IObservable<Unit>;
+
+    inline function get_onLaunch() return subjectLaunch;
+
+    public var onPause (get, never) : IObservable<Unit>;
+
+    inline function get_onPause() return subjectPause;
+
+    public function new(_input, _output)
     {
         input       = _input;
         output      = _output;
@@ -39,8 +49,9 @@ class DapSession
         configured  = false;
         outSequence = 1;
 
-        onDisconnect = new Signal(_events);
-        onLaunch     = new Signal(_events);
+        subjectDisconnect = new PublishSubject();
+        subjectLaunch     = new PublishSubject();
+        subjectPause      = new PublishSubject();
 
         input.read(onInput);
     }
@@ -56,11 +67,60 @@ class DapSession
                 case Some(code):
                     trace('failed to write to output stream : $code');
                 case None:
-                    //
+                    Sys.println('SENT : "$str"');
             }
         });
-        
-        trace(str);
+    }
+
+    public function sendBreakpointHit(_breakpointID : Int, _threadID : Int)
+    {
+        write(
+            Json.stringify({
+                seq   : nextOutSequence(),
+                type  : 'event',
+                event : 'stopped',
+                body  : {
+                    reason            : 'breakpoint',
+                    description       : 'Paused on breakpoint',
+                    threadId          : _threadID,
+                    allThreadsStopped : true,
+                    hitBreakpointIds  : [ _breakpointID ]
+                }
+            })
+        );
+    }
+
+    public function sendExceptionThrown(_threadID : Int)
+    {
+        write(
+            Json.stringify({
+                seq   : nextOutSequence(),
+                type  : 'event',
+                event : 'stopped',
+                body  : {
+                    reason            : 'exception',
+                    description       : 'Paused on exception',
+                    threadId          : _threadID,
+                    allThreadsStopped : true,
+                }
+            })
+        );
+    }
+
+    public function sendPaused()
+    {
+        write(
+            Json.stringify({
+                seq   : nextOutSequence(),
+                type  : 'event',
+                event : 'stopped',
+                body  : {
+                    reason            : 'pause',
+                    description       : 'Paused',
+                    allThreadsStopped : true,
+                }
+            })
+        );
     }
 
     public function sendExited()
@@ -95,12 +155,10 @@ class DapSession
         switch _result
         {
             case Success(data):
-                trace('${ data.length } bytes read');
-
                 switch buffer.append(data)
                 {
                     case Some(message):
-                        trace(message);
+                        Sys.println('RECV : "${ message.toString() }"');
 
                         switch message.type
                         {
@@ -115,6 +173,8 @@ class DapSession
                                         disconnect(message.seq);
                                     case 'launch':
                                         launch(message.seq);
+                                    case 'pause':
+                                        pause(message.seq);
                                     case other:
                                         trace(other);
                                 }
@@ -126,7 +186,7 @@ class DapSession
                                 //
                         }
                     case None:
-                        //
+                        trace(buffer);
                 }
             case Error(code):
                 //
@@ -186,7 +246,7 @@ class DapSession
             })
         );
 
-        onDisconnect.notify(Unit.value);
+        subjectDisconnect.onNext(Unit.value);
     }
 
     function launch(_sequence : Int)
@@ -201,7 +261,22 @@ class DapSession
             })
         );
 
-        onLaunch.notify(Unit.value);
+        subjectLaunch.onNext(Unit.value);
+    }
+
+    function pause(_sequence : Int)
+    {
+        write(
+            Json.stringify({
+                seq         : nextOutSequence(),
+                request_seq : _sequence,
+                type        : 'response',
+                success     : true,
+                command     : 'pause',
+            })
+        );
+
+        subjectPause.onNext(Unit.value);
     }
 
     function nextOutSequence()

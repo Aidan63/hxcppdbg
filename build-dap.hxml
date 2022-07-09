@@ -5,6 +5,7 @@
 -L json2object
 -L hscript
 -L hxcpp_luv
+-L hxrx
 -D HXCPP_M64
 -D HX_WINDOWS
 --macro vcpkg.Vcpkg.install('vcpkg_installed/x64-windows')
