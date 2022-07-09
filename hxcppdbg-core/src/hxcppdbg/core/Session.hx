@@ -66,12 +66,12 @@ class Session
 
     public function pause()
     {
-        driver.pause();
+        return driver.pause();
     }
 
     public function stop()
     {
-        driver.stop();
+        return driver.stop();
     }
 
     public function step(_thread : Int, _type : StepType)
@@ -139,7 +139,7 @@ class Session
                     case Some(breakpoint):
                         breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
                 }
-            case Natural:
+            case _:
                 //
         }
     }

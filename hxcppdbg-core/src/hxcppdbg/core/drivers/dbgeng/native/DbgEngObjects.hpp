@@ -14,6 +14,7 @@
 #include <Windows.h>
 #include <DbgEng.h>
 #include <DbgModel.h>
+#include <atomic>
 #include "DbgModelClientEx.hpp"
 #include "DebugEventCallbacks.hpp"
 
@@ -36,6 +37,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         ComPtr<IDebugSystemObjects4> system;
         std::unique_ptr<DebugEventCallbacks> events;
         std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
+        std::atomic_bool pauseRequested;
 
         DbgEngObjects_obj(
             ComPtr<IDebugClient7> _client,
@@ -67,6 +69,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result start(int status);
         hxcppdbg::core::ds::Result step(int thread, int status);
         haxe::ds::Option pause();
+
+        haxe::ds::Option end();
 
         static hxcppdbg::core::ds::Result createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
         static IDataModelManager* manager;

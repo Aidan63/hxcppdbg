@@ -153,7 +153,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 }
 
 hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::DbgEngObjects_obj(ComPtr<IDebugClient7> _client, ComPtr<IDebugControl7> _control, ComPtr<IDebugSymbols5> _symbols, ComPtr<IDebugSystemObjects4> _system, std::unique_ptr<DebugEventCallbacks> _events, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes)
-	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), models(std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>())
+	: client(_client), control(_control), symbols(_symbols), system(_system), events(std::move(_events)), models(std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>()), pauseRequested(std::atomic_bool(false))
 {
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory();
 	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory();
@@ -640,6 +640,36 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 			}
 
 		default:
-			return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::Natural);
+			if (pauseRequested.exchange(false))
+			{
+				return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::Paused);
+			}
+			else
+			{
+				return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::Natural);
+			}
 	}
+}
+
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::end()
+{
+	auto result = 0;
+	
+	if (!SUCCEEDED(result = client->TerminateProcesses()))
+	{
+		auto err = _com_error(result);
+		auto msg = err.ErrorMessage();
+
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(msg), result));
+	}
+
+	if (!SUCCEEDED(result = client->EndSession(DEBUG_END_ACTIVE_TERMINATE)))
+	{
+		auto err = _com_error(result);
+		auto msg = err.ErrorMessage();
+
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(msg), result));
+	}
+	
+	return haxe::ds::Option_obj::None;
 }

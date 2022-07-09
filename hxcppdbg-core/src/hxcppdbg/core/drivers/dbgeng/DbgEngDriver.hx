@@ -45,7 +45,7 @@ class DbgEngDriver extends Driver
 
 	public function stop() : Option<Exception>
 	{
-		throw new NotImplementedException();
+		return objects.end().asExceptionOption();
 	}
 
 	public function step(_thread : Int, _type : StepType)
