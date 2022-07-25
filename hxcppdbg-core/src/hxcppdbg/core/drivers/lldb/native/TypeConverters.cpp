@@ -163,7 +163,7 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
 
     if (fieldCount == 0)
     {
-        return hxcppdbg::core::model::ModelData_obj::MEnum(tag, fields);
+        return hxcppdbg::core::model::ModelData_obj::MEnum(null(), tag, fields);
     }
 
     auto variants = value.EvaluateExpression("(cpp::Variant*)(this + 1)");
@@ -172,7 +172,7 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConv
         fields[i] = convertValue(value.EvaluateExpression(fmt::format("(cpp::Variant*)(this + {0})", i + 1).c_str()));
     }
 
-    return hxcppdbg::core::model::ModelData_obj::MEnum(tag, fields);
+    return hxcppdbg::core::model::ModelData_obj::MEnum(null(), tag, fields);
 }
 
 hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::lldb::native::TypeConverters::convertValue(::lldb::SBValue value)

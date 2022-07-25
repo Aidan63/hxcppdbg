@@ -18,6 +18,8 @@ extern class LLDBProcess
 
     function resume() : Result<StopReason, Exception>;
 
+    function pause() : Option<Exception>;
+
     function stepIn(_threadIndex : Int) : Result<StopReason, Exception>;
 
     function stepOver(_threadIndex : Int) : Result<StopReason, Exception>;

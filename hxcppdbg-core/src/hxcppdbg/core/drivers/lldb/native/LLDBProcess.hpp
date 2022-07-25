@@ -14,8 +14,9 @@
 #include <SBBreakpoint.h>
 #include "TypeConverters.hpp"
 
+HX_DECLARE_CLASS2(haxe, ds, Option)
 HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, lldb, native, LLDBProcess);
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, lldb, native, LLDBProcess)
 HX_DECLARE_CLASS3(hxcppdbg, core, stack, NativeFrame)
 
 namespace hxcppdbg::core::drivers::lldb::native
@@ -29,6 +30,7 @@ namespace hxcppdbg::core::drivers::lldb::native
         void destroy();
         hxcppdbg::core::ds::Result start(String cwd);
         hxcppdbg::core::ds::Result resume();
+        haxe::ds::Option pause();
 
         hxcppdbg::core::ds::Result stepOver(int threadIndex);
         hxcppdbg::core::ds::Result stepIn(int threadIndex);

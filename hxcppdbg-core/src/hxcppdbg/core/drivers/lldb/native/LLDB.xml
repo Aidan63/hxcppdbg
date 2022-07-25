@@ -1,5 +1,14 @@
 <xml>
+    <set name='FmtDir' value='${LLDBDir}/../../../../../../libs/fmt'/>
+
+    <files id='fmt'>
+        <compilerflag value='-I${FmtDir}/include'/>
+        <file name='${FmtDir}/src/format.cc'/>
+        <file name='${FmtDir}/src/os.cc'/>
+    </files>
+
     <files id='haxe'>
+        <compilerflag value='-I${FmtDir}/include'/>
         <compilerflag value='-I${LLDBDir}'/>
         <compilerflag value='-I/usr/lib/llvm-10/include/lldb/API'/>
         <file name='${LLDBDir}/LLDBBoot.cpp'/>
@@ -8,13 +17,8 @@
         <file name='${LLDBDir}/TypeConverters.cpp'/>
     </files>
 
-    <files id='lldb'>
-        <compilerflag value='-I${LLDBDir}'/>
-        <compilerflag value='-I/usr/lib/llvm-10/include/lldb/API'/>
-    </files>
-
     <target id='haxe'>
-        <files id='lldb'/>
+        <files id='fmt'/>
 
         <lib name='-llldb'/>
     </target>

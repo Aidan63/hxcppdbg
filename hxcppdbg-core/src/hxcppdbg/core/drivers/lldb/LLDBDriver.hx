@@ -37,7 +37,7 @@ class LLDBDriver extends Driver
 
     public function pause()
     {
-        return Option.Some(new Exception(''));
+        return process.pause();
     }
 
 	public function resume()

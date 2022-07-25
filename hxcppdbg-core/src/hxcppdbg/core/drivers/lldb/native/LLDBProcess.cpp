@@ -32,6 +32,9 @@
 #include <hxcppdbg/core/model/ModelData.h>
 #endif
 
+#ifndef INCLUDED_haxe_ds_Option
+#include <haxe/ds/Option.h>
+#endif
 
 #include "LLDBProcess.hpp"
 #include <SBTypeSummary.h>
@@ -67,6 +70,8 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_ob
 
     hx::ExitGCFreeZone();
 
+    printf("returned\n");
+
     if (error.Fail())
     {
         return hxcppdbg::core::ds::Result_obj::Error(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
@@ -87,6 +92,29 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_ob
     }
 
     return findStopReason();
+}
+
+haxe::ds::Option hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::pause()
+{
+    auto error = process.Stop();
+
+    if (error.Fail())
+    {
+        printf("fail\n");
+
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(String::create(error.GetCString()), nullptr, nullptr));
+    }
+
+    if (process.GetState() != ::lldb::StateType::eStateStopped)
+    {
+        printf("not stopped\n");
+
+        return haxe::ds::Option_obj::Some(haxe::Exception_obj::__new(HX_CSTRING("process is not suspended"), nullptr, nullptr));
+    }
+
+    printf("stopped\n");
+
+    return haxe::ds::Option_obj::None;
 }
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::lldb::native::LLDBProcess_obj::stepIn(int threadIndex)
