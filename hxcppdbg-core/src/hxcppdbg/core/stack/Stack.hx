@@ -1,5 +1,6 @@
 package hxcppdbg.core.stack;
 
+import haxe.io.Path;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.IStack;
 
@@ -31,7 +32,7 @@ class Stack
 
     function mapNativeFrame(_frame : NativeFrame)
     {
-        return switch sourcemap.files.find(v -> _frame.file.endsWith(v.cpp))
+        return switch sourcemap.files.find(frameMatchesFile.bind(_frame))
         {
             case null:
                 StackFrame.Native(_frame);
@@ -60,5 +61,13 @@ class Stack
                 // hxcpp c++ macro code (e.g. HX_STACKFRAME generated code).
                 StackFrame.Native(_frame);
         }
+    }
+
+    function frameMatchesFile(_frame : NativeFrame, _file : GeneratedFile)
+    {
+        final framePath = Path.normalize(_frame.file);
+        final filePath  = Path.normalize(_file.cpp);
+        
+        return framePath.endsWith(filePath);
     }
 }
