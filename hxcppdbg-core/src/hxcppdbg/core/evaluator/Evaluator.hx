@@ -51,7 +51,7 @@ class Evaluator
     {
         return switch _expr
         {
-            case EIdent(v):
+            case EIdent(v), EConst(CString(v)):
                 switch _models.find(m -> identity(v, m.key))
                 {
                     case null:
