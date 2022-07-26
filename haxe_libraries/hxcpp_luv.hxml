@@ -1,2 +1,4 @@
--cp D:/programming/haxe/hxcpp_luv/src
+# @install: lix --silent download "git:https://github.com/Aidan63/hxcpp_luv_io#643c04570d6d72e42667a4b497b44b25c03c858d" into //git/643c04570d6d72e42667a4b497b44b25c03c858d
+-lib hxcpp
+-cp ${HAXE_LIBCACHE}///git/643c04570d6d72e42667a4b497b44b25c03c858d/src
 -D hxcpp_luv=1.0.0
