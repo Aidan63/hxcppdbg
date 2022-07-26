@@ -14,6 +14,10 @@ class Locals
 
     public var json = false;
 
+    public var thread = 0;
+
+    public var frame = 0;
+
     public function new(_locals)
     {
         locals = _locals;
@@ -21,7 +25,7 @@ class Locals
 
     @:command public function list()
     {
-        switch locals.getLocals(0, 0)
+        switch locals.getLocals(thread, frame)
         {
             case Success(vars):
                 for (hxVar in vars)
