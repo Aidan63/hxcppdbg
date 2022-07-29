@@ -1,5 +1,6 @@
 package hxcppdbg.core;
 
+import tink.core.Option;
 import hxcppdbg.core.evaluator.Evaluator;
 import sys.io.File;
 import haxe.Exception;
@@ -48,81 +49,75 @@ class Session
         eval        = new Evaluator(sourcemap, driver.locals, stack);
     }
 
-    public function start()
+    public function start(_result : Option<Exception>->Void)
     {
-        return
-            driver
-                .start()
-                .act(dispatchStopCallbacks);
+        driver.start(_result);
     }
 
-    public function resume()
+    public function resume(_result : Option<Exception>->Void)
     {
-        return
-            driver
-                .resume()
-                .act(dispatchStopCallbacks);
+        return driver.resume(_result);
     }
 
-    public function pause()
+    public function pause(_result : Option<Exception>->Void)
     {
-        return driver.pause();
+        driver.pause(_result);
     }
 
-    public function stop()
+    public function stop(_result : Option<Exception>->Void)
     {
-        return driver.stop();
+        driver.stop(_result);
     }
 
-    public function step(_thread : Int, _type : StepType)
+    public function step(_thread : Int, _type : StepType, _result : Option<Exception>->Void)
     {
-        return switch stack.getFrame(_thread, 0)
-        {
-            case Success(baseFrame):
-                var stepAgain = true;
-                var current   = baseFrame;
+        // return switch stack.getFrame(_thread, 0)
+        // {
+        //     case Success(baseFrame):
+        //         var stepAgain = true;
+        //         var current   = baseFrame;
 
-                while (stepAgain)
-                {
-                    switch driver.step(_thread, _type)
-                    {
-                        case Success(Natural):
-                            switch stack.getFrame(_thread, 0)
-                            {
-                                case Success(top):
-                                    stepAgain = switch (current = top)
-                                    {
-                                        case Haxe(haxeCurrent, _):
-                                            switch baseFrame
-                                            {
-                                                case Haxe(mapped, _):
-                                                    haxeCurrent.file.haxe == mapped.file.haxe && haxeCurrent.expr.haxe.start.line == mapped.expr.haxe.start.line;
-                                                case Native(_):
-                                                    // Our base frame shouldn't ever be a non haxe one.
-                                                    // In the future this might be the case (native breakpoints),
-                                                    // so we sould correct this down the line.
-                                                    false;
-                                            }
-                                        case Native(_):
-                                            true;
-                                    }
+        //         while (stepAgain)
+        //         {
+        //             switch driver.step(_thread, _type)
+        //             {
+        //                 case Success(Natural):
+        //                     switch stack.getFrame(_thread, 0)
+        //                     {
+        //                         case Success(top):
+        //                             stepAgain = switch (current = top)
+        //                             {
+        //                                 case Haxe(haxeCurrent, _):
+        //                                     switch baseFrame
+        //                                     {
+        //                                         case Haxe(mapped, _):
+        //                                             haxeCurrent.file.haxe == mapped.file.haxe && haxeCurrent.expr.haxe.start.line == mapped.expr.haxe.start.line;
+        //                                         case Native(_):
+        //                                             // Our base frame shouldn't ever be a non haxe one.
+        //                                             // In the future this might be the case (native breakpoints),
+        //                                             // so we sould correct this down the line.
+        //                                             false;
+        //                                     }
+        //                                 case Native(_):
+        //                                     true;
+        //                             }
                                     
-                                case Error(e):
-                                    return Result.Error(e);
-                            }
-                        case Success(other):
-                            dispatchStopCallbacks(other);
+        //                         case Error(e):
+        //                             return Result.Error(e);
+        //                     }
+        //                 case Success(other):
+        //                     dispatchStopCallbacks(other);
                             
-                            return Result.Success(other);
-                        case Error(e):
-                            return Result.Error(e);
-                    }
-                }
+        //                     return Result.Success(other);
+        //                 case Error(e):
+        //                     return Result.Error(e);
+        //             }
+        //         }
 
-                Result.Success(Natural);
-            case Error(e):
-                Result.Error(e);
-        }
+        //         Result.Success(Natural);
+        //     case Error(e):
+        //         Result.Error(e);
+        // }
     }
 
     function dispatchStopCallbacks(_reason : StopReason)

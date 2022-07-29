@@ -37,16 +37,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         ComPtr<IDebugSystemObjects4> system;
         std::unique_ptr<DebugEventCallbacks> events;
         std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
-        std::atomic_bool pauseRequested;
-
-        DbgEngObjects_obj(
-            ComPtr<IDebugClient7> _client,
-            ComPtr<IDebugControl7> _control,
-            ComPtr<IDebugSymbols5> _symbols,
-            ComPtr<IDebugSystemObjects4> _system,
-            std::unique_ptr<DebugEventCallbacks> _events,
-            Array<hxcppdbg::core::sourcemap::GeneratedType> enums,
-            Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
 
         hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
 
@@ -57,6 +47,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result processLastEvent();
 
     public:
+        haxe::ds::Option createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
+
         hxcppdbg::core::ds::Result createBreakpoint(String file, int line);
         haxe::ds::Option removeBreakpoint(int id);
 
@@ -66,13 +58,14 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result getVariables(int _thread, int _frame);
         hxcppdbg::core::ds::Result getArguments(int _thread, int _frame);
 
-        hxcppdbg::core::ds::Result start(int status);
-        hxcppdbg::core::ds::Result step(int thread, int status);
+        haxe::ds::Option go();
         haxe::ds::Option pause();
+        hxcppdbg::core::ds::Result step(int thread, int status);
 
         haxe::ds::Option end();
 
-        static hxcppdbg::core::ds::Result createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
+        bool doPumpEvents(Dynamic, Dynamic, Dynamic);
+
         static IDataModelManager* manager;
         static IDebugHost* host;
     };

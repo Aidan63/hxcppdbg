@@ -32,8 +32,11 @@ class Locals
                 {
                     switch hxVar
                     {
-                        case Native(_):
-                            continue;
+                        case Native(model):
+                            if (native)
+                            {
+                                Sys.println('\t[native]${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
+                            }
                         case Haxe(model):
                             Sys.println('\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
                     }

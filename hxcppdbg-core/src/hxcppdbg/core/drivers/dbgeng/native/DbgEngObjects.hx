@@ -15,8 +15,10 @@ import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 #end
 extern class DbgEngObjects
 {
-    @:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile')
-    static function createFromFile(_file : String, _enums : Array<GeneratedType>, _classes : Array<GeneratedType>) : Result<DbgEngObjects, HResultException>;
+    @:native('new hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj')
+    static function alloc() : DbgEngObjects;
+
+    function createFromFile(_file : String, _enums : Array<GeneratedType>, _classes : Array<GeneratedType>) : Option<HResultException>;
 
     function createBreakpoint(_file : String, _line : Int) : Result<Int, HResultException>;
 
@@ -30,11 +32,13 @@ extern class DbgEngObjects
 
     function getArguments(_thread : Int, _frame : Int) : Result<Array<NativeLocal>, HResultException>;
 
-    function start(_status : Int) : Result<StopReason, HResultException>;
+    function go() : Option<HResultException>;
 
     function step(_thread : Int, _status : Int) : Result<StopReason, HResultException>;
 
     function pause() : Option<HResultException>;
 
     function end() : Option<HResultException>;
+
+    function doPumpEvents(_cbBreakpoint : Dynamic, _cbException : Dynamic, _cbOther : Dynamic) : Bool;
 }

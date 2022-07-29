@@ -16,41 +16,41 @@ class Step
 
     @:defaultCommand('in') public function step()
     {
-        switch session.step(thread, In)
-        {
-            case Error(e):
-                Sys.println(e.message);
-            case Success(Natural):
-                printLocation();
-            case _:
-            //
-        }
+        // switch session.step(thread, In)
+        // {
+        //     case Error(e):
+        //         Sys.println(e.message);
+        //     case Success(Natural):
+        //         printLocation();
+        //     case _:
+        //     //
+        // }
     }
 
     @:command public function out()
     {
-        switch session.step(thread, Out)
-        {
-            case Error(e):
-                Sys.println(e.message);
-            case Success(Natural):
-                printLocation();
-            case _:
-                //
-        }
+        // switch session.step(thread, Out)
+        // {
+        //     case Error(e):
+        //         Sys.println(e.message);
+        //     case Success(Natural):
+        //         printLocation();
+        //     case _:
+        //         //
+        // }
     }
 
     @:command public function over()
     {
-        switch session.step(thread, Over)
-        {
-            case Error(e):
-                Sys.println(e.message);
-            case Success(Natural):
-                printLocation();
-            case _:
-                //
-        }
+        // switch session.step(thread, Over)
+        // {
+        //     case Error(e):
+        //         Sys.println(e.message);
+        //     case Success(Natural):
+        //         printLocation();
+        //     case _:
+        //         //
+        // }
     }
 
     @:command public function help()

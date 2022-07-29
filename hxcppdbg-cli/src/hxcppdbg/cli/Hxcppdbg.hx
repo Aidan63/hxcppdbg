@@ -29,12 +29,38 @@ class Hxcppdbg
 
     @:command public function start()
     {
-        session.start();
+        session.start(opt -> {
+            switch opt
+            {
+                case Some(v):
+                    trace(v);
+                case None:
+                    trace('started');
+            }
+        });
     }
 
     @:command public function resume()
     {
-        session.resume();
+        session.resume(error -> switch error {
+            case Some(v):
+                trace(v);
+            case None:
+                trace('resumed');
+        });
+    }
+
+    @:command public function pause()
+    {
+        session.pause(error -> {
+            switch error
+            {
+                case Some(v):
+                    trace(v);
+                case None:
+                    trace('paused');
+            }
+        });
     }
 
     @:command

@@ -57,7 +57,15 @@ class Cli
                             switch result
                             {
                                 case Success(data):
-                                    session.pause();
+                                    session.pause(opt -> {
+                                        switch opt
+                                        {
+                                            case Some(v):
+                                                trace(v);
+                                            case None:
+                                                trace('paused');
+                                        }
+                                    });
                                 case Error(error):
                                     throw new Exception(error.toString());
                             }
