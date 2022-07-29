@@ -60,7 +60,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         haxe::ds::Option go();
         haxe::ds::Option pause();
-        hxcppdbg::core::ds::Result step(int thread, int status);
+        haxe::ds::Option step(int thread, int status);
 
         haxe::ds::Option end();
 

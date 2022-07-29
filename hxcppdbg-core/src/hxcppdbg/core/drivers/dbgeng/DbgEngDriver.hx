@@ -2,7 +2,6 @@ package hxcppdbg.core.drivers.dbgeng;
 
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
-import hxcppdbg.core.ds.Result;
 import haxe.Exception;
 import haxe.ds.Option;
 import haxe.exceptions.NotImplementedException;
@@ -13,12 +12,6 @@ using hxcppdbg.core.utils.OptionUtils;
 
 class DbgEngDriver extends Driver
 {
-	private static inline final GO = 1;
-
-	private static inline final STEP_OVER = 4;
-
-	private static inline final STEP_INTO = 5;
-
 	final objects : DbgEngObjects;
 
 	final cbThread : Thread;
@@ -32,10 +25,6 @@ class DbgEngDriver extends Driver
 	public function new(_file, _enums, _classes)
 	{
 		objects     = DbgEngObjects.alloc();
-		breakpoints = new DbgEngBreakpoints(objects);
-		stack       = new DbgEngStack(objects);
-		locals      = new DbgEngLocals(objects);
-
 		cbThread    = Thread.current();
 		dbgThread   = Thread.createWithEventLoop(() -> {
 			switch objects.createFromFile(_file, _enums, _classes)
@@ -46,12 +35,16 @@ class DbgEngDriver extends Driver
 					heartbeat = Thread.current().events.repeat(noop, 1000);
 			};
 		});
+
+		breakpoints = new DbgEngBreakpoints(objects, cbThread, dbgThread);
+		stack       = new DbgEngStack(objects, cbThread, dbgThread);
+		locals      = new DbgEngLocals(objects);
 	}
 
 	public function start(_result : Option<Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			waitLoop = dbgThread.events.repeat(waitForEvent, 1);
+			waitLoop = dbgThread.events.repeat(waitForEvent, 10);
 
 			final r = objects.go();
 
@@ -91,57 +84,11 @@ class DbgEngDriver extends Driver
 
 	public function step(_thread : Int, _type : StepType, _result : Option<Exception>->Void)
 	{
-		_result(Option.Some(new NotImplementedException()));
+		dbgThread.events.run(() -> {
+			final r = objects.step(_thread, _type);
 
-		// return switch _type
-		// {
-		// 	case In:
-		// 		return objects.step(_thread, STEP_INTO).asExceptionResult();
-		// 	case Over:
-		// 		return objects.step(_thread, STEP_OVER).asExceptionResult();
-		// 	case Out:
-		// 		// Dbgeng doesn't seem to have a build in step out? Are we suppose to inspect the return
-		// 		// address and continue to that somehow?
-		// 		// In any case get the current stack trace and keep stepping over until we end up back at the previous frame.
-		// 		// This could take a very long time if you step out in the middle of a long function...
-		// 		switch objects.getCallStack(_thread)
-		// 		{
-		// 			case Success(stack):
-		// 				switch stack.length
-		// 				{
-		// 					case 0, 1:
-		// 						Result.Error(new Exception('No frame to step out into'));
-		// 					case _:
-		// 						final previous = stack[1];
-		
-		// 						while (true)
-		// 						{
-		// 							switch objects.step(_thread, STEP_OVER)
-		// 							{
-		// 								case Success(Natural):
-		// 									switch objects.getFrame(_thread, 0)
-		// 									{
-		// 										case Success(top):
-		// 											if (top.address == previous.address)
-		// 											{
-		// 												return Result.Success(StopReason.Natural);
-		// 											}
-		// 										case Error(e):
-		// 											return Result.Error((e : Exception));
-		// 									}
-		// 								case Success(other):
-		// 									return Success(other);
-		// 								case Error(e):
-		// 									return Result.Error((e : Exception));
-		// 							}
-		// 						}
-
-		// 						return Result.Success(StopReason.Natural);
-		// 				}
-		// 			case Error(e):
-		// 				Result.Error((e : Exception));
-		// 		}
-		// }
+			cbThread.events.run(() -> _result(r.asExceptionOption()));
+		});
 	}
 
 	private function waitForEvent()

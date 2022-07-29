@@ -34,7 +34,7 @@ extern class DbgEngObjects
 
     function go() : Option<HResultException>;
 
-    function step(_thread : Int, _status : Int) : Result<StopReason, HResultException>;
+    function step(_thread : Int, _status : Int) : Option<HResultException>;
 
     function pause() : Option<HResultException>;
 

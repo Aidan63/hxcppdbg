@@ -1,6 +1,8 @@
 package hxcppdbg.core.stack;
 
+import haxe.Exception;
 import haxe.io.Path;
+import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.IStack;
 
@@ -20,14 +22,18 @@ class Stack
         driver    = _driver;
     }
 
-    public function getCallStack(_thread)
+    public function getCallStack(_thread, _callback : Result<Array<StackFrame>, Exception>->Void)
     {
-        return driver.getCallStack(_thread).map(mapNativeFrame);
+        driver.getCallStack(_thread, result -> {
+            _callback(result.map(mapNativeFrame));
+        });
     }
 
-    public function getFrame(_thread, _index)
+    public function getFrame(_thread, _index, _callback : Result<StackFrame, Exception>->Void)
     {
-        return driver.getFrame(_thread, _index).apply(mapNativeFrame);
+        driver.getFrame(_thread, _index, result -> {
+            _callback(result.apply(mapNativeFrame));
+        });
     }
 
     function mapNativeFrame(_frame : NativeFrame)

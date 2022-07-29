@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers;
 
+import hxcppdbg.core.ds.Result;
 import haxe.Exception;
 import haxe.ds.Option;
 

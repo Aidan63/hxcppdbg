@@ -518,17 +518,6 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::doPumpEvents(Dynamic _cbBreakpoint, Dynamic _cbException, Dynamic _cbOther)
 {
 	auto result = S_OK;
-	auto status = 0UL;
-
-	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
-	{
-		return false;
-	}
-
-	if (status == DEBUG_STATUS_BREAK)
-	{
-		return true;
-	}
 
 	switch (result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 1))
 	{
@@ -577,32 +566,50 @@ bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::doPumpEvents(Dy
 	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _status)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _step)
 {
-	auto result = HRESULT{ S_OK };
+	auto result = S_OK;
+
+	auto status = 0UL;
+	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
+	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get the current execution status"), result));
+	}
+
+	if (status != DEBUG_STATUS_BREAK)
+	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Cannot step unless the target is suspended"), status));
+	}
 
 	if (!SUCCEEDED(result = system->SetCurrentThreadId(_thread)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set current thread"), result));
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set current thread"), result));
 	}
 
-	if (!SUCCEEDED(result = control->SetExecutionStatus(_status)))
+	auto mode = 0;
+	switch (_step)
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
+	case 0:
+		mode = DEBUG_STATUS_STEP_INTO;
+		break;
+	case 1:
+		mode = DEBUG_STATUS_STEP_OVER;
+		break;
+	default:
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unsupported step mode"), _step));
 	}
 
-	hx::EnterGCFreeZone();
-
-	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
+	if (!SUCCEEDED(result = control->SetExecutionStatus(mode)))
 	{
-		hx::ExitGCFreeZone();
-
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
 	}
 
-	hx::ExitGCFreeZone();
+	if (!SUCCEEDED(result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE)))
+	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
+	}
 
-	return processLastEvent();
+	return haxe::ds::Option_obj::None;
 }
 
 haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::go()

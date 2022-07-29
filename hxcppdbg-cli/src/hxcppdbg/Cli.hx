@@ -8,7 +8,6 @@ import haxe.io.Eof;
 import sys.io.File;
 import hxcppdbg.core.breakpoints.BreakpointHit;
 import sys.FileSystem;
-import tink.cli.Prompt.PromptType;
 import tink.cli.prompt.SysPrompt;
 import hxcppdbg.cli.Hxcppdbg;
 import hxcppdbg.core.Session;
@@ -160,60 +159,62 @@ class Cli
 
     function printExceptionLocation(_thread : Int)
     {
-        switch session.stack.getCallStack(_thread)
-        {
-            case Success(stack):
-                switch stack.find(isHaxeFrame)
-                {
-                    case Haxe(haxe, _):
-                        final exnFile = haxe.file.haxe;
-                        final exnLine = haxe.expr.haxe.start.line;
-
-                        Sys.println('Thread $_thread has thrown an exception at $exnFile Line $exnLine');
-
-                        final minLine = Std.int(Math.max(1, exnLine - 3)) - 1;
-                        final maxLine = exnLine + 3;
-                        final input   = File.read(exnFile, false);
-
-                        // Read all lines up until the ones we're actually interested in.
-                        var i = 0;
-                        while (i < minLine)
-                        {
-                            input.readLine();
-                            i++;
-                        }
-
-                        for (i in 0...(maxLine - minLine))
-                        {
-                            try
+        session.stack.getCallStack(_thread, result -> {
+            switch result
+            {
+                case Success(stack):
+                    switch stack.find(isHaxeFrame)
+                    {
+                        case Haxe(haxe, _):
+                            final exnFile = haxe.file.haxe;
+                            final exnLine = haxe.expr.haxe.start.line;
+    
+                            Sys.println('Thread $_thread has thrown an exception at $exnFile Line $exnLine');
+    
+                            final minLine = Std.int(Math.max(1, exnLine - 3)) - 1;
+                            final maxLine = exnLine + 3;
+                            final input   = File.read(exnFile, false);
+    
+                            // Read all lines up until the ones we're actually interested in.
+                            var i = 0;
+                            while (i < minLine)
                             {
-                                final line    = input.readLine();
-                                final absLine = minLine + i + 1;
-
-                                if (exnLine == absLine)
-                                {
-                                    Sys.print('=>\t');
-                                }
-                                else
-                                {
-                                    Sys.print('\t');
-                                }
-
-                                Sys.println('$absLine: $line');
+                                input.readLine();
+                                i++;
                             }
-                            catch (_ : Eof)
+    
+                            for (i in 0...(maxLine - minLine))
                             {
-                                break;
+                                try
+                                {
+                                    final line    = input.readLine();
+                                    final absLine = minLine + i + 1;
+    
+                                    if (exnLine == absLine)
+                                    {
+                                        Sys.print('=>\t');
+                                    }
+                                    else
+                                    {
+                                        Sys.print('\t');
+                                    }
+    
+                                    Sys.println('$absLine: $line');
+                                }
+                                catch (_ : Eof)
+                                {
+                                    break;
+                                }
                             }
-                        }
-
-                        input.close();
-                    case _:
-                        Sys.println('exception thrown which contained no haxe frames in thread $_thread');
-                }
-            case Error(_):
-                Sys.println('unable to get the stack for an exception thrown in thread $_thread');
-        }
+    
+                            input.close();
+                        case _:
+                            Sys.println('exception thrown which contained no haxe frames in thread $_thread');
+                    }
+                case Error(_):
+                    Sys.println('unable to get the stack for an exception thrown in thread $_thread');
+            }
+        });
     }
 
     function isHaxeFrame(_frame : StackFrame)

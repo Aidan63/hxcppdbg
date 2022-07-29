@@ -40,7 +40,8 @@ class Breakpoints
     }
 }
 
-class Add {
+class Add
+{
     final driver : CoreBreakpoints;
 
     public var file : String;
@@ -56,17 +57,20 @@ class Add {
 
     @:defaultCommand public function run()
     {
-        switch driver.create(file, line, char)
-        {
-            case Success(v):
-                Sys.println('Breakpoing ${ v.id } added to ${ v.file }:${ v.line }');
-            case Error(e):
-                Sys.println('Failed to add breakpoing : ${ e.message }');
-        }
+        driver.create(file, line, char, result -> {
+            switch result
+            {
+                case Success(v):
+                    Sys.println('Breakpoing ${ v.id } added to ${ v.file }:${ v.line }');
+                case Error(e):
+                    Sys.println('Failed to add breakpoing : ${ e.message }');
+            }
+        });
     }
 }
 
-class Remove {
+class Remove
+{
     final driver : CoreBreakpoints;
 
     public var id : Null<Int>;
@@ -78,12 +82,14 @@ class Remove {
 
     @:defaultCommand public function run()
     {
-        switch driver.delete(id)
-        {
-            case Some(exn):
-                Sys.println('Failed to remove breakpoing $id : ${ exn.message }');
-            case None:
-                Sys.println('Breakpoint $id removed');
-        }
+        driver.delete(id, error -> {
+            switch error
+            {
+                case Some(exn):
+                    Sys.println('Failed to remove breakpoing $id : ${ exn.message }');
+                case None:
+                    Sys.println('Breakpoint $id removed');
+            }
+        });
     }
 }

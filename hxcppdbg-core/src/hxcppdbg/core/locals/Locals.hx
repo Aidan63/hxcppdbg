@@ -27,13 +27,13 @@ class Locals
 
     public function getLocals(_thread, _index)
     {
-        return switch stack.getFrame(_thread, _index)
-        {
-            case Success(frame):
-                driver.getVariables(_thread, _index).map(mapNativeLocal.bind(frame));
-            case Error(e):
-                Result.Error(e);
-        }
+        // return switch stack.getFrame(_thread, _index)
+        // {
+        //     case Success(frame):
+        //         driver.getVariables(_thread, _index).map(mapNativeLocal.bind(frame));
+        //     case Error(e):
+        //         Result.Error(e);
+        // }
     }
 
     function mapNativeLocal(_frame : StackFrame, _native : Model)

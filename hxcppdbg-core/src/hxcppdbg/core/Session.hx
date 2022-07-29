@@ -71,53 +71,62 @@ class Session
 
     public function step(_thread : Int, _type : StepType, _result : Option<Exception>->Void)
     {
-        // return switch stack.getFrame(_thread, 0)
-        // {
-        //     case Success(baseFrame):
-        //         var stepAgain = true;
-        //         var current   = baseFrame;
+        stack.getFrame(_thread, 0, result -> {
+            switch result
+            {
+                case Success(baseFrame):
+                    var current = baseFrame;
 
-        //         while (stepAgain)
-        //         {
-        //             switch driver.step(_thread, _type)
-        //             {
-        //                 case Success(Natural):
-        //                     switch stack.getFrame(_thread, 0)
-        //                     {
-        //                         case Success(top):
-        //                             stepAgain = switch (current = top)
-        //                             {
-        //                                 case Haxe(haxeCurrent, _):
-        //                                     switch baseFrame
-        //                                     {
-        //                                         case Haxe(mapped, _):
-        //                                             haxeCurrent.file.haxe == mapped.file.haxe && haxeCurrent.expr.haxe.start.line == mapped.expr.haxe.start.line;
-        //                                         case Native(_):
-        //                                             // Our base frame shouldn't ever be a non haxe one.
-        //                                             // In the future this might be the case (native breakpoints),
-        //                                             // so we sould correct this down the line.
-        //                                             false;
-        //                                     }
-        //                                 case Native(_):
-        //                                     true;
-        //                             }
-                                    
-        //                         case Error(e):
-        //                             return Result.Error(e);
-        //                     }
-        //                 case Success(other):
-        //                     dispatchStopCallbacks(other);
-                            
-        //                     return Result.Success(other);
-        //                 case Error(e):
-        //                     return Result.Error(e);
-        //             }
-        //         }
+                    function stepLoop()
+                    {
+                        driver.step(_thread, _type, result -> {
+                            switch result
+                            {
+                                case Some(exn):
+                                    _result(Option.Some(exn));
+                                case None:
+                                    stack.getFrame(_thread, 0, result -> {
+                                        switch result
+                                        {
+                                            case Success(top):
+                                                final again = switch (current = top)
+                                                {
+                                                    case Haxe(haxeCurrent, _):
+                                                        switch baseFrame
+                                                        {
+                                                            case Haxe(mapped, _):
+                                                                haxeCurrent.file.haxe == mapped.file.haxe && haxeCurrent.expr.haxe.start.line == mapped.expr.haxe.start.line;
+                                                            case Native(_):
+                                                                // Our base frame shouldn't ever be a non haxe one.
+                                                                // In the future this might be the case (native breakpoints),
+                                                                // so we sould correct this down the line.
+                                                                false;
+                                                        }
+                                                    case Native(_):
+                                                        true;
+                                                }
 
-        //         Result.Success(Natural);
-        //     case Error(e):
-        //         Result.Error(e);
-        // }
+                                                if (again)
+                                                {
+                                                    stepLoop();
+                                                }
+                                                else
+                                                {
+                                                    _result(Option.None);
+                                                }
+                                            case Error(exn):
+                                                _result(Option.Some(exn));
+                                        }
+                                    });
+                            }
+                        });
+                    }
+
+                    stepLoop();
+                case Error(e):
+                    _result(Option.Some(e));
+            }
+        });
     }
 
     function dispatchStopCallbacks(_reason : StopReason)
