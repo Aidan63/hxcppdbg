@@ -10,6 +10,16 @@ import hxcppdbg.core.drivers.dbgeng.native.DbgEngObjects;
 using hxcppdbg.core.utils.ResultUtils;
 using hxcppdbg.core.utils.OptionUtils;
 
+private enum abstract StepWaitLoopResult(Int) from Int
+{
+	var FailedToGetLastEvent;
+	var WaitForEventFailed;
+	var BreakpointHit;
+	var ExceptionHit;
+	var UnknownLastEvent;
+	var StepComplete;
+}
+
 class DbgEngDriver extends Driver
 {
 	final objects : DbgEngObjects;
@@ -87,13 +97,49 @@ class DbgEngDriver extends Driver
 		dbgThread.events.run(() -> {
 			final r = objects.step(_thread, _type);
 
-			cbThread.events.run(() -> _result(r.asExceptionOption()));
+			if (r.match(Option.None))
+			{
+				function loop()
+				{
+					dbgThread.events.run(() -> {
+						switch objects.stepEventWait()
+						{
+							case LoopAgain:
+								loop();
+							case WaitFailed:
+								cbThread.events.run(() -> _result(Option.Some(new Exception('Wait Failed'))));
+							case StepCompleted:
+								cbThread.events.run(() -> _result(Option.None));
+							case StepInterrupted(reason):
+								cbThread.events.run(() -> {
+									switch reason
+									{
+										case Breakpoint:
+											onBreakpoint();
+										case Exception:
+											onException();
+										case Unknown:
+											onUnknownStop();
+									}
+
+									_result(Option.None);
+								});
+						}
+					});
+				}
+
+				loop();
+			}
+			else
+			{
+				cbThread.events.run(() -> _result(r.asExceptionOption()));
+			}
 		});
 	}
 
 	private function waitForEvent()
 	{
-		if (objects.doPumpEvents(onBreakpoint, onException, onUnknownStop))
+		if (objects.runEventWait(onBreakpoint, onException, onUnknownStop))
 		{
 			dbgThread.events.cancel(waitLoop);
 

@@ -47,6 +47,14 @@
 #include <hxcppdbg/core/drivers/dbgeng/NativeFrameReturn.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_StepLoopResult
+#include <hxcppdbg/core/drivers/dbgeng/native/StepLoopResult.h>
+#endif
+
+#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_StepInterruptReason
+#include <hxcppdbg/core/drivers/dbgeng/native/StepInterruptReason.h>
+#endif
+
 #ifndef INCLUDED_hxcppdbg_core_locals_NativeVariable
 #include <hxcppdbg/core/locals/NativeLocal.h>
 #endif
@@ -515,21 +523,17 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Not Implemented"), S_FALSE));
 }
 
-bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::doPumpEvents(Dynamic _cbBreakpoint, Dynamic _cbException, Dynamic _cbOther)
+bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::runEventWait(Dynamic _cbBreakpoint, Dynamic _cbException, Dynamic _cbOther)
 {
 	auto result = S_OK;
 
-	switch (result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 1))
+	switch (result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 10))
 	{
-		// Target is inspectable by the debugger.
-		// The last event is what caused it to pause.
 		case S_OK:
 			{
-				// Get the last event
-				auto result    = HRESULT{ 0 };
-				auto type      = ULONG{ 0 };
-				auto processID = ULONG{ 0 };
-				auto threadID  = ULONG{ 0 };
+				auto type      = 0UL;
+				auto processID = 0UL;
+				auto threadID  = 0UL;
 
 				if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, nullptr, 0, nullptr, nullptr, 0, nullptr)))
 				{
@@ -563,6 +567,49 @@ bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::doPumpEvents(Dy
 		// Not sure what causes the other return values and if we need special handling of them.
         default:
             return true;
+	}
+}
+
+hxcppdbg::core::drivers::dbgeng::native::StepLoopResult hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::stepEventWait()
+{
+	auto result = S_OK;
+
+	switch (result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 1))
+	{
+		case S_OK:
+			{
+				auto type      = 0UL;
+				auto processID = 0UL;
+				auto threadID  = 0UL;
+
+				if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, nullptr, 0, nullptr, nullptr, 0, nullptr)))
+				{
+					return StepLoopResult_obj::StepInterrupted(StepInterruptReason_obj::Unknown);
+				}
+				else
+				{
+					switch (type)
+					{
+						case 0:
+							return StepLoopResult_obj::StepCompleted;
+
+						case DEBUG_EVENT_BREAKPOINT:
+							return StepLoopResult_obj::StepInterrupted(StepInterruptReason_obj::Breakpoint);
+
+						case DEBUG_EVENT_EXCEPTION:
+							return StepLoopResult_obj::StepInterrupted(StepInterruptReason_obj::Exception);
+
+						default:
+							return StepLoopResult_obj::StepInterrupted(StepInterruptReason_obj::Unknown);
+					}
+				}
+			}
+
+		case S_FALSE:
+			return StepLoopResult_obj::LoopAgain;
+
+		default:
+			return StepLoopResult_obj::WaitFailed;
 	}
 }
 
@@ -602,11 +649,6 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::ste
 	if (!SUCCEEDED(result = control->SetExecutionStatus(mode)))
 	{
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
-	}
-
-	if (!SUCCEEDED(result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE)))
-	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
 	}
 
 	return haxe::ds::Option_obj::None;
@@ -660,49 +702,6 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::pau
 	}
 
 	return haxe::ds::Option_obj::None;
-}
-
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::processLastEvent()
-{
-	// Get the last event
-	auto result    = HRESULT{ 0 };
-	auto type      = ULONG{ 0 };
-	auto processID = ULONG{ 0 };
-	auto threadID  = ULONG{ 0 };
-	if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, nullptr, 0, nullptr, nullptr, 0, nullptr)))
-	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get last event"), result));		
-	}
-
-	switch (type)
-	{
-		case DEBUG_EVENT_BREAKPOINT:
-			DEBUG_LAST_EVENT_INFO_BREAKPOINT breakpoint;
-
-			if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, &breakpoint, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
-			{
-				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get last event"), result));		
-			}
-			else
-			{
-				return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::BreakpointHit(breakpoint.Id, threadID));
-			}
-
-		case DEBUG_EVENT_EXCEPTION:
-			DEBUG_LAST_EVENT_INFO_EXCEPTION exception;
-
-			if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, &exception, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
-			{
-				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get last event"), result));		
-			}
-			else
-			{
-				return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::ExceptionThrown(threadID));
-			}
-
-		default:
-			return hxcppdbg::core::ds::Result_obj::Success(hxcppdbg::core::drivers::StopReason_obj::Natural);
-	}
 }
 
 haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::end()
