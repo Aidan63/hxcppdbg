@@ -11,16 +11,6 @@ import hxcppdbg.core.drivers.dbgeng.native.DbgEngObjects;
 using hxcppdbg.core.utils.ResultUtils;
 using hxcppdbg.core.utils.OptionUtils;
 
-private enum abstract StepWaitLoopResult(Int) from Int
-{
-	var FailedToGetLastEvent;
-	var WaitForEventFailed;
-	var BreakpointHit;
-	var ExceptionHit;
-	var UnknownLastEvent;
-	var StepComplete;
-}
-
 class DbgEngDriver extends Driver
 {
 	final objects : Pointer<DbgEngObjects>;
