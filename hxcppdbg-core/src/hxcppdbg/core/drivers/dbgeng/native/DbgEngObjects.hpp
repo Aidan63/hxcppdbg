@@ -57,6 +57,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
     public:
         DbgEngObjects_obj() = default;
+        virtual ~DbgEngObjects_obj() = default;
 
         haxe::ds::Option createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
 
