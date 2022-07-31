@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import cpp.Pointer;
 import haxe.Exception;
 import sys.thread.Thread;
 import hxcppdbg.core.ds.Result;
@@ -12,7 +13,7 @@ using hxcppdbg.core.utils.ResultUtils;
 
 class DbgEngStack implements IStack
 {
-    final objects : DbgEngObjects;
+    final objects : Pointer<DbgEngObjects>;
 
     final cbThread : Thread;
 
@@ -28,7 +29,7 @@ class DbgEngStack implements IStack
     public function getCallStack(_thread : Int, _result : Result<Array<NativeFrame>, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = objects.getCallStack(_thread).map(item -> item.frame);
+            final r = objects.ptr.getCallStack(_thread).map(item -> item.frame);
 
             cbThread.events.run(() -> _result(r.asExceptionResult()));
         });
@@ -37,7 +38,7 @@ class DbgEngStack implements IStack
     public function getFrame(_thread : Int, _index : Int, _result : Result<NativeFrame, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = objects.getFrame(_thread, _index).apply(item -> item.frame);
+            final r = objects.ptr.getFrame(_thread, _index).apply(item -> item.frame);
 
             cbThread.events.run(() -> _result(r.asExceptionResult()));
         });

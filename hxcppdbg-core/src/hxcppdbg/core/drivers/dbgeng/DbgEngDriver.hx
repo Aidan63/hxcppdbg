@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import cpp.Pointer;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
 import haxe.Exception;
@@ -22,7 +23,7 @@ private enum abstract StepWaitLoopResult(Int) from Int
 
 class DbgEngDriver extends Driver
 {
-	final objects : DbgEngObjects;
+	final objects : Pointer<DbgEngObjects>;
 
 	final cbThread : Thread;
 
@@ -37,7 +38,7 @@ class DbgEngDriver extends Driver
 		objects     = DbgEngObjects.alloc();
 		cbThread    = Thread.current();
 		dbgThread   = Thread.createWithEventLoop(() -> {
-			switch objects.createFromFile(_file, _enums, _classes)
+			switch objects.ptr.createFromFile(_file, _enums, _classes)
 			{
 				case Some(v):
 					throw v;
@@ -54,9 +55,12 @@ class DbgEngDriver extends Driver
 	public function start(_result : Option<Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			waitLoop = dbgThread.events.repeat(waitForEvent, 10);
+			final r = objects.ptr.go();
 
-			final r = objects.go();
+			if (r.match(Option.None))
+			{
+				waitLoop = dbgThread.events.repeat(waitForEvent, 1);
+			}
 
 			cbThread.events.run(() -> _result(r.asExceptionOption()));
 		});
@@ -80,7 +84,7 @@ class DbgEngDriver extends Driver
 			// defer our pause until the next event loop iteration.
 			// Otherwise the wait loop might be ran once more depending on cancellation order.
 			dbgThread.events.run(() -> {
-				final r = objects.pause();
+				final r = objects.ptr.pause();
 
 				cbThread.events.run(() -> _result(r.asExceptionOption()));
 			});
@@ -95,14 +99,14 @@ class DbgEngDriver extends Driver
 	public function step(_thread : Int, _type : StepType, _result : Option<Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			final r = objects.step(_thread, _type);
+			final r = objects.ptr.step(_thread, _type);
 
 			if (r.match(Option.None))
 			{
 				function loop()
 				{
 					dbgThread.events.run(() -> {
-						switch objects.stepEventWait()
+						switch objects.ptr.stepEventWait()
 						{
 							case LoopAgain:
 								loop();
@@ -139,7 +143,7 @@ class DbgEngDriver extends Driver
 
 	private function waitForEvent()
 	{
-		if (objects.runEventWait(onBreakpoint, onException, onUnknownStop))
+		if (objects.ptr.runEventWait(onBreakpoint, onException, onUnknownStop))
 		{
 			dbgThread.events.cancel(waitLoop);
 

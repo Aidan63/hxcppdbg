@@ -24,14 +24,14 @@ enum StepLoopResult
 
 @:keep
 @:include('DbgEngObjects.hpp')
-@:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects')
+@:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj')
 #if !display
 @:build(hxcppdbg.core.utils.HxcppUtils.xml('DbgEng'))
 #end
 extern class DbgEngObjects
 {
     @:native('new hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj')
-    static function alloc() : DbgEngObjects;
+    static function alloc() : cpp.Pointer<DbgEngObjects>;
 
     function createFromFile(_file : String, _enums : Array<GeneratedType>, _classes : Array<GeneratedType>) : Option<HResultException>;
 

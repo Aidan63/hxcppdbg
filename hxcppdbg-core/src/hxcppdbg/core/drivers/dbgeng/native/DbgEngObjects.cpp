@@ -128,7 +128,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::cre
 	// Once the process has been suspended this wait for event function will return.
 	hx::EnterGCFreeZone();
 
-	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
+	if (!SUCCEEDED(result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE)))
 	{
 		auto err = _com_error(result);
 		auto msg = err.ErrorMessage();
@@ -525,9 +525,13 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 
 bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::runEventWait(Dynamic _cbBreakpoint, Dynamic _cbException, Dynamic _cbOther)
 {
-	auto result = S_OK;
+	hx::EnterGCFreeZone();
 
-	switch (result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 10))
+	auto result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 50);
+
+	hx::ExitGCFreeZone();
+
+	switch (result)
 	{
 		case S_OK:
 			{
@@ -572,9 +576,13 @@ bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::runEventWait(Dy
 
 hxcppdbg::core::drivers::dbgeng::native::StepLoopResult hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::stepEventWait()
 {
-	auto result = S_OK;
+	hx::EnterGCFreeZone();
 
-	switch (result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 1))
+	auto result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 50);
+
+	hx::ExitGCFreeZone();
+
+	switch (result)
 	{
 		case S_OK:
 			{
@@ -696,10 +704,17 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::pau
 	{
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
 	}
-	if (!SUCCEEDED(result = control->WaitForEvent(0, INFINITE)))
+
+	hx::EnterGCFreeZone();
+
+	if (!SUCCEEDED(result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE)))
 	{
+		hx::ExitGCFreeZone();
+
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
 	}
+
+	hx::ExitGCFreeZone();
 
 	return haxe::ds::Option_obj::None;
 }

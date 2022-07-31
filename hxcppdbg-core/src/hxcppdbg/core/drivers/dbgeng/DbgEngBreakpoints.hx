@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import cpp.Pointer;
 import haxe.ds.Option;
 import haxe.Exception;
 import hxcppdbg.core.ds.Result;
@@ -11,7 +12,7 @@ using hxcppdbg.core.utils.OptionUtils;
 
 class DbgEngBreakpoints implements IBreakpoints
 {
-    final objects : DbgEngObjects;
+    final objects : Pointer<DbgEngObjects>;
 
     final cbThread : Thread;
 
@@ -27,7 +28,7 @@ class DbgEngBreakpoints implements IBreakpoints
 	public function create(_file : String, _line : Int, _result : Result<Int, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = objects.createBreakpoint(_file, _line);
+            final r = objects.ptr.createBreakpoint(_file, _line);
 
             cbThread.events.run(() -> _result(r.asExceptionResult()));
         });
@@ -36,7 +37,7 @@ class DbgEngBreakpoints implements IBreakpoints
 	public function remove(_id : Int, _result : Option<Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = objects.removeBreakpoint(_id);
+            final r = objects.ptr.removeBreakpoint(_id);
 
             cbThread.events.run(() -> _result(r.asExceptionOption()));
         });

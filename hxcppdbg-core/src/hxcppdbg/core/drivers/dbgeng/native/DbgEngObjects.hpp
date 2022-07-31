@@ -29,7 +29,7 @@ HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
-    class DbgEngObjects_obj : public hx::Object
+    class DbgEngObjects_obj
     {
     private:
         ComPtr<IDebugClient7> client;
@@ -56,6 +56,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         };
 
     public:
+        DbgEngObjects_obj() = default;
+
         haxe::ds::Option createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
 
         hxcppdbg::core::ds::Result createBreakpoint(String file, int line);
