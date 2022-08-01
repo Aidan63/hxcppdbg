@@ -16,20 +16,22 @@ class Eval
 
     @:defaultCommand public function eval()
     {
-        switch evaluate.evaluate(expr, 0, 0)
-        {
-            case Success(v):
-                switch v
-                {
-                    case MEnum(type, _):
-                        Sys.println('\t${ printType(type) }\t${ printModelData(v) }');
-                    case MClass(type, _):
-                        Sys.println('\t${ printType(type) }\t${ printModelData(v) }');
-                    case _:
-                        Sys.println('\t${ printModelData(v) }');
-                }
-            case Error(e):
-                Sys.println('\tError : ${ e.message }');
-        }
+        evaluate.evaluate(expr, 0, 0, result -> {
+            switch result
+            {
+                case Success(v):
+                    switch v
+                    {
+                        case MEnum(type, _):
+                            Sys.println('\t${ printType(type) }\t${ printModelData(v) }');
+                        case MClass(type, _):
+                            Sys.println('\t${ printType(type) }\t${ printModelData(v) }');
+                        case _:
+                            Sys.println('\t${ printModelData(v) }');
+                    }
+                case Error(e):
+                    Sys.println('\tError : ${ e.message }');
+            }
+        });
     }
 }

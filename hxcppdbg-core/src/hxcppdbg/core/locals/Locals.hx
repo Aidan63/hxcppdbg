@@ -1,5 +1,7 @@
 package hxcppdbg.core.locals;
 
+import haxe.Exception;
+import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.StackFrame;
@@ -25,15 +27,25 @@ class Locals
         stack     = _stack;
     }
 
-    public function getLocals(_thread, _index)
+    public function getLocals(_thread, _index, _callback : Result<Array<LocalVariable>, Exception>->Void)
     {
-        // return switch stack.getFrame(_thread, _index)
-        // {
-        //     case Success(frame):
-        //         driver.getVariables(_thread, _index).map(mapNativeLocal.bind(frame));
-        //     case Error(e):
-        //         Result.Error(e);
-        // }
+        stack.getFrame(_thread, _index, result -> {
+            switch result
+            {
+                case Success(frame):
+                    driver.getVariables(_thread, _index, result -> {
+                        switch result
+                        {
+                            case Success(locals):
+                                _callback(Result.Success(locals.map(mapNativeLocal.bind(frame))));
+                            case Error(e):
+                                _callback(Result.Error(e));
+                        }
+                    });
+                case Error(e):
+                    _callback(Result.Error(e));
+            }
+        });
     }
 
     function mapNativeLocal(_frame : StackFrame, _native : Model)

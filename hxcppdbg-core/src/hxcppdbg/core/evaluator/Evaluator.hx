@@ -27,24 +27,26 @@ class Evaluator
         stack     = _stack;
     }
 
-    public function evaluate(_expr : String, _thread, _index)
+    public function evaluate(_expr : String, _thread, _index, _callback : Result<ModelData, Exception>->Void)
     {
-        return switch driver.getVariables(_thread, _index)
-        {
-            case Success(locals):
-                final parser = new hscript.Parser();
-                final ast    = parser.parseString(_expr);
-
-                switch fetch(locals, ast)
-                {
-                    case Success(v):
-                        Result.Success(v);
-                    case Error(e):
-                        Result.Error(e);
-                }
-            case Error(e):
-                Result.Error(e);
-        }
+        driver.getVariables(_thread, _index, _result -> {
+            switch _result
+            {
+                case Success(locals):
+                    final parser = new hscript.Parser();
+                    final ast    = parser.parseString(_expr);
+    
+                    switch fetch(locals, ast)
+                    {
+                        case Success(v):
+                            _callback(Result.Success(v));
+                        case Error(e):
+                            _callback(Result.Error(e));
+                    }
+                case Error(e):
+                    _callback(Result.Error(e));
+            }
+        });
     }
 
     function fetch(_models : Array<Model>, _expr : hscript.Expr)

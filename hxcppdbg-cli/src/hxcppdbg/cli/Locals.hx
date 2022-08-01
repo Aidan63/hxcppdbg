@@ -25,25 +25,27 @@ class Locals
 
     @:command public function list()
     {
-        // switch locals.getLocals(thread, frame)
-        // {
-        //     case Success(vars):
-        //         for (hxVar in vars)
-        //         {
-        //             switch hxVar
-        //             {
-        //                 case Native(model):
-        //                     if (native)
-        //                     {
-        //                         Sys.println('\t[native]${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
-        //                     }
-        //                 case Haxe(model):
-        //                     Sys.println('\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
-        //             }
-        //         }
-        //     case Error(e):
-        //         Sys.println('\tError : ${ e.message }');
-        // }
+        locals.getLocals(thread, frame, result -> {
+            switch result
+            {
+                case Success(vars):
+                    for (hxVar in vars)
+                    {
+                        switch hxVar
+                        {
+                            case Native(model):
+                                if (native)
+                                {
+                                    Sys.println('\t[native]${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
+                                }
+                            case Haxe(model):
+                                Sys.println('\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
+                        }
+                    }
+                case Error(e):
+                    Sys.println('\tError : ${ e.message }');
+            }
+        });
     }
 
     @:defaultCommand public function help()

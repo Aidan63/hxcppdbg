@@ -39,7 +39,7 @@ class DbgEngDriver extends Driver
 
 		breakpoints = new DbgEngBreakpoints(objects, cbThread, dbgThread);
 		stack       = new DbgEngStack(objects, cbThread, dbgThread);
-		locals      = new DbgEngLocals(objects);
+		locals      = new DbgEngLocals(objects, cbThread, dbgThread);
 	}
 
 	public function start(_result : Option<Exception>->Void)
