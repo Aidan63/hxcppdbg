@@ -21,7 +21,7 @@ class DbgEngDriver extends Driver
 
 	var heartbeat : Null<EventHandler>;
 
-	var waitLoop : Null<EventHandler>;
+	var pausedFlag : Bool;
 
 	public function new(_file, _enums, _classes)
 	{
@@ -40,6 +40,7 @@ class DbgEngDriver extends Driver
 		breakpoints = new DbgEngBreakpoints(objects, cbThread, dbgThread);
 		stack       = new DbgEngStack(objects, cbThread, dbgThread);
 		locals      = new DbgEngLocals(objects, cbThread, dbgThread);
+		pausedFlag  = false;
 	}
 
 	public function start(_result : Option<Exception>->Void)
@@ -47,12 +48,32 @@ class DbgEngDriver extends Driver
 		dbgThread.events.run(() -> {
 			final r = objects.ptr.go();
 
+			cbThread.events.run(() -> _result(r.asExceptionOption()));
+
 			if (r.match(Option.None))
 			{
-				waitLoop = dbgThread.events.repeat(waitForEvent, 1);
-			}
+				pausedFlag = false;
 
-			cbThread.events.run(() -> _result(r.asExceptionOption()));
+				switch objects.ptr.wait()
+				{
+					case Complete:
+						trace('completed');
+					case WaitFailed:
+						trace('wait failed');
+					case Interrupted(reason):
+						switch reason
+						{
+							case Breakpoint:
+								onBreakpoint();
+							case Exception:
+								onException();
+							case Unknown:
+								onUnknownStop();
+							case Pause:
+								pausedFlag = true;
+						}
+				}
+			}
 		});
 	}
 
@@ -63,22 +84,17 @@ class DbgEngDriver extends Driver
 
 	public function pause(_result : Option<Exception>->Void)
 	{
-		dbgThread.events.run(() -> {
-			if (waitLoop != null)
-			{
-				dbgThread.events.cancel(waitLoop);
-	
-				waitLoop = null;
-			}
-
-			// defer our pause until the next event loop iteration.
-			// Otherwise the wait loop might be ran once more depending on cancellation order.
-			dbgThread.events.run(() -> {
-				final r = objects.ptr.pause();
-
-				cbThread.events.run(() -> _result(r.asExceptionOption()));
-			});
-		});
+		switch objects.ptr.interrupt()
+		{
+			case Some(exn):
+				_result(Option.Some(exn));
+			case None:
+				dbgThread.events.run(() -> {
+					final r = objects.ptr.pause();
+		
+					cbThread.events.run(() -> _result(r.asExceptionOption()));
+				});
+		}
 	}
 
 	public function stop(_result : Option<Exception>->Void)
@@ -89,56 +105,48 @@ class DbgEngDriver extends Driver
 	public function step(_thread : Int, _type : StepType, _result : Option<Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			final r = objects.ptr.step(_thread, _type);
-
-			if (r.match(Option.None))
+			switch objects.ptr.step(_thread, _type)
 			{
-				function loop()
-				{
-					dbgThread.events.run(() -> {
-						switch objects.ptr.stepEventWait()
-						{
-							case LoopAgain:
-								loop();
-							case WaitFailed:
-								cbThread.events.run(() -> _result(Option.Some(new Exception('Wait Failed'))));
-							case StepCompleted:
-								cbThread.events.run(() -> _result(Option.None));
-							case StepInterrupted(reason):
-								cbThread.events.run(() -> {
-									switch reason
-									{
-										case Breakpoint:
-											onBreakpoint();
-										case Exception:
-											onException();
-										case Unknown:
-											onUnknownStop();
-									}
+				case Some(exn):
+					cbThread.events.run(() -> _result(Option.Some(exn)));
+				case None:
+					pausedFlag = false;
 
-									_result(Option.None);
-								});
-						}
-					});
-				}
+					switch objects.ptr.wait()
+					{
+						case WaitFailed:
+							cbThread.events.run(() -> _result(Option.Some(new Exception('Wait failed'))));
+						case Complete:
+							cbThread.events.run(() -> _result(Option.None));
+						case Interrupted(reason):
+							switch reason
+							{
+								case Breakpoint:
+									cbThread.events.run(() -> {
+										onBreakpoint();
 
-				loop();
-			}
-			else
-			{
-				cbThread.events.run(() -> _result(r.asExceptionOption()));
+										_result(Option.Some(new Exception('Breakpoint hit')));
+									});
+								case Exception:
+									cbThread.events.run(() -> {
+										onException();
+
+										_result(Option.Some(new Exception('Exception thrown')));
+									});
+								case Unknown:
+									cbThread.events.run(() -> {
+										onUnknownStop();
+
+										_result(Option.Some(new Exception('Unknown stop')));
+									});
+								case Pause:
+									pausedFlag = true;
+
+									_result(Option.Some(new Exception('interrupt')));
+							}
+					}
 			}
 		});
-	}
-
-	private function waitForEvent()
-	{
-		if (objects.ptr.runEventWait(onBreakpoint, onException, onUnknownStop))
-		{
-			dbgThread.events.cancel(waitLoop);
-
-			waitLoop = null;
-		}
 	}
 
 	private function noop()

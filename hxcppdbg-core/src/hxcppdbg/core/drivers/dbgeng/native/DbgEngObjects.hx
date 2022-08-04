@@ -7,19 +7,19 @@ import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
-enum StepInterruptReason
+enum InterruptReason
 {
     Breakpoint;
     Exception;
     Unknown;
+    Pause;
 }
 
-enum StepLoopResult
+enum WaitResult
 {
-    LoopAgain;
+    Complete;
     WaitFailed;
-    StepCompleted;
-    StepInterrupted(reason : StepInterruptReason);
+    Interrupted(reason : InterruptReason);
 }
 
 @:keep
@@ -55,7 +55,7 @@ extern class DbgEngObjects
 
     function end() : Option<HResultException>;
 
-    function runEventWait(_cbBreakpoint : Dynamic, _cbException : Dynamic, _cbOther : Dynamic) : Bool;
+    function interrupt() : Option<HResultException>;
 
-    function stepEventWait() : StepLoopResult;
+    function wait() : WaitResult;
 }

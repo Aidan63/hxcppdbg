@@ -24,7 +24,7 @@ HX_DECLARE_CLASS3(hxcppdbg, core, model, ModelData)
 HX_DECLARE_CLASS3(hxcppdbg, core, drivers, StopReason)
 HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, StepLoopResult)
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, WaitResult)
 HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
@@ -45,16 +45,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static int backtickCount(std::wstring _input);
         static bool endsWith(std::wstring const &_input, std::wstring const &_ending);
 
-        enum StepWaitLoopResult
-        {
-            FailedToGetLastEvent,
-            WaitForEventFailed,
-            BreakpointHit,
-            ExceptionHit,
-            UnknownLastEvent,
-            StepComplete
-        };
-
     public:
         DbgEngObjects_obj() = default;
         virtual ~DbgEngObjects_obj() = default;
@@ -73,11 +63,10 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         haxe::ds::Option go();
         haxe::ds::Option pause();
         haxe::ds::Option step(int thread, int status);
-
         haxe::ds::Option end();
 
-        bool runEventWait(Dynamic, Dynamic, Dynamic);
-        hxcppdbg::core::drivers::dbgeng::native::StepLoopResult stepEventWait();
+        haxe::ds::Option interrupt();
+        hxcppdbg::core::drivers::dbgeng::native::WaitResult wait();
 
         static IDataModelManager* manager;
         static IDebugHost* host;

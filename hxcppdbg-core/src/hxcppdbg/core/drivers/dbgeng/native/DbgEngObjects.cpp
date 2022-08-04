@@ -47,12 +47,12 @@
 #include <hxcppdbg/core/drivers/dbgeng/NativeFrameReturn.h>
 #endif
 
-#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_StepLoopResult
-#include <hxcppdbg/core/drivers/dbgeng/native/StepLoopResult.h>
+#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_WaitResult
+#include <hxcppdbg/core/drivers/dbgeng/native/WaitResult.h>
 #endif
 
-#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_StepInterruptReason
-#include <hxcppdbg/core/drivers/dbgeng/native/StepInterruptReason.h>
+#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_InterruptReason
+#include <hxcppdbg/core/drivers/dbgeng/native/InterruptReason.h>
 #endif
 
 #ifndef INCLUDED_hxcppdbg_core_locals_NativeVariable
@@ -523,101 +523,70 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Not Implemented"), S_FALSE));
 }
 
-bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::runEventWait(Dynamic _cbBreakpoint, Dynamic _cbException, Dynamic _cbOther)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::interrupt()
 {
-	hx::EnterGCFreeZone();
+	auto result = S_OK;
 
-	auto result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 50);
-
-	hx::ExitGCFreeZone();
-
-	switch (result)
+	if (!SUCCEEDED(result = control->SetInterrupt(DEBUG_INTERRUPT_EXIT)))
 	{
-		case S_OK:
-			{
-				auto type      = 0UL;
-				auto processID = 0UL;
-				auto threadID  = 0UL;
-
-				if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, nullptr, 0, nullptr, nullptr, 0, nullptr)))
-				{
-					_cbOther();
-				}
-				else
-				{
-					switch (type)
-					{
-						case DEBUG_EVENT_BREAKPOINT:
-							_cbBreakpoint();
-							break;
-
-						case DEBUG_EVENT_EXCEPTION:
-							_cbException();
-							break;
-
-						default:
-							_cbOther();
-							break;
-					}
-				}
-
-				return true;
-			}
-
-		// Timeout occured.
-        case S_FALSE:
-            return false;
-
-		// Not sure what causes the other return values and if we need special handling of them.
-        default:
-            return true;
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
 	}
+
+	return haxe::ds::Option_obj::None;
 }
 
-hxcppdbg::core::drivers::dbgeng::native::StepLoopResult hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::stepEventWait()
+hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::wait()
 {
 	hx::EnterGCFreeZone();
 
-	auto result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, 50);
+	auto result = S_OK;
 
-	hx::ExitGCFreeZone();
-
-	switch (result)
+	switch (control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE))
 	{
 		case S_OK:
 			{
+				hx::ExitGCFreeZone();
+
 				auto type      = 0UL;
 				auto processID = 0UL;
 				auto threadID  = 0UL;
 
 				if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, nullptr, 0, nullptr, nullptr, 0, nullptr)))
 				{
-					return StepLoopResult_obj::StepInterrupted(StepInterruptReason_obj::Unknown);
+					return WaitResult_obj::Interrupted(InterruptReason_obj::Unknown);
 				}
 				else
 				{
 					switch (type)
 					{
 						case 0:
-							return StepLoopResult_obj::StepCompleted;
+							return WaitResult_obj::Complete;
 
 						case DEBUG_EVENT_BREAKPOINT:
-							return StepLoopResult_obj::StepInterrupted(StepInterruptReason_obj::Breakpoint);
+							return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint);
 
 						case DEBUG_EVENT_EXCEPTION:
-							return StepLoopResult_obj::StepInterrupted(StepInterruptReason_obj::Exception);
+							return WaitResult_obj::Interrupted(InterruptReason_obj::Exception);
 
 						default:
-							return StepLoopResult_obj::StepInterrupted(StepInterruptReason_obj::Unknown);
+							return WaitResult_obj::Interrupted(InterruptReason_obj::Unknown);
 					}
 				}
 			}
 
-		case S_FALSE:
-			return StepLoopResult_obj::LoopAgain;
+		case E_PENDING:
+			{
+				hx::ExitGCFreeZone();
+
+				return WaitResult_obj::Interrupted(InterruptReason_obj::Pause);
+			}
 
 		default:
-			return StepLoopResult_obj::WaitFailed;
+			{
+				hx::ExitGCFreeZone();
+				
+				return WaitResult_obj::WaitFailed;
+			}
 	}
 }
 
@@ -688,21 +657,15 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::go(
 haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::pause()
 {
 	auto result = S_OK;
-	auto status = 0UL;
 
-	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
+	if (!SUCCEEDED(result = control->SetExecutionStatus(DEBUG_STATUS_GO)))
 	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get the target status"), result));
-	}
-
-	if (status == DEBUG_STATUS_BREAK)
-	{
-		return haxe::ds::Option_obj::None;
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set execution status"), result));
 	}
 
 	if (!SUCCEEDED(result = control->SetInterrupt(DEBUG_INTERRUPT_ACTIVE)))
 	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set active interrupt"), result));
 	}
 
 	hx::EnterGCFreeZone();
