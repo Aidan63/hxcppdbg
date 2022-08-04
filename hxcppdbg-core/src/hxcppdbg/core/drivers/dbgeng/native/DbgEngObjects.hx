@@ -55,7 +55,7 @@ extern class DbgEngObjects
 
     function end() : Option<HResultException>;
 
-    function interrupt() : Option<HResultException>;
+    function interrupt() : Result<Int, HResultException>;
 
     function wait() : WaitResult;
 }

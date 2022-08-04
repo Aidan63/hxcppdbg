@@ -16,7 +16,7 @@ abstract class Driver
 
     public abstract function stop(_result : Option<Exception>->Void) : Void;
 
-    public abstract function pause(_result : Option<Exception>->Void) : Void;
+    public abstract function pause(_result : Result<Bool, Exception>->Void) : Void;
 
     public abstract function resume(_result : Option<Exception>->Void) : Void;
 

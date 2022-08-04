@@ -59,7 +59,7 @@ class Session
         return driver.resume(_result);
     }
 
-    public function pause(_result : Option<Exception>->Void)
+    public function pause(_result : Result<Bool, Exception>->Void)
     {
         driver.pause(_result);
     }

@@ -65,7 +65,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         haxe::ds::Option step(int thread, int status);
         haxe::ds::Option end();
 
-        haxe::ds::Option interrupt();
+        hxcppdbg::core::ds::Result interrupt();
         hxcppdbg::core::drivers::dbgeng::native::WaitResult wait();
 
         static IDataModelManager* manager;

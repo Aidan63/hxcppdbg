@@ -56,15 +56,7 @@ class Cli
                             switch result
                             {
                                 case Success(data):
-                                    session.pause(opt -> {
-                                        switch opt
-                                        {
-                                            case Some(v):
-                                                trace(v);
-                                            case None:
-                                                trace('paused');
-                                        }
-                                    });
+                                    new Hxcppdbg(session).pause();
                                 case Error(error):
                                     throw new Exception(error.toString());
                             }

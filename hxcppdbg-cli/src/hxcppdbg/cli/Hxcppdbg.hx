@@ -52,13 +52,15 @@ class Hxcppdbg
 
     @:command public function pause()
     {
-        session.pause(error -> {
-            switch error
+        session.pause(result -> {
+            switch result
             {
-                case Some(v):
-                    trace(v);
-                case None:
-                    trace('paused');
+                case Success(true):
+                    trace('target paused');
+                case Success(false):
+                    trace('target already paused');
+                case Error(exn):
+                    trace(exn.details());
             }
         });
     }

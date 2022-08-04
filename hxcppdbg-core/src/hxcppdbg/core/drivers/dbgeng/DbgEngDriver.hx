@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import hxcppdbg.core.ds.Result;
 import cpp.Pointer;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
@@ -82,18 +83,33 @@ class DbgEngDriver extends Driver
 		start(_result);
 	}
 
-	public function pause(_result : Option<Exception>->Void)
+	public function pause(_result : Result<Bool, Exception>->Void)
 	{
 		switch objects.ptr.interrupt()
 		{
-			case Some(exn):
-				_result(Option.Some(exn));
-			case None:
-				dbgThread.events.run(() -> {
-					final r = objects.ptr.pause();
-		
-					cbThread.events.run(() -> _result(r.asExceptionOption()));
-				});
+			case Error(exn):
+				_result(Result.Error(exn));
+			case Success(paused):
+				if (paused == 0)
+				{
+					_result(Result.Success(false));
+				}
+				else
+				{
+					dbgThread.events.run(() -> {
+						final r = objects.ptr.pause();
+			
+						cbThread.events.run(() -> {
+							switch r
+							{
+								case Some(exn):
+									_result(Result.Error(exn));
+								case None:
+									_result(Result.Success(true));
+							}
+						});
+					});
+				}
 		}
 	}
 
