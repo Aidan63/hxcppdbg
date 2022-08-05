@@ -1,9 +1,9 @@
 package hxcppdbg.core;
 
-import tink.core.Option;
 import hxcppdbg.core.evaluator.Evaluator;
 import sys.io.File;
 import haxe.Exception;
+import haxe.ds.Option;
 import json2object.JsonParser;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
