@@ -526,20 +526,26 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::interrupt()
 {
 	auto result = S_OK;
+	auto status = 0UL;
+
+	// It seems like we can use GetExecutionStatus from other threads, but I'm not entirely sure...
+
+	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
+	}
+
+	if (status == DEBUG_STATUS_BREAK)
+	{
+		return hxcppdbg::core::ds::Result_obj::Success(0);
+	}
 
 	if (!SUCCEEDED(result = control->SetInterrupt(DEBUG_INTERRUPT_EXIT)))
 	{
 		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
 	}
 
-	if (SUCCEEDED(result = control->GetInterrupt()))
-	{
-		return hxcppdbg::core::ds::Result_obj::Success(result);
-	}
-	else
-	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
-	}
+	return hxcppdbg::core::ds::Result_obj::Success(1);
 }
 
 hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::wait()
