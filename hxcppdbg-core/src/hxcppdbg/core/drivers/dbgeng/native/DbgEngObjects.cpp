@@ -560,11 +560,11 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 			{
 				hx::ExitGCFreeZone();
 
-				auto type      = 0UL;
-				auto processID = 0UL;
-				auto threadID  = 0UL;
+				auto type       = 0UL;
+				auto processIdx = 0UL;
+				auto threadIdx  = 0UL;
 
-				if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processID, &threadID, nullptr, 0, nullptr, nullptr, 0, nullptr)))
+				if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processIdx, &threadIdx, nullptr, 0, nullptr, nullptr, 0, nullptr)))
 				{
 					return WaitResult_obj::Interrupted(InterruptReason_obj::Unknown);
 				}
@@ -576,10 +576,35 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 							return WaitResult_obj::Complete;
 
 						case DEBUG_EVENT_BREAKPOINT:
-							return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint);
+							{
+								auto event        = DEBUG_LAST_EVENT_INFO_BREAKPOINT();
+								auto threadIdxOpt = threadIdx == DEBUG_ANY_ID ? haxe::ds::Option_obj::None : haxe::ds::Option_obj::Some(threadIdx);
+
+								if (!SUCCEEDED(result = control->GetStoredEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
+								{
+									return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint(threadIdxOpt, haxe::ds::Option_obj::None));
+								}
+								else
+								{
+									return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint(threadIdxOpt, haxe::ds::Option_obj::Some(event.Id)));
+								}
+							}
 
 						case DEBUG_EVENT_EXCEPTION:
-							return WaitResult_obj::Interrupted(InterruptReason_obj::Exception);
+							{
+								auto event        = DEBUG_LAST_EVENT_INFO_EXCEPTION();
+								auto threadIdxOpt = threadIdx == DEBUG_ANY_ID ? haxe::ds::Option_obj::None : haxe::ds::Option_obj::Some(threadIdx);
+
+								if (!SUCCEEDED(result = control->GetStoredEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
+								{
+									return WaitResult_obj::Interrupted(InterruptReason_obj::Exception(threadIdxOpt, haxe::ds::Option_obj::None));
+								}
+								else
+								{
+									return WaitResult_obj::Interrupted(InterruptReason_obj::Exception(threadIdxOpt, haxe::ds::Option_obj::Some(event.ExceptionRecord.ExceptionCode)));
+								}
+
+							}
 
 						default:
 							return WaitResult_obj::Interrupted(InterruptReason_obj::Unknown);

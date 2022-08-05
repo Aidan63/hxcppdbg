@@ -9,8 +9,8 @@ import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 enum InterruptReason
 {
-    Breakpoint;
-    Exception;
+    Breakpoint(threadIdx : Option<Int>, id : Option<Int>);
+    Exception(threadIdx : Option<Int>, code : Option<Int>);
     Unknown;
     Pause;
 }

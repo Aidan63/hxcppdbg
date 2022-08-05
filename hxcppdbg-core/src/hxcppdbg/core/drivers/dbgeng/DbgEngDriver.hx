@@ -64,9 +64,9 @@ class DbgEngDriver extends Driver
 					case Interrupted(reason):
 						switch reason
 						{
-							case Breakpoint:
+							case Breakpoint(_, _):
 								onBreakpoint();
-							case Exception:
+							case Exception(_, _):
 								onException();
 							case Unknown:
 								onUnknownStop();
@@ -137,13 +137,13 @@ class DbgEngDriver extends Driver
 						case Interrupted(reason):
 							switch reason
 							{
-								case Breakpoint:
+								case Breakpoint(_, _):
 									cbThread.events.run(() -> {
 										onBreakpoint();
 
 										_result(Option.Some(new Exception('Breakpoint hit')));
 									});
-								case Exception:
+								case Exception(_, _):
 									cbThread.events.run(() -> {
 										onException();
 
