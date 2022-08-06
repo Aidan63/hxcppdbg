@@ -22,8 +22,6 @@ class DbgEngDriver extends Driver
 
 	var heartbeat : Null<EventHandler>;
 
-	var pausedFlag : Bool;
-
 	public function new(_file, _enums, _classes)
 	{
 		objects     = DbgEngObjects.alloc();
@@ -41,7 +39,6 @@ class DbgEngDriver extends Driver
 		breakpoints = new DbgEngBreakpoints(objects, cbThread, dbgThread);
 		stack       = new DbgEngStack(objects, cbThread, dbgThread);
 		locals      = new DbgEngLocals(objects, cbThread, dbgThread);
-		pausedFlag  = false;
 	}
 
 	public function start(_result : Option<Exception>->Void)
@@ -53,8 +50,6 @@ class DbgEngDriver extends Driver
 
 			if (r.match(Option.None))
 			{
-				pausedFlag = false;
-
 				switch objects.ptr.wait()
 				{
 					case Complete:
@@ -71,7 +66,7 @@ class DbgEngDriver extends Driver
 							case Unknown:
 								onUnknownStop();
 							case Pause:
-								pausedFlag = true;
+								//
 						}
 				}
 			}
@@ -126,8 +121,6 @@ class DbgEngDriver extends Driver
 				case Some(exn):
 					cbThread.events.run(() -> _result(Option.Some(exn)));
 				case None:
-					pausedFlag = false;
-
 					switch objects.ptr.wait()
 					{
 						case WaitFailed:
@@ -156,8 +149,6 @@ class DbgEngDriver extends Driver
 										_result(Option.Some(new Exception('Unknown stop')));
 									});
 								case Pause:
-									pausedFlag = true;
-
 									_result(Option.Some(new Exception('interrupt')));
 							}
 					}
