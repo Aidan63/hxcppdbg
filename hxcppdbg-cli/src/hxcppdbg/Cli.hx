@@ -1,5 +1,10 @@
 package hxcppdbg;
 
+import cpp.asio.streams.IReadStream;
+import cpp.asio.TTY;
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Promise;
 import haxe.io.Bytes;
 import haxe.Exception;
 import sys.thread.Thread;
@@ -18,8 +23,6 @@ class Cli
 {
     final regex : EReg;
 
-    var session : Session;
-
     public var target : String;
 
     public var sourcemap : String;
@@ -31,72 +34,73 @@ class Cli
 
     @:defaultCommand public function run()
     {
-        session = new Session(FileSystem.absolutePath(target), FileSystem.absolutePath(sourcemap));
+        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            final session = new Session(FileSystem.absolutePath(target), FileSystem.absolutePath(sourcemap));
 
-        cpp.asio.Signal.open(result -> {
-            switch result
-            {
-                case Success(signal):
-                    signal.start(Interrupt, result -> {
-                        switch result
-                        {
-                            case Success(data):
-                                new Hxcppdbg(session).pause();
-                            case Error(error):
-                                throw new Exception(error.toString());
-                        }
-                    });
-                case Error(error):
-                    throw new Exception(error.toString());
-            }
-        });
+            cpp.asio.Signal.open(result -> {
+                switch result
+                {
+                    case Success(signal):
+                        signal.start(Interrupt, result -> {
+                            switch result
+                            {
+                                case Success(data):
+                                    new Hxcppdbg(session).pause();
+                                case Error(error):
+                                    _reject(new Error(error.toString()));
+                            }
+                        });
 
-        cpp.asio.TTY.open(Stdout, result -> {
-            switch result
-            {
-                case Success(stdout):
-                    cpp.asio.TTY.open(Stdin, result -> {
-                        switch result
-                        {
-                            case Success(stdin):
-                                stdout.write.write(Bytes.ofString('hxcppdbg : '), _ -> {});
-
-                                stdin.read.read(result -> {
-                                    switch result
-                                    {
-                                        case Success(data):
-                                            final str  = data.toString();
-                                            final args = regex.split(str);
-
-                                            tink.Cli
-                                                .process(args, new Hxcppdbg(session))
-                                                .handle(result -> {
-                                                    switch result
-                                                    {
-                                                        case Success(_):
-                                                            //
-                                                        case Failure(failure):
-                                                            stdout.write.write(Bytes.ofString('${ failure.message }\n'), _ -> {});        
-                                                    }
-
-                                                    stdout.write.write(Bytes.ofString('hxcppdbg : '), _ -> {});
-                                                });
-                                        case Error(error):
-                                            throw new Exception(error.toString());
-                                    }
-                                });
-                            case Error(error):
-                                throw new Exception(error.toString());
-                        }
-                    });
-                case Error(error):
-                    throw new Exception(error.toString());
-            }
+                        cpp.asio.TTY.open(Stdin, result -> {
+                            switch result
+                            {
+                                case Success(stdin):
+                                    waitForInput(stdin.read, session, _reject);
+                                case Error(error):
+                                    _reject(new Error(error.toString()));
+                            }
+                        });
+                    case Error(error):
+                        _reject(new Error(error.toString()));
+                }
+            });
         });
     }
 
     @:command public function help()
     {
         //
+    }
+
+    function waitForInput(_stdin : IReadStream, _session : Session, _reject : Error->Void)
+    {
+        Sys.print('hxcppdbg : ');
+
+        _stdin.read(result -> {
+            switch result
+            {
+                case Success(data):
+                    _stdin.stop();
+
+                    final str  = data.toString();
+                    final args = regex.split(str);
+
+                    tink.Cli
+                        .process(args, new Hxcppdbg(_session))
+                        .handle(result -> {
+                            switch result
+                            {
+                                case Success(_):
+                                    //
+                                case Failure(failure):
+                                    Sys.println(failure.message);
+                            }
+
+                            waitForInput(_stdin, _session, _reject);
+                        });
+                case Error(error):
+                    _reject(new Error(error.toString()));
+            }
+        });
     }
 }
