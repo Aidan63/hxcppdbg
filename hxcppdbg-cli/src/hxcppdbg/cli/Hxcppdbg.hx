@@ -1,9 +1,14 @@
 package hxcppdbg.cli;
 
+import haxe.io.Eof;
+import haxe.ds.Option;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
 import hxcppdbg.core.Session;
+import hxcppdbg.core.stack.StackFrame;
+
+using Lambda;
 
 class Hxcppdbg
 {
@@ -40,8 +45,24 @@ class Hxcppdbg
                         run(result -> {
                             switch result
                             {
-                                case Success(_):
-                                    _resolve(null);
+                                case Success(opt):
+                                    switch opt
+                                    {
+                                        case Some(interrupt):
+                                            switch interrupt
+                                            {
+                                                case ExceptionThrown(threadIndex):
+                                                    printExceptionLocation(threadIndex, _resolve);
+                                                case BreakpointHit(threadIndex, id):
+                                                    printBreakpointHitLocation(threadIndex, id);
+
+                                                    _resolve(null);
+                                                case Other:
+                                                    _resolve(null);
+                                            }
+                                        case None:
+                                            _resolve(null);
+                                    }
                                 case Error(exn):
                                     _reject(new Error(exn.message));
                             }
@@ -63,8 +84,24 @@ class Hxcppdbg
                         run(result -> {
                             switch result
                             {
-                                case Success(_):
-                                    _resolve(null);
+                                case Success(opt):
+                                    switch opt
+                                    {
+                                        case Some(interrupt):
+                                            switch interrupt
+                                            {
+                                                case ExceptionThrown(threadIndex):
+                                                    printExceptionLocation(threadIndex, _resolve);
+                                                case BreakpointHit(threadIndex, id):
+                                                    printBreakpointHitLocation(threadIndex, id);
+
+                                                    _resolve(null);
+                                                case Other:
+                                                    _resolve(null);
+                                            }
+                                        case None:
+                                            _resolve(null);
+                                    }
                                 case Error(exn):
                                     _reject(new Error(exn.message));
                             }
@@ -105,122 +142,146 @@ class Hxcppdbg
 
     function shutdown()
     {
-        trace('todo : cleanup');
-
         Sys.exit(0);
     }
 
-    // function printBreakpointHitLocation(_event : BreakpointHit)
-    // {
-    //     Sys.println('Thread ${ _event.thread } hit breakpoint ${ _event.breakpoint.id } at ${ _event.breakpoint.file } Line ${ _event.breakpoint.line }');
+    function printBreakpointHitLocation(_threadIndex : Option<Int>, _id : Option<Int>)
+    {
+        switch _threadIndex
+        {
+            case Some(idx):
+                switch _id
+                {
+                    case Some(id):
+                        switch session.breakpoints.get(id)
+                        {
+                            case Some(bp):
+                                Sys.println('Thread ${ idx } hit breakpoint ${ bp.id } at ${ bp.file } Line ${ bp.line }');
+                
+                                final minLine = Std.int(Math.max(1, bp.line - 3)) - 1;
+                                final maxLine = bp.line + 3;
+                                final input   = sys.io.File.read(bp.file, false);
+                
+                                // Read all lines up until the ones we're actually interested in.
+                                var i = 0;
+                                while (i < minLine)
+                                {
+                                    input.readLine();
+                                    i++;
+                                }
+                
+                                for (i in 0...(maxLine - minLine))
+                                {
+                                    try
+                                    {
+                                        final line    = input.readLine();
+                                        final absLine = minLine + i + 1;
+                
+                                        if (bp.line == absLine)
+                                        {
+                                            Sys.print('=>\t');
+                                        }
+                                        else
+                                        {
+                                            Sys.print('\t');
+                                        }
+                
+                                        Sys.println('$absLine: $line');
+                                    }
+                                    catch (_ : Eof)
+                                    {
+                                        break;
+                                    }
+                                }
+                
+                                input.close();
+                            case None:
+                                Sys.println('Unable to get breakpoint for ID $id');
+                        }
+                    case None:
+                        Sys.println('Breakpoint hit with an unknown ID');
+                }
+            case None:
+                Sys.println('Breakpoint hit on an unknown thread');
+        }
+    }
 
-    //     final minLine = Std.int(Math.max(1, _event.breakpoint.line - 3)) - 1;
-    //     final maxLine = _event.breakpoint.line + 3;
-    //     final input   = File.read(_event.breakpoint.file, false);
+    function printExceptionLocation(_threadIndex : Option<Int>, _resolve : Noise->Void)
+    {
+        switch _threadIndex
+        {
+            case Some(idx):
+                session.stack.getCallStack(idx, result -> {
+                    switch result
+                    {
+                        case Success(stack):
+                            switch stack.find(isHaxeFrame)
+                            {
+                                case Haxe(haxe, _):
+                                    final exnFile = haxe.file.haxe;
+                                    final exnLine = haxe.expr.haxe.start.line;
+            
+                                    Sys.println('Thread $idx has thrown an exception at $exnFile Line $exnLine');
+            
+                                    final minLine = Std.int(Math.max(1, exnLine - 3)) - 1;
+                                    final maxLine = exnLine + 3;
+                                    final input   = sys.io.File.read(exnFile, false);
+            
+                                    // Read all lines up until the ones we're actually interested in.
+                                    var i = 0;
+                                    while (i < minLine)
+                                    {
+                                        input.readLine();
+                                        i++;
+                                    }
+            
+                                    for (i in 0...(maxLine - minLine))
+                                    {
+                                        try
+                                        {
+                                            final line    = input.readLine();
+                                            final absLine = minLine + i + 1;
+            
+                                            if (exnLine == absLine)
+                                            {
+                                                Sys.print('=>\t');
+                                            }
+                                            else
+                                            {
+                                                Sys.print('\t');
+                                            }
+            
+                                            Sys.println('$absLine: $line');
+                                        }
+                                        catch (_ : haxe.io.Eof)
+                                        {
+                                            break;
+                                        }
+                                    }
+            
+                                    input.close();
+                                case _:
+                                    Sys.println('exception thrown which contained no haxe frames in thread $idx');
+                            }
+                        case Error(_):
+                            Sys.println('unable to get the stack for an exception thrown in thread $idx');
+                    }
 
-    //     // Read all lines up until the ones we're actually interested in.
-    //     var i = 0;
-    //     while (i < minLine)
-    //     {
-    //         input.readLine();
-    //         i++;
-    //     }
+                    _resolve(null);
+                });
+            case None:
+                _resolve(null);
+        }
+    }
 
-    //     for (i in 0...(maxLine - minLine))
-    //     {
-    //         try
-    //         {
-    //             final line    = input.readLine();
-    //             final absLine = minLine + i + 1;
-
-    //             if (_event.breakpoint.line == absLine)
-    //             {
-    //                 Sys.print('=>\t');
-    //             }
-    //             else
-    //             {
-    //                 Sys.print('\t');
-    //             }
-
-    //             Sys.println('$absLine: $line');
-    //         }
-    //         catch (_ : Eof)
-    //         {
-    //             break;
-    //         }
-    //     }
-
-    //     input.close();
-    // }
-
-    // function printExceptionLocation(_thread : Int)
-    // {
-    //     session.stack.getCallStack(_thread, result -> {
-    //         switch result
-    //         {
-    //             case Success(stack):
-    //                 switch stack.find(isHaxeFrame)
-    //                 {
-    //                     case Haxe(haxe, _):
-    //                         final exnFile = haxe.file.haxe;
-    //                         final exnLine = haxe.expr.haxe.start.line;
-    
-    //                         Sys.println('Thread $_thread has thrown an exception at $exnFile Line $exnLine');
-    
-    //                         final minLine = Std.int(Math.max(1, exnLine - 3)) - 1;
-    //                         final maxLine = exnLine + 3;
-    //                         final input   = File.read(exnFile, false);
-    
-    //                         // Read all lines up until the ones we're actually interested in.
-    //                         var i = 0;
-    //                         while (i < minLine)
-    //                         {
-    //                             input.readLine();
-    //                             i++;
-    //                         }
-    
-    //                         for (i in 0...(maxLine - minLine))
-    //                         {
-    //                             try
-    //                             {
-    //                                 final line    = input.readLine();
-    //                                 final absLine = minLine + i + 1;
-    
-    //                                 if (exnLine == absLine)
-    //                                 {
-    //                                     Sys.print('=>\t');
-    //                                 }
-    //                                 else
-    //                                 {
-    //                                     Sys.print('\t');
-    //                                 }
-    
-    //                                 Sys.println('$absLine: $line');
-    //                             }
-    //                             catch (_ : Eof)
-    //                             {
-    //                                 break;
-    //                             }
-    //                         }
-    
-    //                         input.close();
-    //                     case _:
-    //                         Sys.println('exception thrown which contained no haxe frames in thread $_thread');
-    //                 }
-    //             case Error(_):
-    //                 Sys.println('unable to get the stack for an exception thrown in thread $_thread');
-    //         }
-    //     });
-    // }
-
-    // function isHaxeFrame(_frame : StackFrame)
-    // {
-    //     return switch _frame
-    //     {
-    //         case Haxe(_, _):
-    //             true;
-    //         case Native(_):
-    //             false;
-    //     }
-    // }
+    function isHaxeFrame(_frame : StackFrame)
+    {
+        return switch _frame
+        {
+            case Haxe(_, _):
+                true;
+            case Native(_):
+                false;
+        }
+    }
 }

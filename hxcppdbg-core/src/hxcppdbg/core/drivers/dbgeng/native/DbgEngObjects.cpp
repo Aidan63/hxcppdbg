@@ -576,7 +576,7 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 								auto event        = DEBUG_LAST_EVENT_INFO_BREAKPOINT();
 								auto threadIdxOpt = threadIdx == DEBUG_ANY_ID ? haxe::ds::Option_obj::None : haxe::ds::Option_obj::Some(threadIdx);
 
-								if (!SUCCEEDED(result = control->GetStoredEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
+								if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
 								{
 									return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint(threadIdxOpt, haxe::ds::Option_obj::None));
 								}
@@ -591,7 +591,7 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 								auto event        = DEBUG_LAST_EVENT_INFO_EXCEPTION();
 								auto threadIdxOpt = threadIdx == DEBUG_ANY_ID ? haxe::ds::Option_obj::None : haxe::ds::Option_obj::Some(threadIdx);
 
-								if (!SUCCEEDED(result = control->GetStoredEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
+								if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
 								{
 									return WaitResult_obj::Interrupted(InterruptReason_obj::Exception(threadIdxOpt, haxe::ds::Option_obj::None));
 								}
