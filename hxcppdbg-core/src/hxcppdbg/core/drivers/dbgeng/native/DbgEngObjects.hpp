@@ -24,11 +24,12 @@ HX_DECLARE_CLASS3(hxcppdbg, core, model, ModelData)
 HX_DECLARE_CLASS3(hxcppdbg, core, drivers, StopReason)
 HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, WaitResult)
 HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
-    class DbgEngObjects_obj : public hx::Object
+    class DbgEngObjects_obj
     {
     private:
         ComPtr<IDebugClient7> client;
@@ -37,16 +38,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         ComPtr<IDebugSystemObjects4> system;
         std::unique_ptr<DebugEventCallbacks> events;
         std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
-        std::atomic_bool pauseRequested;
-
-        DbgEngObjects_obj(
-            ComPtr<IDebugClient7> _client,
-            ComPtr<IDebugControl7> _control,
-            ComPtr<IDebugSymbols5> _symbols,
-            ComPtr<IDebugSystemObjects4> _system,
-            std::unique_ptr<DebugEventCallbacks> _events,
-            Array<hxcppdbg::core::sourcemap::GeneratedType> enums,
-            Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
 
         hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
 
@@ -54,9 +45,12 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static int backtickCount(std::wstring _input);
         static bool endsWith(std::wstring const &_input, std::wstring const &_ending);
 
-        hxcppdbg::core::ds::Result processLastEvent();
-
     public:
+        DbgEngObjects_obj() = default;
+        virtual ~DbgEngObjects_obj() = default;
+
+        haxe::ds::Option createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
+
         hxcppdbg::core::ds::Result createBreakpoint(String file, int line);
         haxe::ds::Option removeBreakpoint(int id);
 
@@ -66,13 +60,14 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result getVariables(int _thread, int _frame);
         hxcppdbg::core::ds::Result getArguments(int _thread, int _frame);
 
-        hxcppdbg::core::ds::Result start(int status);
-        hxcppdbg::core::ds::Result step(int thread, int status);
+        haxe::ds::Option go();
         haxe::ds::Option pause();
-
+        haxe::ds::Option step(int thread, int status);
         haxe::ds::Option end();
 
-        static hxcppdbg::core::ds::Result createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
+        hxcppdbg::core::ds::Result interrupt();
+        hxcppdbg::core::drivers::dbgeng::native::WaitResult wait();
+
         static IDataModelManager* manager;
         static IDebugHost* host;
     };

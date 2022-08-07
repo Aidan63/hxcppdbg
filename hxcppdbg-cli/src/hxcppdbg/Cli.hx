@@ -1,5 +1,10 @@
 package hxcppdbg;
 
+import cpp.asio.streams.IReadStream;
+import cpp.asio.TTY;
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Promise;
 import haxe.io.Bytes;
 import haxe.Exception;
 import sys.thread.Thread;
@@ -8,8 +13,6 @@ import haxe.io.Eof;
 import sys.io.File;
 import hxcppdbg.core.breakpoints.BreakpointHit;
 import sys.FileSystem;
-import tink.cli.Prompt.PromptType;
-import tink.cli.prompt.SysPrompt;
 import hxcppdbg.cli.Hxcppdbg;
 import hxcppdbg.core.Session;
 
@@ -18,11 +21,7 @@ using haxe.EnumTools;
 
 class Cli
 {
-    final input : SysPrompt;
-
     final regex : EReg;
-
-    var session : Session;
 
     public var target : String;
 
@@ -30,25 +29,14 @@ class Cli
 
     public function new()
     {
-        input = new SysPrompt();
         regex = ~/\s+/g;
     }
 
     @:defaultCommand public function run()
     {
-        session = new Session(FileSystem.absolutePath(target), FileSystem.absolutePath(sourcemap));
+        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            final session = new Session(FileSystem.absolutePath(target), FileSystem.absolutePath(sourcemap));
 
-        session
-            .breakpoints
-            .onBreakpointHit
-            .subscribe(printBreakpointHitLocation);
-
-        session
-            .breakpoints
-            .onExceptionThrown
-            .subscribe(printExceptionLocation);
-
-        Thread.createWithEventLoop(() -> {
             cpp.asio.Signal.open(result -> {
                 switch result
                 {
@@ -57,48 +45,25 @@ class Cli
                             switch result
                             {
                                 case Success(data):
-                                    session.pause();
+                                    new Hxcppdbg(session).pause();
                                 case Error(error):
-                                    throw new Exception(error.toString());
+                                    _reject(new Error(error.toString()));
+                            }
+                        });
+
+                        cpp.asio.TTY.open(Stdin, result -> {
+                            switch result
+                            {
+                                case Success(stdin):
+                                    waitForInput(stdin.read, session, _reject);
+                                case Error(error):
+                                    _reject(new Error(error.toString()));
                             }
                         });
                     case Error(error):
-                        throw new Exception(error.toString());
+                        _reject(new Error(error.toString()));
                 }
             });
-        });
-
-        cpp.asio.TTY.open(Stdout, result -> {
-            switch result
-            {
-                case Success(stdout):
-                    cpp.asio.TTY.open(Stdin, result -> {
-                        switch result
-                        {
-                            case Success(stdin):
-                                stdout.write.write(Bytes.ofString('hxcppdbg : '), _ -> {});
-
-                                stdin.read.read(result -> {
-                                    switch result
-                                    {
-                                        case Success(data):
-                                            final str  = data.toString();
-                                            final args = regex.split(str);
-            
-                                            tink.Cli
-                                                .process(args, new Hxcppdbg(session))
-                                                .handle(_ -> stdout.write.write(Bytes.ofString('hxcppdbg : '), _ -> {}));
-                                        case Error(error):
-                                            throw new Exception(error.toString());
-                                    }
-                                });
-                            case Error(error):
-                                throw new Exception(error.toString());
-                        }
-                    });
-                case Error(error):
-                    throw new Exception(error.toString());
-            }
         });
     }
 
@@ -107,115 +72,35 @@ class Cli
         //
     }
 
-    function printBreakpointHitLocation(_event : BreakpointHit)
+    function waitForInput(_stdin : IReadStream, _session : Session, _reject : Error->Void)
     {
-        Sys.println('Thread ${ _event.thread } hit breakpoint ${ _event.breakpoint.id } at ${ _event.breakpoint.file } Line ${ _event.breakpoint.line }');
+        Sys.print('hxcppdbg : ');
 
-        final minLine = Std.int(Math.max(1, _event.breakpoint.line - 3)) - 1;
-        final maxLine = _event.breakpoint.line + 3;
-        final input   = File.read(_event.breakpoint.file, false);
-
-        // Read all lines up until the ones we're actually interested in.
-        var i = 0;
-        while (i < minLine)
-        {
-            input.readLine();
-            i++;
-        }
-
-        for (i in 0...(maxLine - minLine))
-        {
-            try
+        _stdin.read(result -> {
+            switch result
             {
-                final line    = input.readLine();
-                final absLine = minLine + i + 1;
+                case Success(data):
+                    _stdin.stop();
 
-                if (_event.breakpoint.line == absLine)
-                {
-                    Sys.print('=>\t');
-                }
-                else
-                {
-                    Sys.print('\t');
-                }
+                    final str  = data.toString();
+                    final args = regex.split(str);
 
-                Sys.println('$absLine: $line');
-            }
-            catch (_ : Eof)
-            {
-                break;
-            }
-        }
-
-        input.close();
-    }
-
-    function printExceptionLocation(_thread : Int)
-    {
-        switch session.stack.getCallStack(_thread)
-        {
-            case Success(stack):
-                switch stack.find(isHaxeFrame)
-                {
-                    case Haxe(haxe, _):
-                        final exnFile = haxe.file.haxe;
-                        final exnLine = haxe.expr.haxe.start.line;
-
-                        Sys.println('Thread $_thread has thrown an exception at $exnFile Line $exnLine');
-
-                        final minLine = Std.int(Math.max(1, exnLine - 3)) - 1;
-                        final maxLine = exnLine + 3;
-                        final input   = File.read(exnFile, false);
-
-                        // Read all lines up until the ones we're actually interested in.
-                        var i = 0;
-                        while (i < minLine)
-                        {
-                            input.readLine();
-                            i++;
-                        }
-
-                        for (i in 0...(maxLine - minLine))
-                        {
-                            try
+                    tink.Cli
+                        .process(args, new Hxcppdbg(_session))
+                        .handle(result -> {
+                            switch result
                             {
-                                final line    = input.readLine();
-                                final absLine = minLine + i + 1;
-
-                                if (exnLine == absLine)
-                                {
-                                    Sys.print('=>\t');
-                                }
-                                else
-                                {
-                                    Sys.print('\t');
-                                }
-
-                                Sys.println('$absLine: $line');
+                                case Success(_):
+                                    //
+                                case Failure(failure):
+                                    Sys.println(failure.message);
                             }
-                            catch (_ : Eof)
-                            {
-                                break;
-                            }
-                        }
 
-                        input.close();
-                    case _:
-                        Sys.println('exception thrown which contained no haxe frames in thread $_thread');
-                }
-            case Error(_):
-                Sys.println('unable to get the stack for an exception thrown in thread $_thread');
-        }
-    }
-
-    function isHaxeFrame(_frame : StackFrame)
-    {
-        return switch _frame
-        {
-            case Haxe(_, _):
-                true;
-            case Native(_):
-                false;
-        }
+                            waitForInput(_stdin, _session, _reject);
+                        });
+                case Error(error):
+                    _reject(new Error(error.toString()));
+            }
+        });
     }
 }

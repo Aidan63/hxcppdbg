@@ -12,13 +12,13 @@ abstract class Driver
 
     public final locals : ILocals;
 
-    public abstract function start() : Result<StopReason, Exception>;
+    public abstract function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void;
 
-    public abstract function stop() : Option<Exception>;
+    public abstract function stop(_callback : Option<Exception>->Void) : Void;
 
-    public abstract function pause() : Option<Exception>;
+    public abstract function pause(_callback : Result<Bool, Exception>->Void) : Void;
 
-    public abstract function resume() : Result<StopReason, Exception>;
+    public abstract function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void;
 
-    public abstract function step(_thread : Int, _type : StepType) : Result<StopReason, Exception>;
+    public abstract function step(_thread : Int, _type : StepType, _callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void;
 }

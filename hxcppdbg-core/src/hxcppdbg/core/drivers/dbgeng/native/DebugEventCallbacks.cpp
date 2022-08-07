@@ -3,10 +3,6 @@
 #include "DebugEventCallbacks.hpp"
 #include "DbgEngObjects.hpp"
 
-#ifndef INCLUDED_hxcppdbg_core_drivers_StopReason
-#include <hxcppdbg/core/drivers/StopReason.h>
-#endif
-
 hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::DebugEventCallbacks()
 {
     //

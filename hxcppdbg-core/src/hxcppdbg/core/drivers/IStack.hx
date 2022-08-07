@@ -6,7 +6,7 @@ import hxcppdbg.core.stack.NativeFrame;
 
 interface IStack
 {
-    function getCallStack(_thread : Int) : Result<Array<NativeFrame>, Exception>;
+    function getCallStack(_thread : Int, _result : Result<Array<NativeFrame>, Exception>->Void) : Void;
 
-    function getFrame(_thread : Int, _index : Int) : Result<NativeFrame, Exception>;
+    function getFrame(_thread : Int, _index : Int, _result : Result<NativeFrame, Exception>->Void) : Void;
 }

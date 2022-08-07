@@ -4,5 +4,5 @@ function main()
 {
     tink.Cli
         .process(Sys.args(), new Cli())
-        .handle(_ -> {});
+        .handle(tink.Cli.exit);
 }

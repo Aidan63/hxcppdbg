@@ -6,7 +6,7 @@ import hxcppdbg.core.ds.Result;
 
 interface IBreakpoints
 {
-    public function create(_file : String, _line : Int) : Result<Int, Exception>;
+    public function create(_file : String, _line : Int, _result : Result<Int, Exception>->Void) : Void;
 
-    public function remove(_id : Int) : Option<Exception>;
+    public function remove(_id : Int, _result : Option<Exception>->Void) : Void;
 }

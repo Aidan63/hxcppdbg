@@ -18,45 +18,41 @@ class Breakpoints
 
     final active : Map<Int, Breakpoint>;
 
-    public final onBreakpointHit : Signal<BreakpointHit>;
-
-    public final onExceptionThrown : Signal<Int>;
-
     public function new(_sourcemap, _driver)
     {
-        sourcemap         = _sourcemap;
-        driver            = _driver;
-        active            = [];
-        onBreakpointHit   = new Signal();
-        onExceptionThrown = new Signal();
+        sourcemap = _sourcemap;
+        driver    = _driver;
+        active    = [];
     }
 
-    public function create(_hxFile, _hxLine, _hxChar = 0)
+    public function create(_hxFile, _hxLine, _hxChar, _callback : Result<Breakpoint, Exception>->Void)
     {
-        return switch sourcemap.files.find(f -> f.haxe.endsWith(_hxFile))
+        switch sourcemap.files.find(f -> f.haxe.endsWith(_hxFile))
         {
             case null:
-                Error(new Exception('Unable to find file in sourcemap with name $_hxFile'));
+                _callback(Result.Error(new Exception('Unable to find file in sourcemap with name $_hxFile')));
             case file:
                 switch findExpr(file, _hxLine, _hxChar)
                 {
                     case Success(mapping):
-                        switch driver.create(file.cpp, mapping.cpp)
-                        {
-                            case Error(exn):
-                                Error(new Exception('Unable to set breakpoint', exn));
-                            case Success(id):
-                                Success(active[id] = new Breakpoint(id, file.haxe, mapping.haxe.start.line, _hxChar, mapping));
-                        }
+                        driver.create(file.cpp, mapping.cpp, result -> {
+                            switch result
+                            {
+                                case Success(id):
+                                    _callback(Result.Success(active[id] = new Breakpoint(id, file.haxe, mapping.haxe.start.line, _hxChar, mapping)));
+                                case Error(exn):
+                                    _callback(Result.Error(new Exception('Unable to set breakpoint', exn)));
+                            }
+                        });
                     case Error(exn):
-                        Error(exn);
+                        _callback(Result.Error(exn));
                 }
         }
     }
 
-    public function delete(_id)
+    public function delete(_id, _callback)
     {
-        return driver.remove(_id);
+        driver.remove(_id, _callback);
     }
 
     public function get(_id)
