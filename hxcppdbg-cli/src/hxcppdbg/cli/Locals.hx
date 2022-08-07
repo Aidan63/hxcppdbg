@@ -1,5 +1,8 @@
 package hxcppdbg.cli;
 
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Promise;
 import hxcppdbg.core.locals.Locals in CoreLocals;
 import hxcppdbg.core.model.Printer;
 
@@ -25,26 +28,29 @@ class Locals
 
     @:command public function list()
     {
-        locals.getLocals(thread, frame, result -> {
-            switch result
-            {
-                case Success(vars):
-                    for (hxVar in vars)
-                    {
-                        switch hxVar
+        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            locals.getLocals(thread, frame, result -> {
+                switch result
+                {
+                    case Success(vars):
+                        for (hxVar in vars)
                         {
-                            case Native(model):
-                                if (native)
-                                {
-                                    Sys.println('\t[native]${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
-                                }
-                            case Haxe(model):
-                                Sys.println('\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
+                            switch hxVar
+                            {
+                                case Native(model):
+                                    if (native)
+                                    {
+                                        Sys.println('\t[native]${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
+                                    }
+                                case Haxe(model):
+                                    Sys.println('\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
+                            }
                         }
-                    }
-                case Error(e):
-                    Sys.println('\tError : ${ e.message }');
-            }
+                        _resolve(null);
+                    case Error(exn):
+                        _reject(new Error('\tError : ${ exn.message }'));
+                }
+            });
         });
     }
 

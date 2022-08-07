@@ -19,10 +19,20 @@ class Step
         session.step(thread, In, result -> {
             switch result
             {
-                case Some(exn):
-                    Sys.println(exn.message);
-                case None:
+                case Success(Some(interrupt)):
+                    switch interrupt
+                    {
+                        case ExceptionThrown(threadIndex):
+                            //
+                        case BreakpointHit(threadIndex, id):
+                            //
+                        case Other:
+                            //
+                    }
+                case Success(None):
                     printLocation();
+                case Error(exn):
+                    trace(exn.message);
             }
         });
     }
@@ -32,10 +42,20 @@ class Step
         session.step(thread, Out, result -> {
             switch result
             {
-                case Some(exn):
-                    Sys.println(exn.message);
-                case None:
+                case Success(Some(interrupt)):
+                    switch interrupt
+                    {
+                        case ExceptionThrown(threadIndex):
+                            //
+                        case BreakpointHit(threadIndex, id):
+                            //
+                        case Other:
+                            //
+                    }
+                case Success(None):
                     printLocation();
+                case Error(exn):
+                    trace(exn.message);
             }
         });
     }
@@ -45,10 +65,20 @@ class Step
         session.step(thread, Over, result -> {
             switch result
             {
-                case Some(exn):
-                    Sys.println(exn.message);
-                case None:
+                case Success(Some(interrupt)):
+                    switch interrupt
+                    {
+                        case ExceptionThrown(threadIndex):
+                            //
+                        case BreakpointHit(threadIndex, id):
+                            //
+                        case Other:
+                            //
+                    }
+                case Success(None):
                     printLocation();
+                case Error(exn):
+                    trace(exn.message);
             }
         });
     }

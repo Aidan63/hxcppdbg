@@ -1,5 +1,8 @@
 package hxcppdbg.cli;
 
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Promise;
 import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.stack.Stack in CoreStack;
 
@@ -24,36 +27,39 @@ class Stack
 
     @:command public function list()
     {
-        driver.getCallStack(thread, result -> {
-            switch result
-            {
-                case Success(v):
-                    for (idx => frame in v.filter(filterFrame))
-                    {
-                        switch frame
+        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            driver.getCallStack(thread, result -> {
+                switch result
+                {
+                    case Success(frames):
+                        for (idx => frame in frames.filter(filterFrame))
                         {
-                            case Haxe(haxe, frame):
-                                if (native)
-                                {
-                                    Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
-                                }
-                                else
-                                {
-                                    switch haxe.closure
+                            switch frame
+                            {
+                                case Haxe(haxe, frame):
+                                    if (native)
                                     {
-                                        case Some(closure):
-                                            Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }');
-                                        case None:
-                                            Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }');
+                                        Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
                                     }
-                                }
-                            case Native(frame):
-                                Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
+                                    else
+                                    {
+                                        switch haxe.closure
+                                        {
+                                            case Some(closure):
+                                                Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }');
+                                            case None:
+                                                Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }');
+                                        }
+                                    }
+                                case Native(frame):
+                                    Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
+                            }
                         }
-                    }
-                case Error(e):
-                    Sys.println('\t${ e.message }');
-            }
+                        _resolve(null);
+                    case Error(exn):
+                        _reject(new Error('\t${ exn.message }'));
+                }
+            });
         });
     }
 

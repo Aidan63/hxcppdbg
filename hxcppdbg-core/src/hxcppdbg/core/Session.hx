@@ -1,5 +1,6 @@
 package hxcppdbg.core;
 
+import hxcppdbg.core.drivers.Interrupt;
 import hxcppdbg.core.evaluator.Evaluator;
 import sys.io.File;
 import haxe.Exception;
@@ -10,7 +11,6 @@ import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.breakpoints.Breakpoints;
 import hxcppdbg.core.breakpoints.BreakpointHit;
 import hxcppdbg.core.drivers.Driver;
-import hxcppdbg.core.drivers.StopReason;
 import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.locals.Locals;
 
@@ -49,14 +49,14 @@ class Session
         eval        = new Evaluator(sourcemap, driver.locals, stack);
     }
 
-    public function start(_result : Option<Exception>->Void)
+    public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
     {
-        driver.start(_result);
+        driver.start(_callback);
     }
 
-    public function resume(_result : Option<Exception>->Void)
+    public function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
     {
-        return driver.resume(_result);
+        driver.resume(_callback);
     }
 
     public function pause(_result : Result<Bool, Exception>->Void)
@@ -69,7 +69,7 @@ class Session
         driver.stop(_result);
     }
 
-    public function step(_thread : Int, _type : StepType, _result : Option<Exception>->Void)
+    public function step(_thread : Int, _type : StepType, _callback : Result<Option<Interrupt>, Exception>->Void)
     {
         stack.getFrame(_thread, 0, result -> {
             switch result
@@ -82,69 +82,79 @@ class Session
                         driver.step(_thread, _type, result -> {
                             switch result
                             {
-                                case Some(exn):
-                                    _result(Option.Some(exn));
-                                case None:
-                                    stack.getFrame(_thread, 0, result -> {
+                                case Success(run):
+                                    run(result -> {
                                         switch result
                                         {
-                                            case Success(top):
-                                                final again = switch (current = top)
-                                                {
-                                                    case Haxe(haxeCurrent, _):
-                                                        switch baseFrame
-                                                        {
-                                                            case Haxe(mapped, _):
-                                                                haxeCurrent.file.haxe == mapped.file.haxe && haxeCurrent.expr.haxe.start.line == mapped.expr.haxe.start.line;
-                                                            case Native(_):
-                                                                // Our base frame shouldn't ever be a non haxe one.
-                                                                // In the future this might be the case (native breakpoints),
-                                                                // so we sould correct this down the line.
-                                                                false;
-                                                        }
-                                                    case Native(_):
-                                                        true;
-                                                }
-
-                                                if (again)
-                                                {
-                                                    stepLoop();
-                                                }
-                                                else
-                                                {
-                                                    _result(Option.None);
-                                                }
+                                            case Success(Option.None):
+                                                stack.getFrame(_thread, 0, result -> {
+                                                    switch result
+                                                    {
+                                                        case Success(top):
+                                                            final again = switch (current = top)
+                                                            {
+                                                                case Haxe(haxeCurrent, _):
+                                                                    switch baseFrame
+                                                                    {
+                                                                        case Haxe(mapped, _):
+                                                                            haxeCurrent.file.haxe == mapped.file.haxe && haxeCurrent.expr.haxe.start.line == mapped.expr.haxe.start.line;
+                                                                        case Native(_):
+                                                                            // Our base frame shouldn't ever be a non haxe one.
+                                                                            // In the future this might be the case (native breakpoints),
+                                                                            // so we sould correct this down the line.
+                                                                            false;
+                                                                    }
+                                                                case Native(_):
+                                                                    true;
+                                                            }
+            
+                                                            if (again)
+                                                            {
+                                                                stepLoop();
+                                                            }
+                                                            else
+                                                            {
+                                                                _callback(Result.Success(Option.None));
+                                                            }
+                                                        case Error(exn):
+                                                            _callback(Result.Error(exn));
+                                                    }
+                                                });
+                                            case Success(interrupt):
+                                                _callback(Result.Success(interrupt));
                                             case Error(exn):
-                                                _result(Option.Some(exn));
+                                                _callback(Result.Error(exn));
                                         }
                                     });
+                                case Error(exn):
+                                    _callback(Result.Error(exn));
                             }
                         });
                     }
 
                     stepLoop();
-                case Error(e):
-                    _result(Option.Some(e));
+                case Error(exn):
+                    _callback(Result.Error(exn));
             }
         });
     }
 
-    function dispatchStopCallbacks(_reason : StopReason)
-    {
-        switch _reason
-        {
-            case ExceptionThrown(_thread):
-                breakpoints.onExceptionThrown.notify(_thread);
-            case BreakpointHit(_id, _thread):
-                switch breakpoints.get(_id)
-                {
-                    case None:
-                        throw new Exception('Unable to find breakpoint with ID $_id');
-                    case Some(breakpoint):
-                        breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
-                }
-            case _:
-                //
-        }
-    }
+    // function dispatchStopCallbacks(_reason : StopReason)
+    // {
+    //     switch _reason
+    //     {
+    //         case ExceptionThrown(_thread):
+    //             breakpoints.onExceptionThrown.notify(_thread);
+    //         case BreakpointHit(_id, _thread):
+    //             switch breakpoints.get(_id)
+    //             {
+    //                 case None:
+    //                     throw new Exception('Unable to find breakpoint with ID $_id');
+    //                 case Some(breakpoint):
+    //                     breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
+    //             }
+    //         case _:
+    //             //
+    //     }
+    // }
 }

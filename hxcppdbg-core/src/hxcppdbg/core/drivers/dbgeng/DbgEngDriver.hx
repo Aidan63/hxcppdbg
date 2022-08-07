@@ -41,41 +41,22 @@ class DbgEngDriver extends Driver
 		locals      = new DbgEngLocals(objects, cbThread, dbgThread);
 	}
 
-	public function start(_result : Option<Exception>->Void)
+	public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			final r = objects.ptr.go();
-
-			cbThread.events.run(() -> _result(r.asExceptionOption()));
-
-			if (r.match(Option.None))
+			switch objects.ptr.go()
 			{
-				switch objects.ptr.wait()
-				{
-					case Complete:
-						trace('completed');
-					case WaitFailed:
-						trace('wait failed');
-					case Interrupted(reason):
-						switch reason
-						{
-							case Breakpoint(_, _):
-								onBreakpoint();
-							case Exception(_, _):
-								onException();
-							case Unknown:
-								onUnknownStop();
-							case Pause:
-								//
-						}
-				}
+				case Some(exn):
+					cbThread.events.run(() -> _callback(Result.Error(exn)));
+				case None:
+					cbThread.events.run(() -> _callback(Result.Success(run)));
 			}
 		});
 	}
 
-	public function resume(_result : Option<Exception>->Void)
+	public function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
 	{
-		start(_result);
+		start(_callback);
 	}
 
 	public function pause(_result : Result<Bool, Exception>->Void)
@@ -113,66 +94,46 @@ class DbgEngDriver extends Driver
 		_result(Option.Some(new NotImplementedException()));
 	}
 
-	public function step(_thread : Int, _type : StepType, _result : Option<Exception>->Void)
+	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
 			switch objects.ptr.step(_thread, _type)
 			{
 				case Some(exn):
-					cbThread.events.run(() -> _result(Option.Some(exn)));
+					cbThread.events.run(() -> _callback(Result.Error(exn)));
 				case None:
-					switch objects.ptr.wait()
-					{
-						case WaitFailed:
-							cbThread.events.run(() -> _result(Option.Some(new Exception('Wait failed'))));
-						case Complete:
-							cbThread.events.run(() -> _result(Option.None));
-						case Interrupted(reason):
-							switch reason
-							{
-								case Breakpoint(_, _):
-									cbThread.events.run(() -> {
-										onBreakpoint();
-
-										_result(Option.Some(new Exception('Breakpoint hit')));
-									});
-								case Exception(_, _):
-									cbThread.events.run(() -> {
-										onException();
-
-										_result(Option.Some(new Exception('Exception thrown')));
-									});
-								case Unknown:
-									cbThread.events.run(() -> {
-										onUnknownStop();
-
-										_result(Option.Some(new Exception('Unknown stop')));
-									});
-								case Pause:
-									_result(Option.Some(new Exception('interrupt')));
-							}
-					}
+					cbThread.events.run(() -> _callback(Result.Success(run)));
 			}
 		});
 	}
 
-	private function noop()
+	function run(_callback : Result<Option<Interrupt>, Exception>->Void)
+	{
+		dbgThread.events.run(() -> {
+			switch objects.ptr.wait()
+			{
+				case Complete:
+					cbThread.events.run(() -> _callback(Result.Success(Option.None)));
+				case WaitFailed:
+					cbThread.events.run(() -> _callback(Result.Error(new Exception('Wait failed'))));
+				case Interrupted(reason):
+					cbThread.events.run(() -> {
+						switch reason
+						{
+							case Breakpoint(idx, id):
+								_callback(Result.Success(Option.Some(Interrupt.BreakpointHit(idx, id))));
+							case Exception(idx, _):
+								_callback(Result.Success(Option.Some(Interrupt.ExceptionThrown(idx))));
+							case Unknown, Pause:
+								_callback(Result.Success(Option.Some(Interrupt.Other)));
+						}
+					});
+			}
+		});
+	}
+
+	function noop()
 	{
 		//
-	}
-
-	private function onException()
-	{
-		trace('exception');
-	}
-
-	private function onBreakpoint()
-	{
-		trace('breakpoint');
-	}
-
-	private function onUnknownStop()
-	{
-		trace('unknown stop');
 	}
 }

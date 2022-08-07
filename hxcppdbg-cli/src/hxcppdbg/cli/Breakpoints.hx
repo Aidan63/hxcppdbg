@@ -1,5 +1,8 @@
 package hxcppdbg.cli;
 
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Promise;
 import hxcppdbg.core.breakpoints.Breakpoints in CoreBreakpoints;
 
 using Lambda;
@@ -57,14 +60,18 @@ class Add
 
     @:defaultCommand public function run()
     {
-        driver.create(file, line, char, result -> {
-            switch result
-            {
-                case Success(v):
-                    Sys.println('Breakpoing ${ v.id } added to ${ v.file }:${ v.line }');
-                case Error(e):
-                    Sys.println('Failed to add breakpoing : ${ e.message }');
-            }
+        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            driver.create(file, line, char, result -> {
+                switch result
+                {
+                    case Success(bp):
+                        Sys.println('Breakpoing ${ bp.id } added to ${ bp.file }:${ bp.line }');
+
+                        _resolve(null);
+                    case Error(exn):
+                        _reject(new Error('Failed to add breakpoing : ${ exn.message }'));
+                }
+            });
         });
     }
 }
@@ -82,14 +89,18 @@ class Remove
 
     @:defaultCommand public function run()
     {
-        driver.delete(id, error -> {
-            switch error
-            {
-                case Some(exn):
-                    Sys.println('Failed to remove breakpoing $id : ${ exn.message }');
-                case None:
-                    Sys.println('Breakpoint $id removed');
-            }
+        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            driver.delete(id, error -> {
+                switch error
+                {
+                    case Some(exn):
+                        _reject(new Error('Failed to remove breakpoing $id : ${ exn.message }'));
+                    case None:
+                        Sys.println('Breakpoint $id removed');
+
+                        _resolve(null);
+                }
+            });
         });
     }
 }

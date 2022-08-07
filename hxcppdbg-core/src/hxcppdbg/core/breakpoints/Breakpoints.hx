@@ -18,17 +18,11 @@ class Breakpoints
 
     final active : Map<Int, Breakpoint>;
 
-    public final onBreakpointHit : Signal<BreakpointHit>;
-
-    public final onExceptionThrown : Signal<Int>;
-
     public function new(_sourcemap, _driver)
     {
-        sourcemap         = _sourcemap;
-        driver            = _driver;
-        active            = [];
-        onBreakpointHit   = new Signal();
-        onExceptionThrown = new Signal();
+        sourcemap = _sourcemap;
+        driver    = _driver;
+        active    = [];
     }
 
     public function create(_hxFile, _hxLine, _hxChar, _callback : Result<Breakpoint, Exception>->Void)

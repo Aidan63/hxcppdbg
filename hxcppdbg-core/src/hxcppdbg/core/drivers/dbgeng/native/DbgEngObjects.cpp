@@ -39,10 +39,6 @@
 #include <hxcppdbg/core/stack/NativeFrame.h>
 #endif
 
-#ifndef INCLUDED_hxcppdbg_core_drivers_StopReason
-#include <hxcppdbg/core/drivers/StopReason.h>
-#endif
-
 #ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_NativeFrameReturn
 #include <hxcppdbg/core/drivers/dbgeng/NativeFrameReturn.h>
 #endif
