@@ -13,6 +13,8 @@ import sys.thread.Thread;
 import cpp.asio.Code;
 import cpp.asio.TcpSocket;
 
+using Lambda;
+
 class Dap
 {
     public var mode : String;
@@ -157,6 +159,45 @@ class Dap
                             }
                         });
                     case Error(exn):
+                        dap.sendResponse(sequence, 'continue', DapResponse.Failure(exn));
+                }
+            });
+        });
+
+        dap.onStackTrace.subscribe(message -> {
+            session.stack.getCallStack(message.arguments.threadId, result -> {
+                switch result
+                {
+                    case Success(frames):
+                        dap.sendResponse(
+                            message.seq,
+                            'stackTrace',
+                            DapResponse.Success({
+                                totalFrames : frames.length,
+                                stackFrames : frames.mapi((idx, frame) -> {
+                                    final id  = new FrameId(message.arguments.threadId, idx);
+
+                                    switch frame
+                                    {
+                                        case Haxe(haxe, native):
+                                            {
+                                                id               : id,
+                                                name             : haxe.func.name,
+                                                line             : 0,
+                                                presentationHint : 'normal'
+                                            }
+                                        case Native(frame):
+                                            {
+                                                id               : id,
+                                                name             : frame.func,
+                                                line             : 0,
+                                                presentationHint : 'subtle'
+                                            }
+                                    }
+                                })
+                            }));
+                    case Error(exn):
+                        dap.sendResponse(message.seq, 'stackTrace', DapResponse.Failure(exn));
                 }
             });
         });
