@@ -89,9 +89,19 @@ class DbgEngDriver extends Driver
 		}
 	}
 
-	public function stop(_result : Option<Exception>->Void)
+	public function stop(_callback : Option<Exception>->Void)
 	{
-		_result(Option.Some(new NotImplementedException()));
+		dbgThread.events.run(() -> {
+			switch objects.ptr.end()
+			{
+				case Some(exn):
+					cbThread.events.run(() -> _callback(Option.Some(exn)));
+
+					objects.destroy();
+				case None:
+					cbThread.events.run(() -> _callback(Option.None));
+			}
+		});
 	}
 
 	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
