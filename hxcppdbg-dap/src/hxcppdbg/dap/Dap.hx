@@ -1,6 +1,8 @@
 package hxcppdbg.dap;
 
-import cpp.vm.Gc;
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Promise;
 import sys.thread.EventLoop.EventHandler;
 import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
@@ -11,12 +13,8 @@ import sys.thread.Thread;
 import cpp.asio.Code;
 import cpp.asio.TcpSocket;
 
-using hxrx.observables.Observables;
-
 class Dap
 {
-    var server : TcpSocket;
-
     public var mode : String;
 
     public var target : String;
@@ -25,7 +23,6 @@ class Dap
 
     public function new()
     {
-        server    = null;
         mode      = 'stdio';
         target    = '';
         sourcemap = '';
@@ -34,17 +31,15 @@ class Dap
     @:defaultCommand
     public function run()
     {
-        switch mode
-        {
-            case 'stdio':
-                //
-            case 'socket':
-                trace('starting socket');
-
-                cpp.asio.TcpSocket.bind('127.0.0.1', 7777, onSocketListen);
-            case other:
-                throw new Exception('unknown mode $other');
-        }
+        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            switch mode
+            {
+                case 'socket':
+                    cpp.asio.TcpSocket.bind('127.0.0.1', 7777, onSocketListen.bind(_reject));
+                case other:
+                    _reject(new Error('unknown mode $other'));
+            }
+        });
     }
 
     @:command
@@ -53,29 +48,25 @@ class Dap
         //
     }
 
-    function onSocketListen(_result : Result<TcpSocket, Code>)
+    function onSocketListen(_reject : Error->Void, _result : Result<TcpSocket, Code>)
     {
         switch _result
         {
             case Success(socket):
-                server = socket;
-
-                socket.listen(onConnectionRequest);
+                socket.listen(onConnectionRequest.bind(_reject));
             case Error(code):
-                trace('failed to bind to address : $code');
+                _reject(new Error('failed to bind to address : $code'));
         }
     }
 
-    function onConnectionRequest(_result : Result<TcpRequest, Code>)
+    function onConnectionRequest(_reject : Error->Void, _result : Result<TcpRequest, Code>)
     {
         switch _result
         {
             case Success(request):
-                trace('connection request');
-
                 request.accept(onClientConnected);
             case Error(code):
-                trace('failed to listen for connection requests : $code');
+                _reject(new Error('failed to listen for connection requests : $code'));
         }
     }
 
@@ -86,89 +77,70 @@ class Dap
             case Success(client):
                 startDebugSession(target, sourcemap, client);
             case Error(code):
-                trace('failed to connect client : $code');
+                Sys.println('failed to connect client : $code');
         }
-    }
-
-    static function noop()
-    {
-        //
     }
 
     static function startDebugSession(_target : String, _sourcemap : String, _client : TcpClient)
     {
-        var session : Session;
-        var heartbeat : EventHandler;
+        final session = new Session(_target, _sourcemap);
+        final dap     = new DapSession(_client.stream, _client.stream);
 
-        final main   = Thread.current();
-        final thread = Thread.createWithEventLoop(() -> {
-            session   = new Session(_target, _sourcemap);
-            heartbeat = Thread.current().events.repeat(noop, 1000);
+        dap.onLaunch.subscribe(sequence -> {
+            session.start(result -> {
+                switch result
+                {
+                    case Success(run):
+                        dap.sendResponse(sequence, 'launch', DapResponse.Success);
+
+                        run(result -> {
+                            switch result
+                            {
+                                case Success(None):
+                                    dap.sendExited();
+                                case Success(Some(interrupt)):
+                                    switch interrupt
+                                    {
+                                        case ExceptionThrown(threadIndex):
+                                            dap.sendExceptionThrown(threadIndex);
+                                        case BreakpointHit(threadIndex, id):
+                                            dap.sendBreakpointHit(threadIndex, id);
+                                        case Other:
+                                            //
+                                    }
+                                case Error(exn):
+                                    //
+                            }
+                        });
+                    case Error(exn):
+                        dap.sendResponse(sequence, 'launch', DapResponse.Failure(exn));
+                }
+            });
         });
 
-        final dap       = new DapSession(_client.stream, _client.stream);
-        final scheduler = new ThreadEventsScheduler(thread.events);
-
-        dap
-            .onLaunch
-            .observeOn(scheduler)
-            .subscribeFunction(_ -> {
-                switch session.start()
+        dap.onPause.subscribe(sequence -> {
+            session.pause(result -> {
+                switch result
                 {
-                    case Success(reason):
-                        switch reason
-                        {
-                            case ExceptionThrown(_thread):
-                                main.events.run(() -> dap.sendExceptionThrown(_thread));
-                            case BreakpointHit(_id, _thread):
-                                main.events.run(() -> dap.sendBreakpointHit(_id, _thread));
-                            case Paused:
-                                main.events.run(dap.sendPaused);
-                            case Natural:
-                                main.events.run(dap.sendExited);
-                        }
-                    case Error(e):
-                        trace(e.message);
+                    case Success(paused):
+                        dap.sendResponse(sequence, 'pause', DapResponse.Success);
+                        dap.sendPaused();
+                    case Error(exn):
+                        dap.sendResponse(sequence, 'pause', DapResponse.Failure(exn));
                 }
             });
+        });
 
-        dap
-            .onDisconnect
-            .observeOn(scheduler)
-            .subscribeFunction(_ -> {
-                switch session.stop()
+        dap.onDisconnect.subscribe(sequence -> {
+            session.stop(result -> {
+                switch result
                 {
-                    case Some(v):
-                        trace(v.message);
+                    case Some(exn):
+                        dap.sendResponse(sequence, 'disconnect', DapResponse.Failure(exn));
                     case None:
-                        //
-                }
-
-                thread.events.cancel(heartbeat);
-
-                main.events.run(() -> {
-                    _client.shutdown(result -> {
-                        switch result
-                        {
-                            case Some(v):
-                                trace(v);
-                            case None:
-                                _client.close();
-                        }
-                    });
-                });
-            });
-
-        dap
-            .onPause
-            .subscribeFunction(_ -> {
-                switch session.pause()
-                {
-                    case Some(v):
-                        trace(v);
-                    case None:
-                        //
+                        dap.sendResponse(sequence, 'disconnect', DapResponse.Success);
                 }
             });
+        });
     }
 }

@@ -1,13 +1,13 @@
 package hxcppdbg.dap;
 
+import haxe.ds.Option;
 import cpp.asio.Code;
 import cpp.asio.Result;
 import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
-import hxrx.IObservable;
-import hxrx.subjects.PublishSubject;
 import haxe.Json;
 import haxe.io.Bytes;
+import hxcppdbg.core.ds.Signal;
 
 class DapSession
 {
@@ -21,25 +21,11 @@ class DapSession
 
     var outSequence : Int;
 
-    // Observables
+    public final onDisconnect : Signal<Int>;
 
-    final subjectDisconnect : PublishSubject<Unit>;
+    public final onLaunch : Signal<Int>;
 
-    final subjectLaunch : PublishSubject<Unit>;
-
-    final subjectPause : PublishSubject<Unit>;
-
-    public var onDisconnect (get, never) : IObservable<Unit>;
-
-    inline function get_onDisconnect() return subjectDisconnect;
-
-    public var onLaunch (get, never) : IObservable<Unit>;
-
-    inline function get_onLaunch() return subjectLaunch;
-
-    public var onPause (get, never) : IObservable<Unit>;
-
-    inline function get_onPause() return subjectPause;
+    public final onPause : Signal<Int>;
 
     public function new(_input, _output)
     {
@@ -49,9 +35,9 @@ class DapSession
         configured  = false;
         outSequence = 1;
 
-        subjectDisconnect = new PublishSubject();
-        subjectLaunch     = new PublishSubject();
-        subjectPause      = new PublishSubject();
+        onDisconnect = new Signal();
+        onLaunch     = new Signal();
+        onPause      = new Signal();
 
         input.read(onInput);
     }
@@ -72,7 +58,7 @@ class DapSession
         });
     }
 
-    public function sendBreakpointHit(_breakpointID : Int, _threadID : Int)
+    public function sendBreakpointHit(_breakpointID : Option<Int>, _threadID : Option<Int>)
     {
         write(
             Json.stringify({
@@ -82,15 +68,23 @@ class DapSession
                 body  : {
                     reason            : 'breakpoint',
                     description       : 'Paused on breakpoint',
-                    threadId          : _threadID,
+                    threadId          : switch _threadID {
+                        case Some(v): v;
+                        case None: null;
+                    },
                     allThreadsStopped : true,
-                    hitBreakpointIds  : [ _breakpointID ]
+                    hitBreakpointIds  : switch _breakpointID {
+                        case Some(v):
+                            [ v ];
+                        case None:
+                            null;
+                    }
                 }
             })
         );
     }
 
-    public function sendExceptionThrown(_threadID : Int)
+    public function sendExceptionThrown(_threadID : Option<Int>)
     {
         write(
             Json.stringify({
@@ -100,7 +94,10 @@ class DapSession
                 body  : {
                     reason            : 'exception',
                     description       : 'Paused on exception',
-                    threadId          : _threadID,
+                    threadId          : switch _threadID {
+                        case Some(v): v;
+                        case None: null;
+                    },
                     allThreadsStopped : true,
                 }
             })
@@ -150,6 +147,33 @@ class DapSession
         );
     }
 
+    public function sendResponse(_sequence : Int, _command : String, _success : DapResponse)
+    {
+        final obj : Dynamic = {
+            seq         : nextOutSequence(),
+            request_seq : _sequence,
+            type        : 'response',
+            command     : _command,
+        };
+        
+        switch _success
+        {
+            case Success:
+                obj.success = true;
+            case Failure(exn):
+                obj.success = false;
+                obj.body = {
+                    error : {
+                        id       : 0,
+                        format   : exn.message,
+                        showUser : true
+                    }
+                }
+        }
+
+        write(Json.stringify(obj));
+    }
+
     function onInput(_result : Result<Bytes, Code>)
     {
         switch _result
@@ -170,11 +194,11 @@ class DapSession
                                     case 'configurationDone':
                                         finishConfiguration(message.seq);
                                     case 'disconnect':
-                                        disconnect(message.seq);
+                                        onDisconnect.notify(message.seq);
                                     case 'launch':
-                                        launch(message.seq);
+                                        onLaunch.notify(message.seq);
                                     case 'pause':
-                                        pause(message.seq);
+                                        onPause.notify(message.seq);
                                     case other:
                                         trace(other);
                                 }
@@ -232,51 +256,6 @@ class DapSession
                 command     : 'configurationDone',
             })
         );
-    }
-
-    function disconnect(_sequence : Int)
-    {
-        write(
-            Json.stringify({
-                seq         : nextOutSequence(),
-                request_seq : _sequence,
-                type        : 'response',
-                success     : true,
-                command     : 'disconnect',
-            })
-        );
-
-        subjectDisconnect.onNext(Unit.value);
-    }
-
-    function launch(_sequence : Int)
-    {
-        write(
-            Json.stringify({
-                seq         : nextOutSequence(),
-                request_seq : _sequence,
-                type        : 'response',
-                success     : true,
-                command     : 'launch',
-            })
-        );
-
-        subjectLaunch.onNext(Unit.value);
-    }
-
-    function pause(_sequence : Int)
-    {
-        write(
-            Json.stringify({
-                seq         : nextOutSequence(),
-                request_seq : _sequence,
-                type        : 'response',
-                success     : true,
-                command     : 'pause',
-            })
-        );
-
-        subjectPause.onNext(Unit.value);
     }
 
     function nextOutSequence()
