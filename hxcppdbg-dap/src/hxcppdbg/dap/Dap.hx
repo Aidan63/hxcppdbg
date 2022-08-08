@@ -140,6 +140,8 @@ class Dap
                     case None:
                         dap.sendResponse(sequence, 'disconnect', DapResponse.Success);
                 }
+
+                _client.close();
             });
         });
     }
