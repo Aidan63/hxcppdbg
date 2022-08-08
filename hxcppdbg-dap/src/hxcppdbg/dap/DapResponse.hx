@@ -4,6 +4,6 @@ import haxe.Exception;
 
 enum DapResponse
 {
-    Success();
+    Success(body : Null<Any>);
     Failure(exn : Exception);
 }

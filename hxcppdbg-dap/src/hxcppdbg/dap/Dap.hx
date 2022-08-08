@@ -91,7 +91,7 @@ class Dap
                 switch result
                 {
                     case Success(run):
-                        dap.sendResponse(sequence, 'launch', DapResponse.Success);
+                        dap.sendResponse(sequence, 'launch', DapResponse.Success(null));
 
                         run(result -> {
                             switch result
@@ -122,11 +122,41 @@ class Dap
             session.pause(result -> {
                 switch result
                 {
-                    case Success(paused):
-                        dap.sendResponse(sequence, 'pause', DapResponse.Success);
+                    case Success(_):
+                        dap.sendResponse(sequence, 'pause', DapResponse.Success(null));
                         dap.sendPaused();
                     case Error(exn):
                         dap.sendResponse(sequence, 'pause', DapResponse.Failure(exn));
+                }
+            });
+        });
+
+        dap.onContinue.subscribe(sequence -> {
+            session.resume(result -> {
+                switch result {
+                    case Success(run):
+                        dap.sendResponse(sequence, 'continue', DapResponse.Success({ allThreadsContinued : true }));
+
+                        run(result -> {
+                            switch result
+                            {
+                                case Success(None):
+                                    dap.sendExited();
+                                case Success(Some(interrupt)):
+                                    switch interrupt
+                                    {
+                                        case ExceptionThrown(threadIndex):
+                                            dap.sendExceptionThrown(threadIndex);
+                                        case BreakpointHit(threadIndex, id):
+                                            dap.sendBreakpointHit(threadIndex, id);
+                                        case Other:
+                                            //
+                                    }
+                                case Error(exn):
+                                    //
+                            }
+                        });
+                    case Error(exn):
                 }
             });
         });
@@ -138,7 +168,7 @@ class Dap
                     case Some(exn):
                         dap.sendResponse(sequence, 'disconnect', DapResponse.Failure(exn));
                     case None:
-                        dap.sendResponse(sequence, 'disconnect', DapResponse.Success);
+                        dap.sendResponse(sequence, 'disconnect', DapResponse.Success(null));
                 }
 
                 _client.close();

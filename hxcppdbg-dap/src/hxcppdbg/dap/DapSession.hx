@@ -27,6 +27,8 @@ class DapSession
 
     public final onPause : Signal<Int>;
 
+    public final onContinue : Signal<Int>;
+
     public function new(_input, _output)
     {
         input       = _input;
@@ -38,6 +40,7 @@ class DapSession
         onDisconnect = new Signal();
         onLaunch     = new Signal();
         onPause      = new Signal();
+        onContinue   = new Signal();
 
         input.read(onInput);
     }
@@ -158,8 +161,9 @@ class DapSession
         
         switch _success
         {
-            case Success:
+            case Success(body):
                 obj.success = true;
+                obj.body    = body;
             case Failure(exn):
                 obj.success = false;
                 obj.body = {
@@ -199,6 +203,8 @@ class DapSession
                                         onLaunch.notify(message.seq);
                                     case 'pause':
                                         onPause.notify(message.seq);
+                                    case 'continue':
+                                        onContinue.notify(message.seq);
                                     case other:
                                         trace(other);
                                 }
