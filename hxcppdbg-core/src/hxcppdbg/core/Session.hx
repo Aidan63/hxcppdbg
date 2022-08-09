@@ -13,6 +13,7 @@ import hxcppdbg.core.breakpoints.BreakpointHit;
 import hxcppdbg.core.drivers.Driver;
 import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.locals.Locals;
+import hxcppdbg.core.thread.Threads;
 
 using Lambda;
 using hxcppdbg.core.utils.ResultUtils;
@@ -33,6 +34,8 @@ class Session
 
     public final eval : Evaluator;
 
+    public final threads : Threads;
+
     public function new(_target : String, _sourcemap : String)
     {
         parser      = new JsonParser<Sourcemap>();
@@ -47,6 +50,7 @@ class Session
         stack       = new Stack(sourcemap, driver.stack);
         locals      = new Locals(sourcemap, driver.locals, stack);
         eval        = new Evaluator(sourcemap, driver.locals, stack);
+        threads     = new Threads(driver.threads);
     }
 
     public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)

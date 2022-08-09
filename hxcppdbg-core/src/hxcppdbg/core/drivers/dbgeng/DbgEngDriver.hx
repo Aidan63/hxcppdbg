@@ -39,6 +39,7 @@ class DbgEngDriver extends Driver
 		breakpoints = new DbgEngBreakpoints(objects, cbThread, dbgThread);
 		stack       = new DbgEngStack(objects, cbThread, dbgThread);
 		locals      = new DbgEngLocals(objects, cbThread, dbgThread);
+		threads     = new DbgEngThreads(objects, cbThread, dbgThread);
 	}
 
 	public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
@@ -98,6 +99,8 @@ class DbgEngDriver extends Driver
 					cbThread.events.run(() -> _callback(Option.Some(exn)));
 
 					objects.destroy();
+
+					dbgThread.events.cancel(heartbeat);
 				case None:
 					cbThread.events.run(() -> _callback(Option.None));
 			}

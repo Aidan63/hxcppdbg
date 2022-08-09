@@ -39,6 +39,8 @@ extern class DbgEngObjects
 
     function removeBreakpoint(_breakpoint : Int) : Option<HResultException>;
 
+    function getThreads() : Result<Array<NativeThreadReturn>, HResultException>;
+
     function getCallStack(_thread : Int) : Result<Array<NativeFrameReturn>, HResultException>;
 
     function getFrame(_thread : Int, _index : Int) : Result<NativeFrameReturn, HResultException>;

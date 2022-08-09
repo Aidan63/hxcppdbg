@@ -54,6 +54,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result createBreakpoint(String file, int line);
         haxe::ds::Option removeBreakpoint(int id);
 
+        hxcppdbg::core::ds::Result getThreads();
+
         hxcppdbg::core::ds::Result getCallStack(int _threadID);
         hxcppdbg::core::ds::Result getFrame(int _thread, int _index);
 

@@ -202,6 +202,20 @@ class Dap
             });
         });
 
+        dap.onThreads.subscribe(sequence -> {
+            session.threads.getThreads(response -> {
+                switch response
+                {
+                    case Success(threads):
+                        dap.sendResponse(sequence, 'threads', DapResponse.Success({
+                            threads : threads.map(t -> { id : t.index, name : t.name })
+                        }));
+                    case Error(exn):
+                        dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
+                }
+            });
+        });
+
         dap.onDisconnect.subscribe(sequence -> {
             session.stop(result -> {
                 switch result

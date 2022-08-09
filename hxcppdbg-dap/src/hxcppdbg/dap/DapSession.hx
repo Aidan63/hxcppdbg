@@ -31,6 +31,8 @@ class DapSession
 
     public final onStackTrace : Signal<Dynamic>;
 
+    public final onThreads : Signal<Int>;
+
     public function new(_input, _output)
     {
         input       = _input;
@@ -44,6 +46,7 @@ class DapSession
         onPause      = new Signal();
         onContinue   = new Signal();
         onStackTrace = new Signal();
+        onThreads    = new Signal();
 
         input.read(onInput);
     }
@@ -210,6 +213,8 @@ class DapSession
                                         onContinue.notify(message.seq);
                                     case 'stackTrace':
                                         onStackTrace.notify(message);
+                                    case 'threads':
+                                        onThreads.notify(message.seq);
                                     case other:
                                         trace(other);
                                 }

@@ -24,6 +24,8 @@ class Hxcppdbg
 
     @:command public final eval : Eval;
 
+    @:command public final threads : Threads;
+
     public function new(_session)
     {
         session = _session;
@@ -33,6 +35,7 @@ class Hxcppdbg
         step        = new Step(session);
         locals      = new Locals(session.locals);
         eval        = new Eval(session.eval);
+        threads     = new Threads(session.threads);
     }
 
     @:command public function start()

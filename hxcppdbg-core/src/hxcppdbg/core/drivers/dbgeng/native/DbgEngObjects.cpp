@@ -43,6 +43,10 @@
 #include <hxcppdbg/core/drivers/dbgeng/NativeFrameReturn.h>
 #endif
 
+#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_NativeThreadReturn
+#include <hxcppdbg/core/drivers/dbgeng/NativeThreadReturn.h>
+#endif
+
 #ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_WaitResult
 #include <hxcppdbg/core/drivers/dbgeng/native/WaitResult.h>
 #endif
@@ -395,6 +399,31 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::rem
 	}
 
 	return haxe::ds::Option_obj::None;
+}
+
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getThreads()
+{
+	auto result = S_OK;
+
+	try
+	{
+		auto threads = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads");
+		auto count   = int { threads.CallMethod(L"Count") };
+		auto output  = Array<hxcppdbg::core::drivers::dbgeng::NativeThreadReturn>(0, count);
+
+		for (auto&& thread : threads)
+		{
+			auto id = thread.KeyValue(L"Id").As<int>();
+
+			output->Add(hxcppdbg::core::drivers::dbgeng::NativeThreadReturn_obj::__new(id, HX_CSTRING("")));
+		}
+
+		return hxcppdbg::core::ds::Result_obj::Success(output);
+	}
+	catch (const std::exception& exn)
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(exn.what()), 0));
+	}
 }
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadIndex)

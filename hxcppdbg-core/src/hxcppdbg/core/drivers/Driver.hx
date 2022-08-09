@@ -12,6 +12,8 @@ abstract class Driver
 
     public final locals : ILocals;
 
+    public final threads : IThreads;
+
     public abstract function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void;
 
     public abstract function stop(_callback : Option<Exception>->Void) : Void;
