@@ -182,16 +182,42 @@ class Dap
                                         case Haxe(haxe, native):
                                             {
                                                 id               : id,
-                                                name             : haxe.func.name,
-                                                line             : 0,
-                                                presentationHint : 'normal'
+                                                name             : switch haxe.closure {
+                                                    case Some(closure):
+                                                        '${ haxe.file.type }.${ haxe.func.name }.${ closure.name }()';
+                                                    case None:
+                                                        '${ haxe.file.type }.${ haxe.func.name }()';
+                                                },
+
+                                                line             : haxe.expr.haxe.start.line,
+                                                endLine          : haxe.expr.haxe.end.line,
+
+                                                column : haxe.expr.haxe.start.col,
+                                                endColumn : haxe.expr.haxe.end.col,
+
+                                                presentationHint : 'normal',
+                                                source : {
+                                                    name : haxe.func.name,
+                                                    path : haxe.file.haxe
+                                                },
+                                                sources : [
+                                                    {
+                                                        name : native.func,
+                                                        path : native.file
+                                                    }
+                                                ]
                                             }
-                                        case Native(frame):
+                                        case Native(native):
                                             {
                                                 id               : id,
-                                                name             : frame.func,
-                                                line             : 0,
-                                                presentationHint : 'subtle'
+                                                name             : '[native] ${ native.func }',
+                                                line             : native.line,
+                                                column           : 0,
+                                                presentationHint : 'subtle',
+                                                source : {
+                                                    name : native.func,
+                                                    path : native.file
+                                                }
                                             }
                                     }
                                 })
