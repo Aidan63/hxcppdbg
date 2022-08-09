@@ -63,6 +63,36 @@ class Stack
                     }
                 }
 
+                // TODO : Move this into a DbgEng specific place.
+                // Due to cdecl argument cleanup if a function has no args or return type the
+                // line can be "off" by one.
+                // See replies here for more details
+                // https://stackoverflow.com/questions/42943008/visual-studio-call-stack-always-off-by-a-line
+
+                final oneLess = _frame.line - 1;
+
+                trace('one less $oneLess for ${ _frame.func }');
+
+                for (func in file.functions)
+                {
+                    switch func.exprs.find(expr -> expr.cpp == oneLess)
+                    {
+                        case null:
+                            for (closure in func.closures)
+                            {
+                                switch closure.exprs.find(expr -> expr.cpp == oneLess)
+                                {
+                                    case null:
+                                        continue;
+                                    case expr:
+                                        return StackFrame.Haxe(new HaxeFrame(file, expr, func, Some(closure)), _frame);
+                                }
+                            }
+                        case expr:
+                            return StackFrame.Haxe(new HaxeFrame(file, expr, func, None), _frame);
+                    }
+                }
+
                 // if we found a haxe file but could not match to an expression then we've probably hit some
                 // hxcpp c++ macro code (e.g. HX_STACKFRAME generated code).
                 StackFrame.Native(_frame);
