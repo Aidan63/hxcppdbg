@@ -111,7 +111,7 @@ class Dap
                                             //
                                     }
                                 case Error(exn):
-                                    //
+                                    dap.sendPaused();
                             }
                         });
                     case Error(exn):
@@ -155,7 +155,7 @@ class Dap
                                             //
                                     }
                                 case Error(exn):
-                                    //
+                                    dap.sendPaused();
                             }
                         });
                     case Error(exn):
@@ -203,13 +203,54 @@ class Dap
         });
 
         dap.onThreads.subscribe(sequence -> {
-            session.threads.getThreads(response -> {
-                switch response
+            session.pause(result -> {
+                switch result
                 {
-                    case Success(threads):
-                        dap.sendResponse(sequence, 'threads', DapResponse.Success({
-                            threads : threads.map(t -> { id : t.index, name : t.name })
-                        }));
+                    case Success(paused):
+                        session.threads.getThreads(response -> {
+                            switch response
+                            {
+                                case Success(threads):
+                                    dap.sendResponse(sequence, 'threads', DapResponse.Success({
+                                        threads : threads.map(t -> { id : t.index, name : t.name })
+                                    }));
+                                case Error(exn):
+                                    dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
+                            }
+
+                            if (paused)
+                            {
+                                //
+
+                                session.resume(result -> {
+                                    switch result
+                                    {
+                                        case Success(run):
+                                            run(result -> {
+                                                switch result
+                                                {
+                                                    case Success(None):
+                                                        dap.sendExited();
+                                                    case Success(Some(interrupt)):
+                                                        switch interrupt
+                                                        {
+                                                            case ExceptionThrown(threadIndex):
+                                                                dap.sendExceptionThrown(threadIndex);
+                                                            case BreakpointHit(threadIndex, id):
+                                                                dap.sendBreakpointHit(threadIndex, id);
+                                                            case Other:
+                                                                //
+                                                        }
+                                                    case Error(exn):
+                                                        dap.sendPaused();
+                                                }
+                                            });
+                                        case Error(exn):
+                                            dap.sendPaused();
+                                    }
+                                });
+                            }
+                        });
                     case Error(exn):
                         dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
                 }
