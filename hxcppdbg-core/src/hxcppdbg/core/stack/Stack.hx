@@ -71,8 +71,6 @@ class Stack
 
                 final oneLess = _frame.line - 1;
 
-                trace('one less $oneLess for ${ _frame.func }');
-
                 for (func in file.functions)
                 {
                     switch func.exprs.find(expr -> expr.cpp == oneLess)
