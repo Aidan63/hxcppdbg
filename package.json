@@ -12,5 +12,28 @@
   "scripts": {
     "compile": "tsc -p hxcppdbg-dap/tests",
     "test": "mocha hxcppdbg-dap/tests/bin/js/*.test.js"
+  },
+
+  "name": "hxcppdbg",
+  "displayName": "Hxcppdbg",
+  "version": "0.0.1",
+  "publisher": "...",
+  "description": "Debugger for hxcpp programs",
+  "author": {
+    "name": "Aidan Lee",
+    "email": "contact@aidanlee.uk"
+  },
+  "engines": {
+    "vscode": "^1.22.0"
+  },
+  "categories": ["Debuggers"],
+  "contributes": {
+    "breakpoints": [ { "language": "haxe" } ],
+    "debuggers": [
+      {
+        "type": "hxcppdbg",
+        "program": "D:/programming/haxe/hxcppdbg/hxcppdbg-dap/bin/windows/Main-debug.exe"
+      }
+    ]
   }
 }
