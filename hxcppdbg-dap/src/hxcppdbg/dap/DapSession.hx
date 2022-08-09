@@ -189,47 +189,45 @@ class DapSession
         switch _result
         {
             case Success(data):
-                switch buffer.append(data)
+                
+                for (message in buffer.append(data))
                 {
-                    case Some(message):
-                        Sys.println('RECV : "${ message.toString() }"');
+                    Sys.println('RECV : "${ message.toString() }"');
 
-                        switch message.type
-                        {
-                            case 'request':
-                                switch message.command
-                                {
-                                    case 'initialize':
-                                        initialise(message.seq);
-                                    case 'configurationDone':
-                                        finishConfiguration(message.seq);
-                                    case 'disconnect':
-                                        onDisconnect.notify(message.seq);
-                                    case 'launch':
-                                        onLaunch.notify(message.seq);
-                                    case 'pause':
-                                        onPause.notify(message.seq);
-                                    case 'continue':
-                                        onContinue.notify(message.seq);
-                                    case 'stackTrace':
-                                        onStackTrace.notify(message);
-                                    case 'threads':
-                                        onThreads.notify(message.seq);
-                                    case other:
-                                        trace(other);
-                                }
-                            case 'response':
-                                //
-                            case 'event':
-                                //
-                            case _:
-                                //
-                        }
-                    case None:
-                        trace(buffer);
+                    switch message.type
+                    {
+                        case 'request':
+                            switch message.command
+                            {
+                                case 'initialize':
+                                    initialise(message.seq);
+                                case 'configurationDone':
+                                    finishConfiguration(message.seq);
+                                case 'disconnect':
+                                    onDisconnect.notify(message.seq);
+                                case 'launch':
+                                    onLaunch.notify(message.seq);
+                                case 'pause':
+                                    onPause.notify(message.seq);
+                                case 'continue':
+                                    onContinue.notify(message.seq);
+                                case 'stackTrace':
+                                    onStackTrace.notify(message);
+                                case 'threads':
+                                    onThreads.notify(message.seq);
+                                case other:
+                                    trace(other);
+                            }
+                        case 'response':
+                            //
+                        case 'event':
+                            //
+                        case _:
+                            //
+                    }
                 }
             case Error(code):
-                //
+                trace(code);
         }
     }
 
@@ -243,9 +241,7 @@ class DapSession
                 success     : true,
                 command     : 'initialize',
                 body        : {
-                    supportsConfigurationDoneRequest : true,
-                    supportsRestartRequest : true,
-                    supportTerminateDebuggee : true
+                    supportsConfigurationDoneRequest : true
                 }
             })
         );

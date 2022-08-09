@@ -14,13 +14,29 @@ class InputBuffer
         buffer = new BytesData();
     }
 
-    public function append(_bytes : Bytes) : Option<Dynamic>
+    public function append(_bytes : Bytes)
     {
         for (byte in _bytes.getData())
         {
             buffer.push(byte);
         }
 
+        final messages = new Array<Dynamic>();
+
+        while (true)
+        {
+            switch getMessage()
+            {
+                case Some(msg):
+                    messages.push(msg);
+                case None:
+                    return messages;
+            }
+        }
+    }
+
+    function getMessage()
+    {
         return switch Bytes.ofData(buffer).toString().split('\r\n\r\n')
         {
             case [ _ ]:
