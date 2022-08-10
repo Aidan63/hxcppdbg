@@ -3,7 +3,9 @@ class Main {
 		new sub.Resources()
 			.load('test')
 			.subscribe(() -> {
-				final f = (i) -> trace(i);
+				final f = (i) -> {
+					trace(i);
+				}
 
 				f(7);
 

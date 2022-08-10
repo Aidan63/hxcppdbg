@@ -23,7 +23,7 @@ class DapSession
 
     public final onDisconnect : Signal<Int>;
 
-    public final onLaunch : Signal<Int>;
+    public final onLaunch : Signal<{ sequence : Int, program : String, sourcemap : String }>;
 
     public final onPause : Signal<Int>;
 
@@ -189,7 +189,6 @@ class DapSession
         switch _result
         {
             case Success(data):
-                
                 for (message in buffer.append(data))
                 {
                     Sys.println('RECV : "${ message.toString() }"');
@@ -206,7 +205,11 @@ class DapSession
                                 case 'disconnect':
                                     onDisconnect.notify(message.seq);
                                 case 'launch':
-                                    onLaunch.notify(message.seq);
+                                    onLaunch.notify({
+                                        sequence  : message.seq,
+                                        program   : message.arguments.program,
+                                        sourcemap : message.arguments.sourcemap
+                                    });
                                 case 'pause':
                                     onPause.notify(message.seq);
                                 case 'continue':

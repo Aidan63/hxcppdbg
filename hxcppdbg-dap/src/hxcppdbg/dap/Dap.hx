@@ -88,12 +88,12 @@ class Dap
         final session = new Session(_target, _sourcemap);
         final dap     = new DapSession(_client.stream, _client.stream);
 
-        dap.onLaunch.subscribe(sequence -> {
+        dap.onLaunch.subscribe(data -> {
             session.start(result -> {
                 switch result
                 {
                     case Success(run):
-                        dap.sendResponse(sequence, 'launch', DapResponse.Success(null));
+                        dap.sendResponse(data.sequence, 'launch', DapResponse.Success(null));
 
                         run(result -> {
                             switch result
@@ -115,7 +115,7 @@ class Dap
                             }
                         });
                     case Error(exn):
-                        dap.sendResponse(sequence, 'launch', DapResponse.Failure(exn));
+                        dap.sendResponse(data.sequence, 'launch', DapResponse.Failure(exn));
                 }
             });
         });

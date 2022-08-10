@@ -32,7 +32,22 @@
     "debuggers": [
       {
         "type": "hxcppdbg",
-        "program": "D:/programming/haxe/hxcppdbg/hxcppdbg-dap/bin/windows/Main-debug.exe"
+        "program": "D:/programming/haxe/hxcppdbg/hxcppdbg-dap/bin/windows/Main-debug.exe",
+        "configurationAttributes": {
+          "launch": {
+            "required": [ "program", "sourcemap" ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a hxcpp executable"
+              },
+              "sourcemap": {
+                "type": "string",
+                "description": "Absolute path to the corresponding hxcpp program sourcemap"
+              }
+            }
+          }
+        }
       }
     ]
   }
