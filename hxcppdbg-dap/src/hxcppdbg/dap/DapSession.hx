@@ -219,7 +219,7 @@ class DapSession
                                 case 'threads':
                                     onThreads.notify(message.seq);
                                 case other:
-                                    trace(other);
+                                    sendResponse(message.seq, other, DapResponse.Success(null));
                             }
                         case 'response':
                             //
@@ -244,7 +244,7 @@ class DapSession
                 success     : true,
                 command     : 'initialize',
                 body        : {
-                    supportsConfigurationDoneRequest : true
+                    // supportsConfigurationDoneRequest : true
                 }
             })
         );

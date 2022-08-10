@@ -19,15 +19,9 @@ class Dap
 {
     public var mode : String;
 
-    public var target : String;
-
-    public var sourcemap : String;
-
     public function new()
     {
-        mode      = 'stdio';
-        target    = '';
-        sourcemap = '';
+        mode = 'stdio';
     }
 
     @:defaultCommand
@@ -50,7 +44,7 @@ class Dap
         //
     }
 
-    function onSocketListen(_reject : Error->Void, _result : Result<TcpSocket, Code>)
+    static function onSocketListen(_reject : Error->Void, _result : Result<TcpSocket, Code>)
     {
         switch _result
         {
@@ -61,7 +55,7 @@ class Dap
         }
     }
 
-    function onConnectionRequest(_reject : Error->Void, _result : Result<TcpRequest, Code>)
+    static function onConnectionRequest(_reject : Error->Void, _result : Result<TcpRequest, Code>)
     {
         switch _result
         {
@@ -72,104 +66,108 @@ class Dap
         }
     }
 
-    function onClientConnected(_result : Result<TcpClient, Code>)
+    static function onClientConnected(_result : Result<TcpClient, Code>)
     {
         switch _result
         {
             case Success(client):
-                startDebugSession(target, sourcemap, client);
+                startDebugSession(client);
             case Error(code):
                 Sys.println('failed to connect client : $code');
         }
     }
 
-    static function startDebugSession(_target : String, _sourcemap : String, _client : TcpClient)
+    static function startDebugSession(_client : TcpClient)
     {
-        final session = new Session(_target, _sourcemap);
-        final dap     = new DapSession(_client.stream, _client.stream);
+        final dap = new DapSession(_client.stream, _client.stream);
 
-        dap.onLaunch.subscribe(data -> {
-            session.start(result -> {
-                switch result
-                {
-                    case Success(run):
-                        dap.sendResponse(data.sequence, 'launch', DapResponse.Success(null));
+        dap.onLaunch.subscribe(launchDebugee.bind(_client, dap));
+    }
 
-                        run(result -> {
-                            switch result
-                            {
-                                case Success(None):
-                                    dap.sendExited();
-                                case Success(Some(interrupt)):
-                                    switch interrupt
-                                    {
-                                        case ExceptionThrown(threadIndex):
-                                            dap.sendExceptionThrown(threadIndex);
-                                        case BreakpointHit(threadIndex, id):
-                                            dap.sendBreakpointHit(threadIndex, id);
-                                        case Other:
-                                            //
-                                    }
-                                case Error(exn):
-                                    dap.sendPaused();
-                            }
-                        });
-                    case Error(exn):
-                        dap.sendResponse(data.sequence, 'launch', DapResponse.Failure(exn));
-                }
-            });
+    static function launchDebugee(_client : TcpClient, _dap : DapSession, _data : { sequence : Int, program : String, sourcemap : String })
+    {
+        final session = new Session(_data.program, _data.sourcemap);
+
+        session.start(result -> {
+            switch result
+            {
+                case Success(run):
+                    _dap.sendResponse(_data.sequence, 'launch', DapResponse.Success(null));
+
+                    run(result -> {
+                        switch result
+                        {
+                            case Success(None):
+                                _dap.sendExited();
+                            case Success(Some(interrupt)):
+                                switch interrupt
+                                {
+                                    case ExceptionThrown(threadIndex):
+                                        _dap.sendExceptionThrown(threadIndex);
+                                    case BreakpointHit(threadIndex, id):
+                                        _dap.sendBreakpointHit(threadIndex, id);
+                                    case Other:
+                                        //
+                                }
+                            case Error(exn):
+                                _dap.sendPaused();
+                        }
+                    });
+                case Error(exn):
+                    _dap.sendResponse(_data.sequence, 'launch', DapResponse.Failure(exn));
+            }
         });
 
-        dap.onPause.subscribe(sequence -> {
+        _dap.onPause.subscribe(sequence -> {
             session.pause(result -> {
                 switch result
                 {
                     case Success(_):
-                        dap.sendResponse(sequence, 'pause', DapResponse.Success(null));
-                        dap.sendPaused();
+                        _dap.sendResponse(sequence, 'pause', DapResponse.Success(null));
+                        _dap.sendPaused();
                     case Error(exn):
-                        dap.sendResponse(sequence, 'pause', DapResponse.Failure(exn));
+                        _dap.sendResponse(sequence, 'pause', DapResponse.Failure(exn));
                 }
             });
         });
 
-        dap.onContinue.subscribe(sequence -> {
+        _dap.onContinue.subscribe(sequence -> {
             session.resume(result -> {
                 switch result {
                     case Success(run):
-                        dap.sendResponse(sequence, 'continue', DapResponse.Success({ allThreadsContinued : true }));
+                        _dap.sendResponse(sequence, 'continue', DapResponse.Success({ allThreadsContinued : true }));
 
                         run(result -> {
                             switch result
                             {
                                 case Success(None):
-                                    dap.sendExited();
+                                    _dap.sendExited();
                                 case Success(Some(interrupt)):
                                     switch interrupt
                                     {
                                         case ExceptionThrown(threadIndex):
-                                            dap.sendExceptionThrown(threadIndex);
+                                            _dap.sendExceptionThrown(threadIndex);
                                         case BreakpointHit(threadIndex, id):
-                                            dap.sendBreakpointHit(threadIndex, id);
+                                            _dap.sendBreakpointHit(threadIndex, id);
                                         case Other:
                                             //
                                     }
                                 case Error(exn):
-                                    dap.sendPaused();
+                                    _dap.sendPaused();
                             }
                         });
                     case Error(exn):
-                        dap.sendResponse(sequence, 'continue', DapResponse.Failure(exn));
+                        _dap.sendResponse(sequence, 'continue', DapResponse.Failure(exn));
                 }
             });
         });
 
-        dap.onStackTrace.subscribe(message -> {
+        _dap.onStackTrace.subscribe(message -> {
             session.stack.getCallStack(message.arguments.threadId, result -> {
                 switch result
                 {
                     case Success(frames):
-                        dap.sendResponse(
+                        _dap.sendResponse(
                             message.seq,
                             'stackTrace',
                             DapResponse.Success({
@@ -223,12 +221,12 @@ class Dap
                                 })
                             }));
                     case Error(exn):
-                        dap.sendResponse(message.seq, 'stackTrace', DapResponse.Failure(exn));
+                        _dap.sendResponse(message.seq, 'stackTrace', DapResponse.Failure(exn));
                 }
             });
         });
 
-        dap.onThreads.subscribe(sequence -> {
+        _dap.onThreads.subscribe(sequence -> {
             session.pause(result -> {
                 switch result
                 {
@@ -237,11 +235,11 @@ class Dap
                             switch response
                             {
                                 case Success(threads):
-                                    dap.sendResponse(sequence, 'threads', DapResponse.Success({
+                                    _dap.sendResponse(sequence, 'threads', DapResponse.Success({
                                         threads : threads.map(t -> { id : t.index, name : t.name })
                                     }));
                                 case Error(exn):
-                                    dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
+                                    _dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
                             }
 
                             if (paused)
@@ -256,41 +254,41 @@ class Dap
                                                 switch result
                                                 {
                                                     case Success(None):
-                                                        dap.sendExited();
+                                                        _dap.sendExited();
                                                     case Success(Some(interrupt)):
                                                         switch interrupt
                                                         {
                                                             case ExceptionThrown(threadIndex):
-                                                                dap.sendExceptionThrown(threadIndex);
+                                                                _dap.sendExceptionThrown(threadIndex);
                                                             case BreakpointHit(threadIndex, id):
-                                                                dap.sendBreakpointHit(threadIndex, id);
+                                                                _dap.sendBreakpointHit(threadIndex, id);
                                                             case Other:
                                                                 //
                                                         }
                                                     case Error(exn):
-                                                        dap.sendPaused();
+                                                        _dap.sendPaused();
                                                 }
                                             });
                                         case Error(exn):
-                                            dap.sendPaused();
+                                            _dap.sendPaused();
                                     }
                                 });
                             }
                         });
                     case Error(exn):
-                        dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
+                        _dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
                 }
             });
         });
 
-        dap.onDisconnect.subscribe(sequence -> {
+        _dap.onDisconnect.subscribe(sequence -> {
             session.stop(result -> {
                 switch result
                 {
                     case Some(exn):
-                        dap.sendResponse(sequence, 'disconnect', DapResponse.Failure(exn));
+                        _dap.sendResponse(sequence, 'disconnect', DapResponse.Failure(exn));
                     case None:
-                        dap.sendResponse(sequence, 'disconnect', DapResponse.Success(null));
+                        _dap.sendResponse(sequence, 'disconnect', DapResponse.Success(null));
                 }
 
                 _client.close();
