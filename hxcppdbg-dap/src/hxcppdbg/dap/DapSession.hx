@@ -34,16 +34,19 @@ class DapSession
 
     final output : IWriteStream;
 
+    final close : Void->Void;
+
     final buffer : InputBuffer;
 
     var outSequence : Int;
 
     var session : Option<Session>;
 
-    public function new(_input, _output)
+    public function new(_input, _output, _close)
     {
         input       = _input;
         output      = _output;
+        close       = _close;
         buffer      = new InputBuffer();
         outSequence = 1;
         session     = Option.None;
@@ -146,7 +149,14 @@ class DapSession
                     .flatMap(sendResponse);
             case 'disconnect':
                 onDisconnect()
-                    .flatMap(sendResponse);
+                    .flatMap(sendResponse)
+                    .next(noise -> {
+                        session = Option.None;
+
+                        close();
+
+                        return noise;
+                    });
             case 'setExceptionBreakpoints':
                 sendResponse(tink.core.Outcome.Success({ filters : [] }));
             case other:

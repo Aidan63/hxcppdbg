@@ -72,7 +72,7 @@ class Dap
         switch _result
         {
             case Success(client):
-                new DapSession(client.stream, client.stream);
+                new DapSession(client.stream, client.stream, () -> client.close());
             case Error(code):
                 Sys.println('failed to connect client : $code');
         }
