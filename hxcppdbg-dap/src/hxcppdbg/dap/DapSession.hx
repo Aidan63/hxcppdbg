@@ -392,10 +392,48 @@ class DapSession
     {
         switch _result
         {
-            case Success(Option.Some(interrupt)):
-                //
             case Success(Option.None):
-                //
+                event({
+                    seq   : nextOutSequence(),
+                    type  : 'event',
+                    event : 'stopped',
+                    body  : {
+                        reason            : 'pause',
+                        description       : 'Paused',
+                        allThreadsStopped : true
+                    }
+                }).handle(handleRunEventPromise);
+            case Success(Option.Some(interrupt)):
+                switch interrupt
+                {
+                    case ExceptionThrown(threadIndex):
+                        event({
+                            seq   : nextOutSequence(),
+                            type  : 'event',
+                            event : 'stopped',
+                            body  : {
+                                reason            : 'exception',
+                                description       : 'Paused on exception',
+                                allThreadsStopped : true,
+                                threadId          : threadIndex
+                            }
+                        }).handle(handleRunEventPromise);
+                    case BreakpointHit(threadIndex, id):
+                        event({
+                            seq   : nextOutSequence(),
+                            type  : 'event',
+                            event : 'stopped',
+                            body  : {
+                                reason            : 'breakpoint',
+                                description       : 'Paused on exception',
+                                allThreadsStopped : true,
+                                threadId          : threadIndex,
+                                hitBreakpointsIds : [ id ]
+                            }
+                        }).handle(handleRunEventPromise);
+                    case Other:
+                        //
+                }
             case Error(exn):
                 //
         }
@@ -481,5 +519,10 @@ class DapSession
     static function errorFromCode(_code : Code)
     {
         return new Error(_code.toString());
+    }
+
+    static function handleRunEventPromise(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
+    {
+        //
     }
 }
