@@ -72,37 +72,19 @@ class DapSession
         }
     }
 
-    function makeMessage(_message : ProtocolMessage) : Future<Noise>
+    function makeMessage(_message : ProtocolMessage)
     {
-        return
-            Promise
-                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-                    Sys.println('MSG : ${ _message }');
-
-                    switch _message.type
-                    {
-                        case 'request':
-                            makeRequest(cast _message, _resolve, _reject);
-                        case other:
-                            _reject(new Error('Unsupported message type "$other"'));
-                    }
-                })
-                .asFuture();
+        return switch _message.type
+        {
+            case 'request':
+                makeRequest(cast _message);
+            case other:
+                Promise.reject(new Error('Unsupported message type "$other"'));
+        }
     }
 
-    function makeRequest(_request : Request, _resolve : Noise->Void, _reject : Error->Void)
+    function makeRequest(_request : Request)
     {
-        function handleResponse(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
-        {
-            switch _outcome
-            {
-                case Success(data):
-                    _resolve(data);
-                case Failure(failure):
-                    _reject(failure);
-            }
-        }
-
         function sendResponse(_outcome : tink.core.Outcome<Null<Any>, tink.core.Error>)
         {
             return switch _outcome
@@ -114,11 +96,12 @@ class DapSession
             }
         }
 
-        switch _request.command
+        Sys.println('MSG : ${ _request }');
+
+        return switch _request.command
         {
             case 'initialize':
-                sendResponse(tink.core.Outcome.Success(null))
-                    .handle(handleResponse);
+                sendResponse(tink.core.Outcome.Success(null));
             case 'launch':
                 onLaunch(cast _request)
                     .flatMap(sendResponse)
@@ -130,12 +113,10 @@ class DapSession
                             case Failure(failure):
                                 Promise.reject(failure);
                         }
-                    })
-                    .handle(handleResponse);
+                    });
             case 'threads':
                 onThreads()
-                    .flatMap(sendResponse)
-                    .handle(handleResponse);
+                    .flatMap(sendResponse);
             case 'pause':
                 onPause()
                     .flatMap(sendResponse)
@@ -156,25 +137,20 @@ class DapSession
                             case Failure(failure):
                                 Promise.reject(failure);
                         }
-                    })
-                    .handle(handleResponse);
+                    });
             case 'continue':
                 onContinue()
-                    .flatMap(sendResponse)
-                    .handle(handleResponse);
+                    .flatMap(sendResponse);
             case 'stackTrace':
                 onStackTrace(cast _request)
-                    .flatMap(sendResponse)
-                    .handle(handleResponse);
+                    .flatMap(sendResponse);
             case 'disconnect':
                 onDisconnect()
-                    .flatMap(sendResponse)
-                    .handle(handleResponse);
+                    .flatMap(sendResponse);
             case 'setExceptionBreakpoints':
-                sendResponse(tink.core.Outcome.Success({ filters : [] }))
-                    .handle(handleResponse);
+                sendResponse(tink.core.Outcome.Success({ filters : [] }));
             case other:
-                _reject(new Error('Unsupported request command "$other"'));
+                Promise.reject(new Error('Unsupported request command "$other"'));
         }
     }
 
@@ -397,7 +373,7 @@ class DapSession
                 });
     }
 
-    function onMessagesProcessed(_result : Array<Noise>)
+    function onMessagesProcessed(_result : Array<Outcome<Noise, Error>>)
     {
         Sys.println('${ _result.length } messages processed');
     }
