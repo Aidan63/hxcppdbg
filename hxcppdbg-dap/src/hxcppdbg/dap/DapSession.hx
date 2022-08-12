@@ -76,7 +76,7 @@ class DapSession
     {
         return
             Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
                     Sys.println('MSG : ${ _message }');
 
                     switch _message.type
@@ -87,90 +87,148 @@ class DapSession
                             _reject(new Error('Unsupported message type "$other"'));
                     }
                 })
-                .flatMap(outcome -> {
-                    return switch outcome
-                    {
-                        case Success(data):
-                            respond(cast _message, Result.Success(data)).asFuture();
-                        case Failure(failure):
-                            respond(cast _message, Result.Error(failure)).asFuture();
-                    }
-                });
+                .asFuture();
     }
 
-    function makeRequest(_request : Request, _resolve : Null<Any>->Void, _reject : Error->Void)
+    function makeRequest(_request : Request, _resolve : Noise->Void, _reject : Error->Void)
     {
+        function handleResponse(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
+        {
+            switch _outcome
+            {
+                case Success(data):
+                    _resolve(data);
+                case Failure(failure):
+                    _reject(failure);
+            }
+        }
+
+        function sendResponse(_outcome : tink.core.Outcome<Null<Any>, tink.core.Error>)
+        {
+            return switch _outcome
+            {
+                case Success(data):
+                    respond(_request, Result.Success(data));
+                case Failure(failure):
+                    respond(_request, Result.Error(failure));
+            }
+        }
+
         switch _request.command
         {
             case 'initialize':
-                _resolve(null);
+                sendResponse(tink.core.Outcome.Success(null))
+                    .handle(handleResponse);
             case 'launch':
-                onLaunch(cast _request, _resolve, _reject);
+                onLaunch(cast _request)
+                    .flatMap(sendResponse)
+                    .flatMap(_outcome -> {
+                        return switch _outcome
+                        {
+                            case Success(data):
+                                event({ seq : nextOutSequence(), type : 'event', event : 'initialized' });
+                            case Failure(failure):
+                                Promise.reject(failure);
+                        }
+                    })
+                    .handle(handleResponse);
             case 'threads':
-                onThreads(_resolve, _reject);
+                onThreads()
+                    .flatMap(sendResponse)
+                    .handle(handleResponse);
             case 'pause':
-                onPause(cast _request, _resolve, _reject);
+                onPause()
+                    .flatMap(sendResponse)
+                    .flatMap(_outcome -> {
+                        return switch _outcome
+                        {
+                            case Success(data):
+                                event({
+                                    seq   : nextOutSequence(),
+                                    type  : 'event',
+                                    event : 'stopped',
+                                    body  : {
+                                        reason            : 'pause',
+                                        description       : 'Paused',
+                                        allThreadsStopped : true
+                                    }
+                                });
+                            case Failure(failure):
+                                Promise.reject(failure);
+                        }
+                    })
+                    .handle(handleResponse);
             case 'continue':
-                onContinue(_resolve, _reject);
+                onContinue()
+                    .flatMap(sendResponse)
+                    .handle(handleResponse);
             case 'stackTrace':
-                onStackTrace(cast _request, _resolve, _reject);
+                onStackTrace(cast _request)
+                    .flatMap(sendResponse)
+                    .handle(handleResponse);
             case 'disconnect':
-                onDisconnect(_resolve, _reject);
+                onDisconnect()
+                    .flatMap(sendResponse)
+                    .handle(handleResponse);
             case 'setExceptionBreakpoints':
-                _resolve({ filters : [] });
+                sendResponse(tink.core.Outcome.Success({ filters : [] }))
+                    .handle(handleResponse);
             case other:
                 _reject(new Error('Unsupported request command "$other"'));
         }
     }
 
-    function onLaunch(_request : LaunchRequest, _resolve : Null<Any>->Void, _reject : Error->Void)
+    function onLaunch(_request : LaunchRequest)
     {
-        final s = new Session(_request.arguments.program, _request.arguments.sourcemap);
+        session = Option.Some(new Session(_request.arguments.program, _request.arguments.sourcemap));
 
-        s.start(result -> {
-            switch result
-            {
-                case Success(run):
-                    session = Option.Some(s);
-
-                    run(onRunCallback);
-
-                    event({ seq : nextOutSequence(), type : 'event', event : 'initialized' })
-                        .handle(outcome -> {
-                            switch outcome
-                            {
-                                case Success(_):
-                                    _resolve(null);
-                                case Failure(failure):
-                                    _reject(failure);
-                            }
-                        });
-                case Error(exn):
-                    _reject(errorFromException(exn));
-            }
-        });
-    }
-
-    function onPause(_request : PauseRequest, _resolve : Null<Any>->Void, _reject : Error->Void)
-    {
-        switch session
-        {
-            case Some(s):
-                s.pause(result -> {
-                    switch result
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch session
                     {
-                        case Success(_):
-                            _resolve(null);
-                        case Error(exn):
-                            _reject(errorFromException(exn));
+                        case Some(s):
+                            s.start(result -> {
+                                switch result
+                                {
+                                    case Success(run):
+                                        run(onRunCallback);
+
+                                        _resolve(null);
+                                    case Error(exn):
+                                        _reject(errorFromException(exn));
+                                }
+                            });
+                        case None:
+                            _reject(noSessionError());
                     }
                 });
-            case None:
-                _reject(noSessionError());
-        }
     }
 
-    function onThreads(_resolve : Null<Any>->Void, _reject : Error->Void)
+    function onPause()
+    {
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch session
+                    {
+                        case Some(s):
+                            s.pause(result -> {
+                                switch result
+                                {
+                                    case Success(_):
+                                        _resolve(null);
+                                    case Error(exn):
+                                        _reject(errorFromException(exn));
+                                }
+                            });
+                        case None:
+                            _reject(noSessionError());
+                    }
+                });
+    }
+
+    function onThreads()
     {
         function toProtocolThread(_thread : NativeThread) : Thread
         {
@@ -180,67 +238,74 @@ class DapSession
             }
         }
 
-        switch session
-        {
-            case Some(s):
-                s.pause(result -> {
-                    switch result
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch session
                     {
-                        case Success(paused):
-                            s.threads.getThreads(result -> {
+                        case Some(s):
+                            s.pause(result -> {
                                 switch result
                                 {
-                                    case Success(threads):
-                                        _resolve({ threads : threads.map(toProtocolThread) });
+                                    case Success(paused):
+                                        s.threads.getThreads(result -> {
+                                            if (paused)
+                                            {
+                                                s.resume(result -> {
+                                                    switch result
+                                                    {
+                                                        case Success(run):
+                                                            run(onRunCallback);
+                                                        case Error(exn):
+                                                            _reject(errorFromException(exn));
+                                                    }
+                                                });
+                                            }
+
+                                            switch result
+                                            {
+                                                case Success(threads):
+                                                    _resolve({ threads : threads.map(toProtocolThread) });
+                                                case Error(exn):
+                                                    _reject(errorFromException(exn));
+                                            }
+                                        });
                                     case Error(exn):
                                         _reject(errorFromException(exn));
                                 }
+                            });
+                        case None:
+                            _reject(noSessionError());
+                    }
+                });
+    }
 
-                                if (paused)
+    function onContinue()
+    {
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch session
+                    {
+                        case Some(s):
+                            s.resume(result -> {
+                                switch result
                                 {
-                                    s.resume(result -> {
-                                        switch result
-                                        {
-                                            case Success(run):
-                                                run(onRunCallback);
-                                            case Error(exn):
-                                                // TODO : Send stopped event / error output.
-                                                throw exn;
-                                        }
-                                    });
+                                    case Success(run):
+                                        run(onRunCallback);
+
+                                        _resolve(null);
+                                    case Error(exn):
+                                        _reject(errorFromException(exn));
                                 }
                             });
-                        case Error(exn):
-                            _reject(errorFromException(exn));
+                        case None:
+                            _reject(noSessionError());
                     }
                 });
-            case None:
-                _reject(noSessionError());
-        }
     }
 
-    function onContinue(_resolve : Null<Any>->Void, _reject : Error->Void)
-    {
-        switch session
-        {
-            case Some(s):
-                s.resume(result -> {
-                    switch result
-                    {
-                        case Success(run):
-                            run(onRunCallback);
-
-                            _resolve(null);
-                        case Error(exn):
-                            _reject(errorFromException(exn));
-                    }
-                });
-            case None:
-                _reject(noSessionError());
-        }
-    }
-
-    function onStackTrace(_request : StackTraceRequest, _resolve : Null<Any>->Void, _reject : Error->Void)
+    function onStackTrace(_request : StackTraceRequest)
     {
         function toProtocolFrame(_idx : Int, _frame : hxcppdbg.core.stack.StackFrame) : StackFrame
         {
@@ -288,40 +353,48 @@ class DapSession
             }
         }
 
-        switch session
-        {
-            case Some(s):
-                s.stack.getCallStack(_request.arguments.threadId, result -> {
-                    switch result
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch session
                     {
-                        case Success(frames):
-                            _resolve({ stackFrames : frames.mapi(toProtocolFrame) });
-                        case Error(exn):
-                            _reject(errorFromException(exn));
+                        case Some(s):
+                            s.stack.getCallStack(_request.arguments.threadId, result -> {
+                                switch result
+                                {
+                                    case Success(frames):
+                                        _resolve({ stackFrames : frames.mapi(toProtocolFrame) });
+                                    case Error(exn):
+                                        _reject(errorFromException(exn));
+                                }
+                            });
+                        case None:
+                            _reject(noSessionError());
                     }
                 });
-            case None:
-                _reject(noSessionError());
-        }
     }
 
-    function onDisconnect(_resolve : Null<Any>->Void, _reject : Error->Void)
+    function onDisconnect()
     {
-        switch session
-        {
-            case Some(s):
-                s.stop(result -> {
-                    switch result
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch session
                     {
-                        case Some(exn):
-                            _reject(errorFromException(exn));
+                        case Some(s):
+                            s.stop(result -> {
+                                switch result
+                                {
+                                    case Some(exn):
+                                        _reject(errorFromException(exn));
+                                    case None:
+                                        _resolve(null);
+                                }
+                            });
                         case None:
-                            _resolve(null);
+                            _reject(noSessionError());
                     }
                 });
-            case None:
-                _reject(noSessionError());
-        }
     }
 
     function onMessagesProcessed(_result : Array<Noise>)
