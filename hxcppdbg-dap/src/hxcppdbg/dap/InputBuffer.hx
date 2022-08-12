@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.dap.protocol.ProtocolMessage;
 import haxe.io.Bytes;
 import haxe.Json;
 import haxe.ds.Option;
@@ -21,7 +22,7 @@ class InputBuffer
             buffer.push(byte);
         }
 
-        final messages = new Array<Dynamic>();
+        final messages = new Array<ProtocolMessage>();
 
         while (true)
         {
@@ -61,7 +62,7 @@ class InputBuffer
                                 {
                                     buffer.splice(0, 4 + header.length + length);
 
-                                    return Option.Some(Json.parse(body.substr(0, length)));
+                                    return Option.Some((Json.parse(body.substr(0, length)) : ProtocolMessage));
                                 }
                         }
                     case _:

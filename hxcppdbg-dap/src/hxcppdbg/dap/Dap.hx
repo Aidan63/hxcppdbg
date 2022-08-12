@@ -8,6 +8,7 @@ import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
 import cpp.asio.Result;
 import haxe.Exception;
+import haxe.ds.Option;
 import hxcppdbg.core.Session;
 import sys.thread.Thread;
 import cpp.asio.Code;
@@ -71,228 +72,220 @@ class Dap
         switch _result
         {
             case Success(client):
-                startDebugSession(client);
+                new DapSession(client.stream, client.stream);
             case Error(code):
                 Sys.println('failed to connect client : $code');
         }
     }
 
-    static function startDebugSession(_client : TcpClient)
-    {
-        final dap = new DapSession(_client.stream, _client.stream);
+    // static function launchDebugee(_client : TcpClient, _dap : DapSession, _data : { sequence : Int, program : String, sourcemap : String })
+    // {
+    //     final session = new Session(_data.program, _data.sourcemap);
 
-        dap.onLaunch.subscribe(launchDebugee.bind(_client, dap));
-    }
+    //     session.start(result -> {
+    //         switch result
+    //         {
+    //             case Success(run):
+    //                 _dap.sendResponse(_data.sequence, 'launch', DapResponse.Success(null));
 
-    static function launchDebugee(_client : TcpClient, _dap : DapSession, _data : { sequence : Int, program : String, sourcemap : String })
-    {
-        final session = new Session(_data.program, _data.sourcemap);
+    //                 run(result -> {
+    //                     switch result
+    //                     {
+    //                         case Success(None):
+    //                             _dap.sendExited();
+    //                         case Success(Some(interrupt)):
+    //                             switch interrupt
+    //                             {
+    //                                 case ExceptionThrown(threadIndex):
+    //                                     _dap.sendExceptionThrown(threadIndex);
+    //                                 case BreakpointHit(threadIndex, id):
+    //                                     _dap.sendBreakpointHit(threadIndex, id);
+    //                                 case Other:
+    //                                     //
+    //                             }
+    //                         case Error(exn):
+    //                             _dap.sendPaused();
+    //                     }
+    //                 });
+    //             case Error(exn):
+    //                 _dap.sendResponse(_data.sequence, 'launch', DapResponse.Failure(exn));
+    //         }
+    //     });
 
-        session.start(result -> {
-            switch result
-            {
-                case Success(run):
-                    _dap.sendResponse(_data.sequence, 'launch', DapResponse.Success(null));
+    //     _dap.onPause = function(_callback : Option<Exception>->Void) {
+    //         session.pause(result -> {
+    //             switch result
+    //             {
+    //                 case Success(_):
+    //                     _callback(Option.None);
+    //                 case Error(exn):
+    //                     _callback(Option.Some(exn));
+    //             }
+    //         });
+    //     }
 
-                    run(result -> {
-                        switch result
-                        {
-                            case Success(None):
-                                _dap.sendExited();
-                            case Success(Some(interrupt)):
-                                switch interrupt
-                                {
-                                    case ExceptionThrown(threadIndex):
-                                        _dap.sendExceptionThrown(threadIndex);
-                                    case BreakpointHit(threadIndex, id):
-                                        _dap.sendBreakpointHit(threadIndex, id);
-                                    case Other:
-                                        //
-                                }
-                            case Error(exn):
-                                _dap.sendPaused();
-                        }
-                    });
-                case Error(exn):
-                    _dap.sendResponse(_data.sequence, 'launch', DapResponse.Failure(exn));
-            }
-        });
+    //     _dap.onContinue.subscribe(sequence -> {
+    //         session.resume(result -> {
+    //             switch result {
+    //                 case Success(run):
+    //                     _dap.sendResponse(sequence, 'continue', DapResponse.Success({ allThreadsContinued : true }));
 
-        _dap.onPause.subscribe(sequence -> {
-            session.pause(result -> {
-                switch result
-                {
-                    case Success(_):
-                        _dap.sendResponse(sequence, 'pause', DapResponse.Success(null));
-                        _dap.sendPaused();
-                    case Error(exn):
-                        _dap.sendResponse(sequence, 'pause', DapResponse.Failure(exn));
-                }
-            });
-        });
+    //                     run(result -> {
+    //                         switch result
+    //                         {
+    //                             case Success(None):
+    //                                 _dap.sendExited();
+    //                             case Success(Some(interrupt)):
+    //                                 switch interrupt
+    //                                 {
+    //                                     case ExceptionThrown(threadIndex):
+    //                                         _dap.sendExceptionThrown(threadIndex);
+    //                                     case BreakpointHit(threadIndex, id):
+    //                                         _dap.sendBreakpointHit(threadIndex, id);
+    //                                     case Other:
+    //                                         //
+    //                                 }
+    //                             case Error(exn):
+    //                                 _dap.sendPaused();
+    //                         }
+    //                     });
+    //                 case Error(exn):
+    //                     _dap.sendResponse(sequence, 'continue', DapResponse.Failure(exn));
+    //             }
+    //         });
+    //     });
 
-        _dap.onContinue.subscribe(sequence -> {
-            session.resume(result -> {
-                switch result {
-                    case Success(run):
-                        _dap.sendResponse(sequence, 'continue', DapResponse.Success({ allThreadsContinued : true }));
+    //     _dap.onStackTrace.subscribe(message -> {
+    //         session.stack.getCallStack(message.arguments.threadId, result -> {
+    //             switch result
+    //             {
+    //                 case Success(frames):
+    //                     _dap.sendResponse(
+    //                         message.seq,
+    //                         'stackTrace',
+    //                         DapResponse.Success({
+    //                             totalFrames : frames.length,
+    //                             stackFrames : frames.mapi((idx, frame) -> {
+    //                                 final id  = new FrameId(message.arguments.threadId, idx);
 
-                        run(result -> {
-                            switch result
-                            {
-                                case Success(None):
-                                    _dap.sendExited();
-                                case Success(Some(interrupt)):
-                                    switch interrupt
-                                    {
-                                        case ExceptionThrown(threadIndex):
-                                            _dap.sendExceptionThrown(threadIndex);
-                                        case BreakpointHit(threadIndex, id):
-                                            _dap.sendBreakpointHit(threadIndex, id);
-                                        case Other:
-                                            //
-                                    }
-                                case Error(exn):
-                                    _dap.sendPaused();
-                            }
-                        });
-                    case Error(exn):
-                        _dap.sendResponse(sequence, 'continue', DapResponse.Failure(exn));
-                }
-            });
-        });
+    //                                 switch frame
+    //                                 {
+    //                                     case Haxe(haxe, native):
+    //                                         {
+    //                                             id               : id,
+    //                                             name             : switch haxe.closure {
+    //                                                 case Some(closure):
+    //                                                     '${ haxe.file.type }.${ haxe.func.name }.${ closure.name }()';
+    //                                                 case None:
+    //                                                     '${ haxe.file.type }.${ haxe.func.name }()';
+    //                                             },
 
-        _dap.onStackTrace.subscribe(message -> {
-            session.stack.getCallStack(message.arguments.threadId, result -> {
-                switch result
-                {
-                    case Success(frames):
-                        _dap.sendResponse(
-                            message.seq,
-                            'stackTrace',
-                            DapResponse.Success({
-                                totalFrames : frames.length,
-                                stackFrames : frames.mapi((idx, frame) -> {
-                                    final id  = new FrameId(message.arguments.threadId, idx);
+    //                                             line             : haxe.expr.haxe.start.line,
+    //                                             endLine          : haxe.expr.haxe.end.line,
 
-                                    switch frame
-                                    {
-                                        case Haxe(haxe, native):
-                                            {
-                                                id               : id,
-                                                name             : switch haxe.closure {
-                                                    case Some(closure):
-                                                        '${ haxe.file.type }.${ haxe.func.name }.${ closure.name }()';
-                                                    case None:
-                                                        '${ haxe.file.type }.${ haxe.func.name }()';
-                                                },
+    //                                             column : haxe.expr.haxe.start.col,
+    //                                             endColumn : haxe.expr.haxe.end.col,
 
-                                                line             : haxe.expr.haxe.start.line,
-                                                endLine          : haxe.expr.haxe.end.line,
+    //                                             presentationHint : 'normal',
+    //                                             source : {
+    //                                                 name : haxe.func.name,
+    //                                                 path : haxe.file.haxe
+    //                                             },
+    //                                             sources : [
+    //                                                 {
+    //                                                     name : native.func,
+    //                                                     path : native.file
+    //                                                 }
+    //                                             ]
+    //                                         }
+    //                                     case Native(native):
+    //                                         {
+    //                                             id               : id,
+    //                                             name             : '[native] ${ native.func }',
+    //                                             line             : native.line,
+    //                                             column           : 0,
+    //                                             presentationHint : 'subtle',
+    //                                             source : {
+    //                                                 name : native.func,
+    //                                                 path : native.file
+    //                                             }
+    //                                         }
+    //                                 }
+    //                             })
+    //                         }));
+    //                 case Error(exn):
+    //                     _dap.sendResponse(message.seq, 'stackTrace', DapResponse.Failure(exn));
+    //             }
+    //         });
+    //     });
 
-                                                column : haxe.expr.haxe.start.col,
-                                                endColumn : haxe.expr.haxe.end.col,
+    //     _dap.onThreads.subscribe(sequence -> {
+    //         session.pause(result -> {
+    //             switch result
+    //             {
+    //                 case Success(paused):
+    //                     session.threads.getThreads(response -> {
+    //                         switch response
+    //                         {
+    //                             case Success(threads):
+    //                                 _dap.sendResponse(sequence, 'threads', DapResponse.Success({
+    //                                     threads : threads.map(t -> { id : t.index, name : t.name })
+    //                                 }));
+    //                             case Error(exn):
+    //                                 _dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
+    //                         }
 
-                                                presentationHint : 'normal',
-                                                source : {
-                                                    name : haxe.func.name,
-                                                    path : haxe.file.haxe
-                                                },
-                                                sources : [
-                                                    {
-                                                        name : native.func,
-                                                        path : native.file
-                                                    }
-                                                ]
-                                            }
-                                        case Native(native):
-                                            {
-                                                id               : id,
-                                                name             : '[native] ${ native.func }',
-                                                line             : native.line,
-                                                column           : 0,
-                                                presentationHint : 'subtle',
-                                                source : {
-                                                    name : native.func,
-                                                    path : native.file
-                                                }
-                                            }
-                                    }
-                                })
-                            }));
-                    case Error(exn):
-                        _dap.sendResponse(message.seq, 'stackTrace', DapResponse.Failure(exn));
-                }
-            });
-        });
+    //                         if (paused)
+    //                         {
+    //                             //
 
-        _dap.onThreads.subscribe(sequence -> {
-            session.pause(result -> {
-                switch result
-                {
-                    case Success(paused):
-                        session.threads.getThreads(response -> {
-                            switch response
-                            {
-                                case Success(threads):
-                                    _dap.sendResponse(sequence, 'threads', DapResponse.Success({
-                                        threads : threads.map(t -> { id : t.index, name : t.name })
-                                    }));
-                                case Error(exn):
-                                    _dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
-                            }
+    //                             session.resume(result -> {
+    //                                 switch result
+    //                                 {
+    //                                     case Success(run):
+    //                                         run(result -> {
+    //                                             switch result
+    //                                             {
+    //                                                 case Success(None):
+    //                                                     _dap.sendExited();
+    //                                                 case Success(Some(interrupt)):
+    //                                                     switch interrupt
+    //                                                     {
+    //                                                         case ExceptionThrown(threadIndex):
+    //                                                             _dap.sendExceptionThrown(threadIndex);
+    //                                                         case BreakpointHit(threadIndex, id):
+    //                                                             _dap.sendBreakpointHit(threadIndex, id);
+    //                                                         case Other:
+    //                                                             //
+    //                                                     }
+    //                                                 case Error(exn):
+    //                                                     _dap.sendPaused();
+    //                                             }
+    //                                         });
+    //                                     case Error(exn):
+    //                                         _dap.sendPaused();
+    //                                 }
+    //                             });
+    //                         }
+    //                     });
+    //                 case Error(exn):
+    //                     _dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
+    //             }
+    //         });
+    //     });
 
-                            if (paused)
-                            {
-                                //
+    //     _dap.onDisconnect.subscribe(sequence -> {
+    //         session.stop(result -> {
+    //             switch result
+    //             {
+    //                 case Some(exn):
+    //                     _dap.sendResponse(sequence, 'disconnect', DapResponse.Failure(exn));
+    //                 case None:
+    //                     _dap.sendResponse(sequence, 'disconnect', DapResponse.Success(null));
+    //             }
 
-                                session.resume(result -> {
-                                    switch result
-                                    {
-                                        case Success(run):
-                                            run(result -> {
-                                                switch result
-                                                {
-                                                    case Success(None):
-                                                        _dap.sendExited();
-                                                    case Success(Some(interrupt)):
-                                                        switch interrupt
-                                                        {
-                                                            case ExceptionThrown(threadIndex):
-                                                                _dap.sendExceptionThrown(threadIndex);
-                                                            case BreakpointHit(threadIndex, id):
-                                                                _dap.sendBreakpointHit(threadIndex, id);
-                                                            case Other:
-                                                                //
-                                                        }
-                                                    case Error(exn):
-                                                        _dap.sendPaused();
-                                                }
-                                            });
-                                        case Error(exn):
-                                            _dap.sendPaused();
-                                    }
-                                });
-                            }
-                        });
-                    case Error(exn):
-                        _dap.sendResponse(sequence, 'threads', DapResponse.Failure(exn));
-                }
-            });
-        });
-
-        _dap.onDisconnect.subscribe(sequence -> {
-            session.stop(result -> {
-                switch result
-                {
-                    case Some(exn):
-                        _dap.sendResponse(sequence, 'disconnect', DapResponse.Failure(exn));
-                    case None:
-                        _dap.sendResponse(sequence, 'disconnect', DapResponse.Success(null));
-                }
-
-                _client.close();
-            });
-        });
-    }
+    //             _client.close();
+    //         });
+    //     });
+    // }
 }

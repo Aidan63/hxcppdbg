@@ -1,13 +1,32 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.dap.protocol.Event;
+import hxcppdbg.dap.protocol.StackFrame;
+import hxcppdbg.dap.protocol.StackTraceRequest;
+import hxcppdbg.core.thread.NativeThread;
+import hxcppdbg.dap.protocol.PauseRequest;
+import hxcppdbg.dap.protocol.Response;
+import hxcppdbg.core.drivers.Interrupt;
+import hxcppdbg.dap.protocol.Request;
+import hxcppdbg.dap.protocol.ProtocolMessage;
+import hxcppdbg.dap.protocol.LaunchRequest;
+import hxcppdbg.dap.protocol.Thread;
+import hxcppdbg.core.Session;
+import hxcppdbg.core.ds.Result;
+import haxe.Exception;
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Future;
+import tink.CoreApi.Promise;
+import tink.CoreApi.Outcome;
 import haxe.ds.Option;
 import cpp.asio.Code;
-import cpp.asio.Result;
 import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
 import haxe.Json;
 import haxe.io.Bytes;
-import hxcppdbg.core.ds.Signal;
+
+using Lambda;
 
 class DapSession
 {
@@ -17,264 +36,391 @@ class DapSession
 
     final buffer : InputBuffer;
 
-    var configured : Bool;
-
     var outSequence : Int;
 
-    public final onDisconnect : Signal<Int>;
-
-    public final onLaunch : Signal<{ sequence : Int, program : String, sourcemap : String }>;
-
-    public final onPause : Signal<Int>;
-
-    public final onContinue : Signal<Int>;
-
-    public final onStackTrace : Signal<Dynamic>;
-
-    public final onThreads : Signal<Int>;
+    var session : Option<Session>;
 
     public function new(_input, _output)
     {
         input       = _input;
         output      = _output;
         buffer      = new InputBuffer();
-        configured  = false;
         outSequence = 1;
-
-        onDisconnect = new Signal();
-        onLaunch     = new Signal();
-        onPause      = new Signal();
-        onContinue   = new Signal();
-        onStackTrace = new Signal();
-        onThreads    = new Signal();
+        session     = Option.None;
 
         input.read(onInput);
     }
 
-    function write(_content : String)
+    function write(_content : String, _callback : Option<Code>->Void)
     {
         final str  = 'Content-Length: ${ _content.length }\r\n\r\n$_content';
         final data = Bytes.ofString(str);
         
-        output.write(data, option -> {
-            switch option
-            {
-                case Some(code):
-                    trace('failed to write to output stream : $code');
-                case None:
-                    Sys.println('SENT : "$str"');
-            }
-        });
+        output.write(data, _callback);
     }
 
-    public function sendBreakpointHit(_breakpointID : Option<Int>, _threadID : Option<Int>)
-    {
-        write(
-            Json.stringify({
-                seq   : nextOutSequence(),
-                type  : 'event',
-                event : 'stopped',
-                body  : {
-                    reason            : 'breakpoint',
-                    description       : 'Paused on breakpoint',
-                    threadId          : switch _threadID {
-                        case Some(v): v;
-                        case None: null;
-                    },
-                    allThreadsStopped : true,
-                    hitBreakpointIds  : switch _breakpointID {
-                        case Some(v):
-                            [ v ];
-                        case None:
-                            null;
-                    }
-                }
-            })
-        );
-    }
-
-    public function sendExceptionThrown(_threadID : Option<Int>)
-    {
-        write(
-            Json.stringify({
-                seq   : nextOutSequence(),
-                type  : 'event',
-                event : 'stopped',
-                body  : {
-                    reason            : 'exception',
-                    description       : 'Paused on exception',
-                    threadId          : switch _threadID {
-                        case Some(v): v;
-                        case None: null;
-                    },
-                    allThreadsStopped : true,
-                }
-            })
-        );
-    }
-
-    public function sendPaused()
-    {
-        write(
-            Json.stringify({
-                seq   : nextOutSequence(),
-                type  : 'event',
-                event : 'stopped',
-                body  : {
-                    reason            : 'pause',
-                    description       : 'Paused',
-                    allThreadsStopped : true,
-                }
-            })
-        );
-    }
-
-    public function sendExited()
-    {
-        write(
-            Json.stringify({
-                seq   : nextOutSequence(),
-                type  : 'event',
-                event : 'exited',
-                body  : {
-                    exitCode : 0
-                }
-            })
-        );
-    }
-
-    public function sendDisconnect(_sequence)
-    {
-        write(
-            Json.stringify({
-                seq         : nextOutSequence(),
-                request_seq : _sequence,
-                type        : 'response',
-                success     : true,
-                command     : 'disconnect',
-            })
-        );
-    }
-
-    public function sendResponse(_sequence : Int, _command : String, _success : DapResponse)
-    {
-        final obj : Dynamic = {
-            seq         : nextOutSequence(),
-            request_seq : _sequence,
-            type        : 'response',
-            command     : _command,
-        };
-        
-        switch _success
-        {
-            case Success(body):
-                obj.success = true;
-                obj.body    = body;
-            case Failure(exn):
-                obj.success = false;
-                obj.body = {
-                    error : {
-                        id       : 0,
-                        format   : exn.message,
-                        showUser : true
-                    }
-                }
-        }
-
-        write(Json.stringify(obj));
-    }
-
-    function onInput(_result : Result<Bytes, Code>)
+    function onInput(_result : cpp.asio.Result<Bytes, Code>)
     {
         switch _result
         {
             case Success(data):
-                for (message in buffer.append(data))
-                {
-                    Sys.println('RECV : "${ message.toString() }"');
-
-                    switch message.type
-                    {
-                        case 'request':
-                            switch message.command
-                            {
-                                case 'initialize':
-                                    initialise(message.seq);
-                                case 'configurationDone':
-                                    finishConfiguration(message.seq);
-                                case 'disconnect':
-                                    onDisconnect.notify(message.seq);
-                                case 'launch':
-                                    onLaunch.notify({
-                                        sequence  : message.seq,
-                                        program   : message.arguments.program,
-                                        sourcemap : message.arguments.sourcemap
-                                    });
-                                case 'pause':
-                                    onPause.notify(message.seq);
-                                case 'continue':
-                                    onContinue.notify(message.seq);
-                                case 'stackTrace':
-                                    onStackTrace.notify(message);
-                                case 'threads':
-                                    onThreads.notify(message.seq);
-                                case other:
-                                    sendResponse(message.seq, other, DapResponse.Success(null));
-                            }
-                        case 'response':
-                            //
-                        case 'event':
-                            //
-                        case _:
-                            //
-                    }
-                }
-            case Error(code):
-                trace(code);
+                Future
+                    .inSequence(buffer.append(data).map(makeMessage))
+                    .handle(onMessagesProcessed);
+            case Error(error):
+                Sys.println(error.toString());
         }
     }
 
-    function initialise(_sequence : Int)
+    function makeMessage(_message : ProtocolMessage) : Future<Noise>
     {
-        write(
-            Json.stringify({
-                seq         : nextOutSequence(),
-                request_seq : _sequence,
-                type        : 'response',
-                success     : true,
-                command     : 'initialize',
-                body        : {
-                    // supportsConfigurationDoneRequest : true
-                }
-            })
-        );
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    Sys.println('MSG : ${ _message }');
 
-        write(
-            Json.stringify({
-                seq   : nextOutSequence(),
-                type  : 'event',
-                event : 'initialized'
-            })
-        );
+                    switch _message.type
+                    {
+                        case 'request':
+                            makeRequest(cast _message, _resolve, _reject);
+                        case other:
+                            _reject(new Error('Unsupported message type "$other"'));
+                    }
+                })
+                .flatMap(outcome -> {
+                    return switch outcome
+                    {
+                        case Success(data):
+                            respond(cast _message, Result.Success(data)).asFuture();
+                        case Failure(failure):
+                            respond(cast _message, Result.Error(failure)).asFuture();
+                    }
+                });
     }
 
-    function finishConfiguration(_sequence : Int)
+    function makeRequest(_request : Request, _resolve : Null<Any>->Void, _reject : Error->Void)
     {
-        configured = true;
+        switch _request.command
+        {
+            case 'initialize':
+                _resolve(null);
+            case 'launch':
+                onLaunch(cast _request, _resolve, _reject);
+            case 'threads':
+                onThreads(_resolve, _reject);
+            case 'pause':
+                onPause(cast _request, _resolve, _reject);
+            case 'continue':
+                onContinue(_resolve, _reject);
+            case 'stackTrace':
+                onStackTrace(cast _request, _resolve, _reject);
+            case 'disconnect':
+                onDisconnect(_resolve, _reject);
+            case 'setExceptionBreakpoints':
+                _resolve({ filters : [] });
+            case other:
+                _reject(new Error('Unsupported request command "$other"'));
+        }
+    }
 
-        write(
-            Json.stringify({
-                seq         : nextOutSequence(),
-                request_seq : _sequence,
-                type        : 'response',
-                success     : true,
-                command     : 'configurationDone',
-            })
-        );
+    function onLaunch(_request : LaunchRequest, _resolve : Null<Any>->Void, _reject : Error->Void)
+    {
+        final s = new Session(_request.arguments.program, _request.arguments.sourcemap);
+
+        s.start(result -> {
+            switch result
+            {
+                case Success(run):
+                    session = Option.Some(s);
+
+                    run(onRunCallback);
+
+                    event({ seq : nextOutSequence(), type : 'event', event : 'initialized' })
+                        .handle(outcome -> {
+                            switch outcome
+                            {
+                                case Success(_):
+                                    _resolve(null);
+                                case Failure(failure):
+                                    _reject(failure);
+                            }
+                        });
+                case Error(exn):
+                    _reject(errorFromException(exn));
+            }
+        });
+    }
+
+    function onPause(_request : PauseRequest, _resolve : Null<Any>->Void, _reject : Error->Void)
+    {
+        switch session
+        {
+            case Some(s):
+                s.pause(result -> {
+                    switch result
+                    {
+                        case Success(_):
+                            _resolve(null);
+                        case Error(exn):
+                            _reject(errorFromException(exn));
+                    }
+                });
+            case None:
+                _reject(noSessionError());
+        }
+    }
+
+    function onThreads(_resolve : Null<Any>->Void, _reject : Error->Void)
+    {
+        function toProtocolThread(_thread : NativeThread) : Thread
+        {
+            return {
+                name : _thread.name,
+                id   : _thread.index
+            }
+        }
+
+        switch session
+        {
+            case Some(s):
+                s.pause(result -> {
+                    switch result
+                    {
+                        case Success(paused):
+                            s.threads.getThreads(result -> {
+                                switch result
+                                {
+                                    case Success(threads):
+                                        _resolve({ threads : threads.map(toProtocolThread) });
+                                    case Error(exn):
+                                        _reject(errorFromException(exn));
+                                }
+
+                                if (paused)
+                                {
+                                    s.resume(result -> {
+                                        switch result
+                                        {
+                                            case Success(run):
+                                                run(onRunCallback);
+                                            case Error(exn):
+                                                // TODO : Send stopped event / error output.
+                                                throw exn;
+                                        }
+                                    });
+                                }
+                            });
+                        case Error(exn):
+                            _reject(errorFromException(exn));
+                    }
+                });
+            case None:
+                _reject(noSessionError());
+        }
+    }
+
+    function onContinue(_resolve : Null<Any>->Void, _reject : Error->Void)
+    {
+        switch session
+        {
+            case Some(s):
+                s.resume(result -> {
+                    switch result
+                    {
+                        case Success(run):
+                            run(onRunCallback);
+
+                            _resolve(null);
+                        case Error(exn):
+                            _reject(errorFromException(exn));
+                    }
+                });
+            case None:
+                _reject(noSessionError());
+        }
+    }
+
+    function onStackTrace(_request : StackTraceRequest, _resolve : Null<Any>->Void, _reject : Error->Void)
+    {
+        function toProtocolFrame(_idx : Int, _frame : hxcppdbg.core.stack.StackFrame) : StackFrame
+        {
+            final id = new FrameId(_request.arguments.threadId, _idx);
+
+            return switch _frame
+            {
+                case Haxe(haxe, native):
+                    {
+                        id        : id,
+                        line      : haxe.expr.haxe.start.line,
+                        endLine   : haxe.expr.haxe.end.line,
+                        column    : haxe.expr.haxe.start.col,
+                        endColumn : haxe.expr.haxe.end.col,
+                        name      : switch haxe.closure {
+                            case Some(closure):
+                                '${ haxe.file.type }.${ haxe.func.name }.${ closure.name }';
+                            case None:
+                                '${ haxe.file.type }.${ haxe.func.name }';
+                        },
+                        presentationHint: Normal,
+                        source : {
+                            name : haxe.func.name,
+                            path : haxe.file.haxe
+                        },
+                        sources : [
+                            {
+                                name : native.func,
+                                path : native.file
+                            }
+                        ]
+                    }
+                case Native(native):
+                    {
+                        id               : id,
+                        name             : '[native] ${ native.func }',
+                        line             : native.line,
+                        column           : 0,
+                        presentationHint : Subtle,
+                        source : {
+                            name : native.func,
+                            path : native.file
+                        }
+                    }
+            }
+        }
+
+        switch session
+        {
+            case Some(s):
+                s.stack.getCallStack(_request.arguments.threadId, result -> {
+                    switch result
+                    {
+                        case Success(frames):
+                            _resolve({ stackFrames : frames.mapi(toProtocolFrame) });
+                        case Error(exn):
+                            _reject(errorFromException(exn));
+                    }
+                });
+            case None:
+                _reject(noSessionError());
+        }
+    }
+
+    function onDisconnect(_resolve : Null<Any>->Void, _reject : Error->Void)
+    {
+        switch session
+        {
+            case Some(s):
+                s.stop(result -> {
+                    switch result
+                    {
+                        case Some(exn):
+                            _reject(errorFromException(exn));
+                        case None:
+                            _resolve(null);
+                    }
+                });
+            case None:
+                _reject(noSessionError());
+        }
+    }
+
+    function onMessagesProcessed(_result : Array<Noise>)
+    {
+        Sys.println('${ _result.length } messages processed');
+    }
+
+    function onRunCallback(_result : Result<Option<Interrupt>, Exception>)
+    {
+        switch _result
+        {
+            case Success(Option.Some(interrupt)):
+                //
+            case Success(Option.None):
+                //
+            case Error(exn):
+                //
+        }
+    }
+
+    function respond(_request : Request, _result : cpp.asio.Result<Null<Any>, tink.CoreApi.Error>) : Promise<Noise>
+    {
+        return
+            Promise
+                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+                    final obj : Dynamic = {
+                        seq         : nextOutSequence(),
+                        type        : 'response',
+                        request_seq : _request.seq,
+                        command     : _request.command
+                    };
+                    
+                    switch _result
+                    {
+                        case Success(body):
+                            obj.success = true;
+                            obj.body    = body;
+                        case Error(exn):
+                            obj.body = {
+                                error : {
+                                    id       : 0,
+                                    format   : exn.message,
+                                    showUser : true
+                                }
+                            }
+                    }
+
+                    Sys.println('OUT : ${ obj }');
+
+                    write(Json.stringify(obj), result -> {
+                        switch result
+                        {
+                            case Some(code):
+                                _reject(errorFromCode(code));
+                            case None:
+                                _resolve(null);
+                        }
+                    });
+                });
+    }
+
+    function event(_event : Event)
+    {
+        return
+            Promise
+                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+                    final str = Json.stringify(_event);
+
+                    Sys.println('OUT : $str');
+
+                    write(str, result -> {
+                        switch result
+                        {
+                            case Some(code):
+                                _reject(errorFromCode(code));
+                            case None:
+                                _resolve(null);
+                        }
+                    });
+                });
     }
 
     function nextOutSequence()
     {
         return outSequence++;
+    }
+
+    static function noSessionError()
+    {
+        return new Error('Session has not yet started');
+    }
+
+    static function errorFromException(_exn : Exception)
+    {
+        return new Error(_exn.message);
+    }
+
+    static function errorFromCode(_code : Code)
+    {
+        return new Error(_code.toString());
     }
 }
