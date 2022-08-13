@@ -156,6 +156,8 @@ class DapSession
             case 'stackTrace':
                 onStackTrace(cast _request)
                     .flatMap(sendResponse);
+            case 'scopes':
+                sendResponse(tink.core.Outcome.Success({ scopes : [] }));
             case 'disconnect':
                 onDisconnect()
                     .flatMap(sendResponse)
