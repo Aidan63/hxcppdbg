@@ -315,7 +315,7 @@ class DapSession
                                 {
                                     case Success(opt):
                                         respond(_request, cpp.asio.Result.Success(null))
-                                            .flatMap(_ -> interruptOptionToEvent(opt, 'step'))
+                                            .flatMap(_ -> interruptOptionToEvent(opt, 'step', _request.arguments.threadId))
                                             .handle(outcome -> {
                                                 switch outcome
                                                 {
@@ -450,7 +450,7 @@ class DapSession
         switch _result
         {
             case Success(opt):
-                interruptOptionToEvent(opt, 'pause')
+                interruptOptionToEvent(opt, 'pause', null)
                     .handle(handleRunEventPromise);
             case Error(exn):
                 //
@@ -519,7 +519,7 @@ class DapSession
                 });
     }
 
-    function interruptOptionToEvent(_interrupt : Option<Interrupt>, _reason : String)
+    function interruptOptionToEvent(_interrupt : Option<Interrupt>, _reason : String, _threadId : Null<Int>)
     {
         return
             switch _interrupt
@@ -532,6 +532,7 @@ class DapSession
                         body  : {
                             reason            : _reason,
                             description       : 'Paused',
+                            threadId          : _threadId,
                             allThreadsStopped : true,
                             preserveFocusHint : false
                         }
