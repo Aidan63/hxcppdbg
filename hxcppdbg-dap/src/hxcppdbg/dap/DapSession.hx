@@ -391,7 +391,20 @@ class DapSession
                                 switch result
                                 {
                                     case Success(frames):
-                                        _resolve({ stackFrames : frames.mapi(toProtocolFrame) });
+                                        final mapped = [];
+
+                                        for (idx => frame in frames)
+                                        {
+                                            switch frame
+                                            {
+                                                case Haxe(_, _):
+                                                    mapped.push(toProtocolFrame(idx, frame));
+                                                case Native(_):
+                                                    //
+                                            }
+                                        }
+
+                                        _resolve({ stackFrames : mapped });
                                     case Error(exn):
                                         _reject(errorFromException(exn));
                                 }
