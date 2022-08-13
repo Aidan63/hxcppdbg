@@ -152,7 +152,7 @@ class DapSession
             case 'stepIn':
                 onStep(cast _request, StepType.In);
             case 'stepOut':
-                onStep(cast _request, StepType.In);
+                onStep(cast _request, StepType.Out);
             case 'stackTrace':
                 onStackTrace(cast _request)
                     .flatMap(sendResponse);
