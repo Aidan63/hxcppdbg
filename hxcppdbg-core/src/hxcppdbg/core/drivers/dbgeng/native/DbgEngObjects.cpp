@@ -611,7 +611,14 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 								}
 								else
 								{
-									return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint(threadIdxOpt, haxe::ds::Option_obj::Some(event.Id)));
+									if (event.Id == stepOutBreakpointId)
+									{
+										return WaitResult_obj::Complete;
+									}
+									else
+									{
+										return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint(threadIdxOpt, haxe::ds::Option_obj::Some(event.Id)));
+									}
 								}
 							}
 
@@ -653,7 +660,7 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 	}
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _thread, int _step)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _threadIndex, int _step)
 {
 	auto result = S_OK;
 
@@ -668,7 +675,13 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::ste
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Cannot step unless the target is suspended"), status));
 	}
 
-	if (!SUCCEEDED(result = system->SetCurrentThreadId(_thread)))
+	auto threadID = ULONG{ 0 };
+	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, &threadID, nullptr)))
+	{
+		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get thread ID from index"), result));
+	}
+
+	if (!SUCCEEDED(result = system->SetCurrentThreadId(threadID)))
 	{
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set current thread"), result));
 	}
@@ -677,11 +690,60 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::ste
 	switch (_step)
 	{
 	case 0:
-		mode = DEBUG_STATUS_STEP_INTO;
-		break;
+		{
+			mode = DEBUG_STATUS_STEP_INTO;
+
+			break;
+		}
 	case 1:
-		mode = DEBUG_STATUS_STEP_OVER;
-		break;
+		{
+			mode = DEBUG_STATUS_STEP_OVER;
+
+			break;
+		}
+	case 2:
+		{
+			auto offset = ULONG64{ 0 };
+			if (!SUCCEEDED(control->GetReturnOffset(&offset)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to add breakpoint"), result));
+			}
+
+			auto breakpoint = PDEBUG_BREAKPOINT();
+			if (!SUCCEEDED(result = control->AddBreakpoint(DEBUG_BREAKPOINT_CODE, DEBUG_ANY_ID, &breakpoint)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to add breakpoint"), result));
+			}
+
+			if (!SUCCEEDED(result = breakpoint->AddFlags(DEBUG_BREAKPOINT_ENABLED)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to enable breakpoint"), result));
+			}
+
+			if (!SUCCEEDED(result = breakpoint->AddFlags(DEBUG_BREAKPOINT_ONE_SHOT)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set the breakpoint to one shot"), result));
+			}
+
+			if (!SUCCEEDED(result = breakpoint->SetMatchThreadId(threadID)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set the breakpoint to one shot"), result));
+			}
+
+			if (!SUCCEEDED(result = breakpoint->SetOffset(offset)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set breakpoint offset"), result));
+			}
+
+			if (!SUCCEEDED(breakpoint->GetId(&stepOutBreakpointId)))
+			{
+				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get breakpoint ID"), result));
+			}
+
+			mode = DEBUG_STATUS_GO;
+
+			break;
+		}
 	default:
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unsupported step mode"), _step));
 	}

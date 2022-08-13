@@ -38,6 +38,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         ComPtr<IDebugSystemObjects4> system;
         std::unique_ptr<DebugEventCallbacks> events;
         std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
+        ULONG stepOutBreakpointId;
 
         hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
 
