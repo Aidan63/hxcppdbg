@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.core.StepType;
 import hxcppdbg.dap.protocol.Event;
 import hxcppdbg.dap.protocol.StackFrame;
 import hxcppdbg.dap.protocol.StackTraceRequest;
@@ -11,6 +12,7 @@ import hxcppdbg.dap.protocol.Request;
 import hxcppdbg.dap.protocol.ProtocolMessage;
 import hxcppdbg.dap.protocol.LaunchRequest;
 import hxcppdbg.dap.protocol.Thread;
+import hxcppdbg.dap.protocol.NextRequest;
 import hxcppdbg.core.Session;
 import hxcppdbg.core.ds.Result;
 import haxe.Exception;
@@ -134,7 +136,8 @@ class DapSession
                                     body  : {
                                         reason            : 'pause',
                                         description       : 'Paused',
-                                        allThreadsStopped : true
+                                        allThreadsStopped : true,
+                                        preserveFocusHint : false
                                     }
                                 });
                             case Failure(failure):
@@ -144,6 +147,12 @@ class DapSession
             case 'continue':
                 onContinue()
                     .flatMap(sendResponse);
+            case 'next':
+                onStep(cast _request, StepType.Over);
+            case 'stepIn':
+                onStep(cast _request, StepType.In);
+            case 'stepOut':
+                onStep(cast _request, StepType.In);
             case 'stackTrace':
                 onStackTrace(cast _request)
                     .flatMap(sendResponse);
@@ -291,6 +300,39 @@ class DapSession
                 });
     }
 
+    function onStep(_request : NextRequest, _type : StepType)
+    {
+        return
+            Promise
+                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+                    switch session
+                    {
+                        case Some(s):
+                            s.step(_request.arguments.threadId, _type, result -> {
+                                switch result
+                                {
+                                    case Success(opt):
+                                        respond(_request, cpp.asio.Result.Success(null))
+                                            .flatMap(_ -> interruptOptionToEvent(opt, 'step'))
+                                            .handle(outcome -> {
+                                                switch outcome
+                                                {
+                                                    case Success(data):
+                                                        _resolve(data);
+                                                    case Failure(failure):
+                                                        _reject(failure);
+                                                }
+                                            });
+                                    case Error(exn):
+                                        _reject(errorFromException(exn));
+                                }
+                            });
+                        case None:
+                            _reject(noSessionError());
+                    }
+                });
+    }
+
     function onStackTrace(_request : StackTraceRequest)
     {
         function toProtocolFrame(_idx : Int, _frame : hxcppdbg.core.stack.StackFrame) : StackFrame
@@ -392,48 +434,9 @@ class DapSession
     {
         switch _result
         {
-            case Success(Option.None):
-                event({
-                    seq   : nextOutSequence(),
-                    type  : 'event',
-                    event : 'stopped',
-                    body  : {
-                        reason            : 'pause',
-                        description       : 'Paused',
-                        allThreadsStopped : true
-                    }
-                }).handle(handleRunEventPromise);
-            case Success(Option.Some(interrupt)):
-                switch interrupt
-                {
-                    case ExceptionThrown(threadIndex):
-                        event({
-                            seq   : nextOutSequence(),
-                            type  : 'event',
-                            event : 'stopped',
-                            body  : {
-                                reason            : 'exception',
-                                description       : 'Paused on exception',
-                                allThreadsStopped : true,
-                                threadId          : threadIndex
-                            }
-                        }).handle(handleRunEventPromise);
-                    case BreakpointHit(threadIndex, id):
-                        event({
-                            seq   : nextOutSequence(),
-                            type  : 'event',
-                            event : 'stopped',
-                            body  : {
-                                reason            : 'breakpoint',
-                                description       : 'Paused on exception',
-                                allThreadsStopped : true,
-                                threadId          : threadIndex,
-                                hitBreakpointsIds : [ id ]
-                            }
-                        }).handle(handleRunEventPromise);
-                    case Other:
-                        //
-                }
+            case Success(opt):
+                interruptOptionToEvent(opt, 'pause')
+                    .handle(handleRunEventPromise);
             case Error(exn):
                 //
         }
@@ -499,6 +502,55 @@ class DapSession
                         }
                     });
                 });
+    }
+
+    function interruptOptionToEvent(_interrupt : Option<Interrupt>, _reason : String)
+    {
+        return
+            switch _interrupt
+            {
+                case Option.None:
+                    event({
+                        seq   : nextOutSequence(),
+                        type  : 'event',
+                        event : 'stopped',
+                        body  : {
+                            reason            : _reason,
+                            description       : 'Paused',
+                            allThreadsStopped : true,
+                            preserveFocusHint : false
+                        }
+                    });
+                case Option.Some(Interrupt.ExceptionThrown(threadIndex)):
+                    event({
+                        seq   : nextOutSequence(),
+                        type  : 'event',
+                        event : 'stopped',
+                        body  : {
+                            reason            : 'exception',
+                            description       : 'Paused on exception',
+                            allThreadsStopped : true,
+                            threadId          : threadIndex,
+                            preserveFocusHint : false
+                        }
+                    });
+                case Option.Some(Interrupt.BreakpointHit(threadIndex, id)):
+                    event({
+                        seq   : nextOutSequence(),
+                        type  : 'event',
+                        event : 'stopped',
+                        body  : {
+                            reason            : 'breakpoint',
+                            description       : 'Paused on exception',
+                            allThreadsStopped : true,
+                            threadId          : threadIndex,
+                            hitBreakpointsIds : [ id ],
+                            preserveFocusHint : false
+                        }
+                    });
+                case Option.Some(Interrupt.Other):
+                    Promise.resolve(null);
+            }
     }
 
     function nextOutSequence()
