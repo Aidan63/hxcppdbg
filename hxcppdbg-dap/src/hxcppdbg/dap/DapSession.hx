@@ -112,21 +112,90 @@ class DapSession
             }
         }
 
+        function sendInitialisedEvent(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
+        {
+            return switch _outcome
+            {
+                case Success(data):
+                    event({ seq : nextOutSequence(), type : 'event', event : 'initialized' });
+                case Failure(failure):
+                    Promise.reject(failure);
+            }
+        }
+
+        function sendPauseStoppedEvent(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
+        {
+            return switch _outcome
+            {
+                case Success(data):
+                    event({
+                        seq   : nextOutSequence(),
+                        type  : 'event',
+                        event : 'stopped',
+                        body  : {
+                            reason            : 'pause',
+                            description       : 'Paused',
+                            allThreadsStopped : true,
+                            preserveFocusHint : false
+                        }
+                    });
+                case Failure(failure):
+                    Promise.reject(failure);
+            }
+        }
+
+        function startTargetAfterConfiguration(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
+        {
+            return switch _outcome
+            {
+                case Success(_):
+                    switch launch
+                    {
+                        case Some(req):
+                            switch session
+                            {
+                                case Some(s):
+                                    Promise
+                                        .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+                                            s.start(result -> {
+                                                switch result
+                                                {
+                                                    case Success(run):
+                                                        run(onRunCallback);
+
+                                                        _resolve(null);
+                                                    case Error(exn):
+                                                        _reject(errorFromException(exn));
+                                                }
+                                            });
+                                        })
+                                        .flatMap(outcome -> {
+                                            return switch outcome
+                                            {
+                                                case Success(_):
+                                                    respond(req, Result.Success(null));
+                                                case Failure(failure):
+                                                    Promise.reject(failure);
+                                            }
+                                        });
+                                case None:
+                                    Promise.reject(noSessionError());
+                            }
+                        case None:
+                            Promise.reject(new Error('no launch request received'));
+                    }
+                case Failure(failure):
+                    Promise.reject(failure);
+            }
+        }
+
         Sys.println('MSG : ${ _request }');
 
         return switch _request.command
         {
             case 'initialize':
                 sendResponse(tink.core.Outcome.Success({ supportsConfigurationDoneRequest : true }))
-                    .flatMap(_outcome -> {
-                        return switch _outcome
-                        {
-                            case Success(data):
-                                event({ seq : nextOutSequence(), type : 'event', event : 'initialized' });
-                            case Failure(failure):
-                                Promise.reject(failure);
-                        }
-                    });
+                    .flatMap(sendInitialisedEvent);
             case 'setExceptionBreakpoints':
                 sendResponse(tink.core.Outcome.Success({ filters : [] }));
             case 'setBreakpoints':
@@ -134,49 +203,7 @@ class DapSession
                     .flatMap(sendResponse);
             case 'configurationDone':
                 sendResponse(tink.core.Outcome.Success(null))
-                    .next(_ -> launch)
-                    .flatMap(_outcome -> {
-                        return switch _outcome
-                        {
-                            case Success(data):
-                                switch data
-                                {
-                                    case Some(req):
-                                        switch session
-                                        {
-                                            case Some(s):
-                                                Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-                                                    s.start(result -> {
-                                                        switch result
-                                                        {
-                                                            case Success(run):
-                                                                respond(req, Result.Success(null))
-                                                                    .handle(outcome -> {
-                                                                        switch outcome
-                                                                        {
-                                                                            case Success(data):
-                                                                                _resolve(data);
-                                                                            case Failure(failure):
-                                                                                _reject(failure);
-                                                                        }
-                                                                    });
-    
-                                                                run(onRunCallback);
-                                                            case Error(exn):
-                                                                _reject(errorFromException(exn));
-                                                        }
-                                                    });
-                                                });
-                                            case None:
-                                                Promise.reject(noSessionError());
-                                        }
-                                    case None:
-                                        Promise.reject(new Error('no launch request received'));
-                                }
-                            case Failure(failure):
-                                Promise.reject(failure);
-                        }
-                    });
+                    .flatMap(startTargetAfterConfiguration);
             case 'launch':
                 onLaunch(cast _request);
             case 'threads':
@@ -185,25 +212,7 @@ class DapSession
             case 'pause':
                 onPause()
                     .flatMap(sendResponse)
-                    .flatMap(_outcome -> {
-                        return switch _outcome
-                        {
-                            case Success(data):
-                                event({
-                                    seq   : nextOutSequence(),
-                                    type  : 'event',
-                                    event : 'stopped',
-                                    body  : {
-                                        reason            : 'pause',
-                                        description       : 'Paused',
-                                        allThreadsStopped : true,
-                                        preserveFocusHint : false
-                                    }
-                                });
-                            case Failure(failure):
-                                Promise.reject(failure);
-                        }
-                    });
+                    .flatMap(sendPauseStoppedEvent);
             case 'continue':
                 onContinue()
                     .flatMap(sendResponse);
@@ -232,6 +241,8 @@ class DapSession
                 Promise.reject(new Error('Unsupported request command "$other"'));
         }
     }
+
+    // #region requests
 
     function onLaunch(_request : LaunchRequest)
     {
@@ -551,6 +562,8 @@ class DapSession
                     }
                 });
     }
+
+    // #endregion
 
     function onMessagesProcessed(_result : Array<Outcome<Noise, Error>>)
     {
