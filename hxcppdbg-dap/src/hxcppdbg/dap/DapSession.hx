@@ -1,5 +1,7 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.dap.protocol.Breakpoint;
+import hxcppdbg.dap.protocol.SetBreakpointsRequest;
 import hxcppdbg.core.StepType;
 import hxcppdbg.dap.protocol.Event;
 import hxcppdbg.dap.protocol.StackFrame;
@@ -29,6 +31,7 @@ import haxe.Json;
 import haxe.io.Bytes;
 
 using Lambda;
+using StringTools;
 
 class DapSession
 {
@@ -44,20 +47,26 @@ class DapSession
 
     var session : Option<Session>;
 
+    var launch : Option<LaunchRequest>;
+
     public function new(_input, _output, _close)
     {
-        input       = _input;
-        output      = _output;
-        close       = _close;
-        buffer      = new InputBuffer();
+        input              = _input;
+        output             = _output;
+        close              = _close;
+        buffer             = new InputBuffer();
+
         outSequence = 1;
         session     = Option.None;
+        launch      = Option.None;
 
         input.read(onInput);
     }
 
     function write(_content : String, _callback : Option<Code>->Void)
     {
+        Sys.println('OUT : $_content');
+
         final str  = 'Content-Length: ${ _content.length }\r\n\r\n$_content';
         final data = Bytes.ofString(str);
         
@@ -69,6 +78,8 @@ class DapSession
         switch _result
         {
             case Success(data):
+                Sys.println('RAW : ${ data.toString() }');
+
                 Future
                     .inSequence(buffer.append(data).map(makeMessage))
                     .handle(onMessagesProcessed);
@@ -106,10 +117,7 @@ class DapSession
         return switch _request.command
         {
             case 'initialize':
-                sendResponse(tink.core.Outcome.Success(null));
-            case 'launch':
-                onLaunch(cast _request)
-                    .flatMap(sendResponse)
+                sendResponse(tink.core.Outcome.Success({ supportsConfigurationDoneRequest : true }))
                     .flatMap(_outcome -> {
                         return switch _outcome
                         {
@@ -119,6 +127,58 @@ class DapSession
                                 Promise.reject(failure);
                         }
                     });
+            case 'setExceptionBreakpoints':
+                sendResponse(tink.core.Outcome.Success({ filters : [] }));
+            case 'setBreakpoints':
+                onSetBreakpoints(cast _request)
+                    .flatMap(sendResponse);
+            case 'configurationDone':
+                sendResponse(tink.core.Outcome.Success(null))
+                    .next(_ -> launch)
+                    .flatMap(_outcome -> {
+                        return switch _outcome
+                        {
+                            case Success(data):
+                                switch data
+                                {
+                                    case Some(req):
+                                        switch session
+                                        {
+                                            case Some(s):
+                                                Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+                                                    s.start(result -> {
+                                                        switch result
+                                                        {
+                                                            case Success(run):
+                                                                respond(req, Result.Success(null))
+                                                                    .handle(outcome -> {
+                                                                        switch outcome
+                                                                        {
+                                                                            case Success(data):
+                                                                                _resolve(data);
+                                                                            case Failure(failure):
+                                                                                _reject(failure);
+                                                                        }
+                                                                    });
+    
+                                                                run(onRunCallback);
+                                                            case Error(exn):
+                                                                _reject(errorFromException(exn));
+                                                        }
+                                                    });
+                                                });
+                                            case None:
+                                                Promise.reject(noSessionError());
+                                        }
+                                    case None:
+                                        Promise.reject(new Error('no launch request received'));
+                                }
+                            case Failure(failure):
+                                Promise.reject(failure);
+                        }
+                    });
+            case 'launch':
+                onLaunch(cast _request);
             case 'threads':
                 onThreads()
                     .flatMap(sendResponse);
@@ -168,8 +228,6 @@ class DapSession
 
                         return noise;
                     });
-            case 'setExceptionBreakpoints':
-                sendResponse(tink.core.Outcome.Success({ filters : [] }));
             case other:
                 Promise.reject(new Error('Unsupported request command "$other"'));
         }
@@ -178,28 +236,9 @@ class DapSession
     function onLaunch(_request : LaunchRequest)
     {
         session = Option.Some(new Session(_request.arguments.program, _request.arguments.sourcemap));
+        launch  = Option.Some(_request);
 
-        return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
-                    switch session
-                    {
-                        case Some(s):
-                            s.start(result -> {
-                                switch result
-                                {
-                                    case Success(run):
-                                        run(onRunCallback);
-
-                                        _resolve(null);
-                                    case Error(exn):
-                                        _reject(errorFromException(exn));
-                                }
-                            });
-                        case None:
-                            _reject(noSessionError());
-                    }
-                });
+        return Promise.resolve(null);
     }
 
     function onPause()
@@ -440,6 +479,79 @@ class DapSession
                 });
     }
 
+    function onSetBreakpoints(_request : SetBreakpointsRequest)
+    {
+        function removeExistingBreakpointsForSource(_session : Session, _existing : Array<hxcppdbg.core.breakpoints.Breakpoint>)
+        {
+            return
+                Promise
+                    .inSequence(
+                        _existing
+                            .filter(bp -> bp.file.endsWith(_request.arguments.source.name))
+                            .map(bp -> promiseForBreakpointRemoval(_session, bp)))
+                    .next(_ -> (null : Noise));
+        }
+
+        function createBreakpointsForSource(_session : Session)
+        {
+            return
+                Promise
+                    .inSequence(
+                        _request.arguments.breakpoints.map(bp -> {
+                            return
+                                promiseForBreakpointCreation(_session, _request.arguments.source.name, bp.line, if (bp.column == null) 0 else bp.column)
+                                    .flatMap(outcome -> {
+                                        return Promise.resolve(switch outcome
+                                        {
+                                            case Success(created):
+                                                breakpointToProtocolBreakpoint(created);
+                                            case Failure(failure):
+                                                ({ verified : false, message : failure.message } : Breakpoint);
+                                        });
+                                    });
+                            })
+                        );
+        }
+
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch session
+                    {
+                        case Some(s):
+                            s.pause(result -> {
+                                switch result
+                                {
+                                    case Success(paused):
+                                        removeExistingBreakpointsForSource(s, s.breakpoints.list())
+                                            .flatMap(outcome -> {
+                                                return switch outcome
+                                                {
+                                                    case Success(data):
+                                                        createBreakpointsForSource(s);
+                                                    case Failure(failure):
+                                                        Promise.reject(failure);
+                                                }
+                                            })
+                                            .handle(outcome -> {
+                                                switch outcome
+                                                {
+                                                    case Success(created):
+                                                        _resolve({ breakpoints : created });
+                                                    case Failure(failure):
+                                                        _reject(failure);
+                                                }
+                                            });
+                                    case Error(exn):
+                                        _reject(errorFromException(exn));
+                                }
+                            });
+                        case None:
+                            _reject(noSessionError());
+                    }
+                });
+    }
+
     function onMessagesProcessed(_result : Array<Outcome<Noise, Error>>)
     {
         Sys.println('${ _result.length } messages processed');
@@ -484,8 +596,6 @@ class DapSession
                             }
                     }
 
-                    Sys.println('OUT : ${ obj }');
-
                     write(Json.stringify(obj), result -> {
                         switch result
                         {
@@ -504,8 +614,6 @@ class DapSession
             Promise
                 .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
                     final str = Json.stringify(_event);
-
-                    Sys.println('OUT : $str');
 
                     write(str, result -> {
                         switch result
@@ -572,6 +680,52 @@ class DapSession
     function nextOutSequence()
     {
         return outSequence++;
+    }
+
+    static function breakpointToProtocolBreakpoint(_breakpoint : hxcppdbg.core.breakpoints.Breakpoint) : Breakpoint
+    {
+        return {
+            id        : _breakpoint.id,
+            verified  : true,
+            line      : _breakpoint.expr.haxe.start.line,
+            column    : _breakpoint.expr.haxe.start.col,
+            endLine   : _breakpoint.expr.haxe.end.line,
+            endColumn : _breakpoint.expr.haxe.end.col
+        }
+    }
+
+    static function promiseForBreakpointRemoval(_session : Session, _bp : hxcppdbg.core.breakpoints.Breakpoint)
+    {
+        return
+            Promise
+                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+                    _session.breakpoints.delete(_bp.id, result -> {
+                        switch result
+                        {
+                            case Some(exn):
+                                _reject(errorFromException(exn));
+                            case None:
+                                _resolve(null);
+                        }
+                    });
+                });
+    }
+
+    static function promiseForBreakpointCreation(_session : Session, _file : String, _line : Int, _char : Int)
+    {
+        return
+            Promise
+                .irreversible((_resolve : hxcppdbg.core.breakpoints.Breakpoint->Void, _reject : Error->Void) -> {
+                    _session.breakpoints.create(_file, _line, _char, result -> {
+                        switch result
+                        {
+                            case Success(bp):
+                                _resolve(bp);
+                            case Error(exn):
+                                _reject(errorFromException(exn));
+                        }
+                    });
+                });
     }
 
     static function noSessionError()
