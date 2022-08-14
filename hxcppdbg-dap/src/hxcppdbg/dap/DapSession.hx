@@ -545,6 +545,19 @@ class DapSession
                                                 }
                                             })
                                             .handle(outcome -> {
+                                                if (paused)
+                                                {
+                                                    s.resume(result -> {
+                                                        switch result
+                                                        {
+                                                            case Success(run):
+                                                                run(onRunCallback);
+                                                            case Error(exn):
+                                                                throw exn;
+                                                        }
+                                                    });
+                                                }
+
                                                 switch outcome
                                                 {
                                                     case Success(created):
