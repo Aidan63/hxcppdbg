@@ -739,7 +739,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::ste
 				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set breakpoint offset"), result));
 			}
 
-			if (!SUCCEEDED(breakpoint->GetId(&stepOutBreakpointId)))
+			if (!SUCCEEDED(result = breakpoint->GetId(&stepOutBreakpointId)))
 			{
 				return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get breakpoint ID"), result));
 			}
