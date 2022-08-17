@@ -142,23 +142,4 @@ class Session
             }
         });
     }
-
-    // function dispatchStopCallbacks(_reason : StopReason)
-    // {
-    //     switch _reason
-    //     {
-    //         case ExceptionThrown(_thread):
-    //             breakpoints.onExceptionThrown.notify(_thread);
-    //         case BreakpointHit(_id, _thread):
-    //             switch breakpoints.get(_id)
-    //             {
-    //                 case None:
-    //                     throw new Exception('Unable to find breakpoint with ID $_id');
-    //                 case Some(breakpoint):
-    //                     breakpoints.onBreakpointHit.notify(new BreakpointHit(breakpoint, _thread));
-    //             }
-    //         case _:
-    //             //
-    //     }
-    // }
 }
