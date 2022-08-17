@@ -1,5 +1,8 @@
 package hxcppdbg.core.sourcemap;
 
+import hx.files.Path;
+import hxjsonast.Json;
+
 using Lambda;
 
 @:structInit class Sourcemap
@@ -26,13 +29,26 @@ using Lambda;
 
 @:structInit class GeneratedFile
 {
-    public final cpp : String;
+    @:jcustomparse(hxcppdbg.core.sourcemap.Sourcemap.GeneratedFile.parsePath)
+    public final cpp : Path;
 
-    public final haxe : String;
+    @:jcustomparse(hxcppdbg.core.sourcemap.Sourcemap.GeneratedFile.parsePath)
+    public final haxe : Path;
 
     public final type : String;
 
     public final functions : Array<Function>;
+
+    public static function parsePath(_val : Json, _name : String) : Path
+    {
+        return switch _val.value
+        {
+            case JString(s):
+                Path.of(s).normalize();
+            case _:
+                null;
+        }
+    }
 }
 
 @:structInit class GeneratedType

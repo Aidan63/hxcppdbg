@@ -163,7 +163,7 @@ class Hxcppdbg
                 
                                 final minLine = Std.int(Math.max(1, bp.line - 3)) - 1;
                                 final maxLine = bp.line + 3;
-                                final input   = sys.io.File.read(bp.file, false);
+                                final input   = bp.file.toFile().openInput(false);
                 
                                 // Read all lines up until the ones we're actually interested in.
                                 var i = 0;
@@ -228,7 +228,7 @@ class Hxcppdbg
             
                                     final minLine = Std.int(Math.max(1, exnLine - 3)) - 1;
                                     final maxLine = exnLine + 3;
-                                    final input   = sys.io.File.read(exnFile, false);
+                                    final input   = exnFile.toFile().openInput(false);
             
                                     // Read all lines up until the ones we're actually interested in.
                                     var i = 0;

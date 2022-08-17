@@ -1,12 +1,13 @@
 package hxcppdbg.core.breakpoints;
 
+import hx.files.Path;
 import hxcppdbg.core.sourcemap.Sourcemap.ExprMap;
 
 class Breakpoint
 {
     public final id : Int;
 
-    public final file : String;
+    public final file : Path;
 
     public final line : Int;
 

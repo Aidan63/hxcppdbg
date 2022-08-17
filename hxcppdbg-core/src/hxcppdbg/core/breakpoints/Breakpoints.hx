@@ -1,5 +1,6 @@
 package hxcppdbg.core.breakpoints;
 
+import hx.files.Path;
 import haxe.Exception;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Signal;
@@ -9,6 +10,7 @@ import hxcppdbg.core.drivers.IBreakpoints;
 
 using Lambda;
 using StringTools;
+using hxcppdbg.core.utils.PathUtils;
 
 class Breakpoints
 {
@@ -25,9 +27,9 @@ class Breakpoints
         active    = [];
     }
 
-    public function create(_hxFile, _hxLine, _hxChar, _callback : Result<Breakpoint, Exception>->Void)
+    public function create(_hxFile : Path, _hxLine, _hxChar, _callback : Result<Breakpoint, Exception>->Void)
     {
-        switch sourcemap.files.find(f -> f.haxe.endsWith(_hxFile))
+        switch sourcemap.files.find(f -> f.haxe.matches(_hxFile))
         {
             case null:
                 _callback(Result.Error(new Exception('Unable to find file in sourcemap with name $_hxFile')));
@@ -35,7 +37,7 @@ class Breakpoints
                 switch findExpr(file, _hxLine, _hxChar)
                 {
                     case Success(mapping):
-                        driver.create(file.cpp, mapping.cpp, result -> {
+                        driver.create(file.cpp.toString(), mapping.cpp, result -> {
                             switch result
                             {
                                 case Success(id):

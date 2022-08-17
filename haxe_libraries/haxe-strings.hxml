@@ -1,0 +1,5 @@
+# @install: lix --silent download "haxelib:/haxe-strings#7.0.2" into haxe-strings/7.0.2/haxelib
+-cp ${HAXE_LIBCACHE}/haxe-strings/7.0.2/haxelib/src/
+-D haxe-strings=7.0.2
+--macro hx.strings.internal.Macros.addDefines()
+--macro hx.strings.internal.Macros.configureNullSafety()

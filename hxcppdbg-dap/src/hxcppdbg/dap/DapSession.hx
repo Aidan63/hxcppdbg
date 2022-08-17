@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import hx.files.Path;
 import hxcppdbg.dap.protocol.Breakpoint;
 import hxcppdbg.dap.protocol.SetBreakpointsRequest;
 import hxcppdbg.core.StepType;
@@ -7,8 +8,6 @@ import hxcppdbg.dap.protocol.Event;
 import hxcppdbg.dap.protocol.StackFrame;
 import hxcppdbg.dap.protocol.StackTraceRequest;
 import hxcppdbg.core.thread.NativeThread;
-import hxcppdbg.dap.protocol.PauseRequest;
-import hxcppdbg.dap.protocol.Response;
 import hxcppdbg.core.drivers.Interrupt;
 import hxcppdbg.dap.protocol.Request;
 import hxcppdbg.dap.protocol.ProtocolMessage;
@@ -32,6 +31,7 @@ import haxe.io.Bytes;
 
 using Lambda;
 using StringTools;
+using hxcppdbg.core.utils.PathUtils;
 
 class DapSession
 {
@@ -409,12 +409,12 @@ class DapSession
                         presentationHint: Normal,
                         source : {
                             name : haxe.func.name,
-                            path : haxe.file.haxe
+                            path : haxe.file.haxe.toString()
                         },
                         sources : [
                             {
                                 name : native.func,
-                                path : native.file
+                                path : native.file.toString()
                             }
                         ]
                     }
@@ -427,7 +427,7 @@ class DapSession
                         presentationHint : Subtle,
                         source : {
                             name : native.func,
-                            path : native.file
+                            path : native.file.toString()
                         }
                     }
             }
@@ -498,7 +498,7 @@ class DapSession
                 Promise
                     .inSequence(
                         _existing
-                            .filter(bp -> bp.file.endsWith(_request.arguments.source.name))
+                            .filter(bp -> bp.file.matches(Path.of(_request.arguments.source.path)))
                             .map(bp -> promiseForBreakpointRemoval(_session, bp)))
                     .next(_ -> (null : Noise));
         }
@@ -510,7 +510,7 @@ class DapSession
                     .inSequence(
                         _request.arguments.breakpoints.map(bp -> {
                             return
-                                promiseForBreakpointCreation(_session, _request.arguments.source.name, bp.line, if (bp.column == null) 0 else bp.column)
+                                promiseForBreakpointCreation(_session, Path.of(_request.arguments.source.path), bp.line, if (bp.column == null) 0 else bp.column)
                                     .flatMap(outcome -> {
                                         return Promise.resolve(switch outcome
                                         {
@@ -737,7 +737,7 @@ class DapSession
                 });
     }
 
-    static function promiseForBreakpointCreation(_session : Session, _file : String, _line : Int, _char : Int)
+    static function promiseForBreakpointCreation(_session : Session, _file : Path, _line : Int, _char : Int)
     {
         return
             Promise

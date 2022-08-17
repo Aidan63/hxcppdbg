@@ -1,0 +1,7 @@
+# @install: lix --silent download "haxelib:/haxe-files#4.0.0" into haxe-files/4.0.0/haxelib
+-lib haxe-concurrent
+-lib haxe-strings
+-cp ${HAXE_LIBCACHE}/haxe-files/4.0.0/haxelib/src/
+-D haxe-files=4.0.0
+--macro hx.files.internal.Macros.addDefines()
+--macro hx.files.internal.Macros.configureNullSafety()

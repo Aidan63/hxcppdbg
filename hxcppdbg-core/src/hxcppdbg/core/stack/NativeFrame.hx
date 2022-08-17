@@ -1,5 +1,7 @@
 package hxcppdbg.core.stack;
 
+import hx.files.Path;
+
 /**
  * Driver agnostic native frame representation.
  */
@@ -8,7 +10,7 @@ class NativeFrame
     /**
      * Absolute path to the file which contains this frames function.
      */
-    public final file : String;
+    public final file : Path;
 
     /**
      * Fully qualified type path of the c++ function of this frame.

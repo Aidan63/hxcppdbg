@@ -1,5 +1,6 @@
 package hxcppdbg.cli;
 
+import hx.files.Path;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
@@ -61,7 +62,7 @@ class Add
     @:defaultCommand public function run()
     {
         return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            driver.create(file, line, char, result -> {
+            driver.create(Path.of(file).normalize(), line, char, result -> {
                 switch result
                 {
                     case Success(bp):
