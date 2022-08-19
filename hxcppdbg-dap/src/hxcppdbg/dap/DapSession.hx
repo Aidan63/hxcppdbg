@@ -1,5 +1,10 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.model.Model;
+import hxcppdbg.dap.protocol.ScopesRequest;
+import hxcppdbg.dap.protocol.VariablesRequest;
+import hxcppdbg.core.locals.LocalVariable;
 import hxcppdbg.core.ds.Path;
 import hxcppdbg.dap.protocol.Breakpoint;
 import hxcppdbg.dap.protocol.SetBreakpointsRequest;
@@ -42,6 +47,8 @@ class DapSession
 
     final buffer : InputBuffer;
 
+    var variables : VariableCache;
+
     var outSequence : Int;
 
     var session : Option<Session>;
@@ -50,10 +57,10 @@ class DapSession
 
     public function new(_input, _output, _close)
     {
-        input              = _input;
-        output             = _output;
-        close              = _close;
-        buffer             = new InputBuffer();
+        input        = _input;
+        output       = _output;
+        close        = _close;
+        buffer       = new InputBuffer();
 
         outSequence = 1;
         session     = Option.None;
@@ -225,7 +232,11 @@ class DapSession
                 onStackTrace(cast _request)
                     .flatMap(sendResponse);
             case 'scopes':
-                sendResponse(tink.core.Outcome.Success({ scopes : [] }));
+                onScopes(cast _request)
+                    .flatMap(sendResponse);
+            case 'variables':
+                onVariables(cast _request)
+                    .flatMap(sendResponse);
             case 'disconnect':
                 onDisconnect()
                     .flatMap(sendResponse)
@@ -575,6 +586,53 @@ class DapSession
                 });
     }
 
+    function onScopes(_request : ScopesRequest)
+    {
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch session
+                    {
+                        case Some(s):
+                            final frameId = (cast _request.arguments.frameId : FrameId);
+            
+                            s.locals.getLocals(frameId.thread, frameId.number, result -> {
+                                switch result
+                                {
+                                    case Result.Success(locals):
+                                        _resolve({
+                                            scopes : [
+                                                {
+                                                    name               : 'locals',
+                                                    variablesReference : variables.insert(locals),
+                                                    expensive          : false
+                                                }
+                                            ]
+                                        });
+                                    case Result.Error(exn):
+                                        _reject(errorFromException(exn));
+                                }
+                            });
+                        case None:
+                    }
+                });
+    }
+
+    function onVariables(_request : VariablesRequest)
+    {
+        return
+            Promise
+                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+                    switch variables.get(_request.arguments.variablesReference)
+                    {
+                        case Some(v):
+                            _resolve({ variables : v });
+                        case None:
+                            _reject(new Error('no variables for reference ${ _request.arguments.variablesReference }'));
+                    }
+                });
+    }
+
     // #endregion
 
     function onMessagesProcessed(_result : Array<Outcome<Noise, Error>>)
@@ -654,6 +712,8 @@ class DapSession
 
     function interruptOptionToEvent(_interrupt : Option<Interrupt>, _reason : String, _threadId : Null<Int>)
     {
+        variables = new VariableCache();
+
         return
             switch _interrupt
             {
