@@ -617,6 +617,8 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 								{
 									if (event.Id == stepOutBreakpointId)
 									{
+										stepOutBreakpointId = DEBUG_ANY_ID;
+
 										return WaitResult_obj::Complete;
 									}
 									else
