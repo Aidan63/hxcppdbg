@@ -1,6 +1,6 @@
 package hxcppdbg.cli;
 
-import hx.files.Path;
+import hxcppdbg.core.ds.Path;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;

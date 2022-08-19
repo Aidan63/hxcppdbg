@@ -71,8 +71,8 @@
 #include <hxcppdbg/core/sourcemap/GeneratedType.h>
 #endif
 
-#ifndef INCLUDED_hx_files_Path
-#include <hx/files/Path.h>
+#ifndef INCLUDED_haxe_io_Path
+#include <haxe/io/Path.h>
 #endif
 
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
@@ -246,7 +246,7 @@ hxcppdbg::core::drivers::dbgeng::NativeFrameReturn hxcppdbg::core::drivers::dbge
 	auto file = String::create(fileBuffer.data(), fileLength - 1);
 	auto name = cleanSymbolName(std::wstring(nameBuffer.data(), nameLength - 1));
 
-	return hxcppdbg::core::drivers::dbgeng::NativeFrameReturn_obj::__new(hxcppdbg::core::stack::NativeFrame_obj::__new(hx::files::Path_obj::of(file, null())->normalize(), name, line), address);
+	return hxcppdbg::core::drivers::dbgeng::NativeFrameReturn_obj::__new(hxcppdbg::core::stack::NativeFrame_obj::__new(haxe::io::Path_obj::__new(haxe::io::Path_obj::normalize(file)), name, line), address);
 }
 
 String hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::cleanSymbolName(std::wstring _input)

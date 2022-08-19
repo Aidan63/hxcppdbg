@@ -5,7 +5,6 @@
 -L json2object
 -L hscript
 -L hxcpp_luv
--L haxe-files
 -D HXCPP_M64
 -D HX_WINDOWS
 --cpp hxcppdbg-cli/bin/windows

@@ -1,6 +1,6 @@
 package hxcppdbg.core.stack;
 
-import hx.files.Path;
+import hxcppdbg.core.ds.Path;
 
 /**
  * Driver agnostic native frame representation.

@@ -1,6 +1,6 @@
 package hxcppdbg.core.breakpoints;
 
-import hx.files.Path;
+import hxcppdbg.core.ds.Path;
 import haxe.Exception;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Signal;
@@ -10,7 +10,6 @@ import hxcppdbg.core.drivers.IBreakpoints;
 
 using Lambda;
 using StringTools;
-using hxcppdbg.core.utils.PathUtils;
 
 class Breakpoints
 {

@@ -1,6 +1,6 @@
 package hxcppdbg.core.sourcemap;
 
-import hx.files.Path;
+import hxcppdbg.core.ds.Path;
 import hxjsonast.Json;
 
 using Lambda;
@@ -44,7 +44,7 @@ using Lambda;
         return switch _val.value
         {
             case JString(s):
-                Path.of(s).normalize();
+                Path.of(s);
             case _:
                 null;
         }

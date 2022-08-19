@@ -1,6 +1,6 @@
 package hxcppdbg.core.breakpoints;
 
-import hx.files.Path;
+import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.sourcemap.Sourcemap.ExprMap;
 
 class Breakpoint

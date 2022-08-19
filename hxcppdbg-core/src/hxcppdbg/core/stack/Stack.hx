@@ -1,7 +1,7 @@
 package hxcppdbg.core.stack;
 
 import haxe.Exception;
-import hx.files.Path;
+import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.IStack;
@@ -9,7 +9,6 @@ import hxcppdbg.core.drivers.IStack;
 using Lambda;
 using StringTools;
 using hxcppdbg.core.utils.ResultUtils;
-using hxcppdbg.core.utils.PathUtils;
 
 class Stack
 {

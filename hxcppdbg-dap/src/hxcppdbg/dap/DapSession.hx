@@ -1,6 +1,6 @@
 package hxcppdbg.dap;
 
-import hx.files.Path;
+import hxcppdbg.core.ds.Path;
 import hxcppdbg.dap.protocol.Breakpoint;
 import hxcppdbg.dap.protocol.SetBreakpointsRequest;
 import hxcppdbg.core.StepType;
@@ -31,7 +31,6 @@ import haxe.io.Bytes;
 
 using Lambda;
 using StringTools;
-using hxcppdbg.core.utils.PathUtils;
 
 class DapSession
 {

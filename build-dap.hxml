@@ -6,7 +6,6 @@
 -L hscript
 -L hxcpp_luv
 -L hxrx
--L haxe-files
 -D HXCPP_M64
 -D HX_WINDOWS
 --cpp hxcppdbg-dap/bin/windows
