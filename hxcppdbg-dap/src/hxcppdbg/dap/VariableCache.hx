@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 import haxe.ds.Option;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.model.ModelData;
@@ -143,13 +144,13 @@ class VariableCache
             case MArray(_), MMap(_):
                 '[]';
             case MEnum(type, constructor, arguments):
-                '$type.$constructor';
+                '${ printType(type) }.$constructor';
             case MDynamic(inner):
                 dataAsValue(inner);
             case MAnon(fields):
                 '{}';
             case MClass(type, fields):
-                '{}';
+                printType(type);
             case MUnknown(type):
                 'unknown';
         }
@@ -174,15 +175,27 @@ class VariableCache
             case MMap(_):
                 'Map<?, ?>';
             case MEnum(type, _, _):
-                type.name;
+                printType(type);
             case MDynamic(inner):
                 'Dynamic';
             case MAnon(fields):
                 '{}';
             case MClass(type, _):
-                type.name;
+                printType(type);
             case MUnknown(type):
                 type;
+        }
+    }
+
+    static function printType(_type : GeneratedType)
+    {
+        return if (_type.module != _type.name)
+        {
+            '${ _type.pack.join('.') }.${ _type.module }.${ _type.name }';
+        }
+        else
+        {
+            '${ _type.pack.join('.') }.${ _type.name }';
         }
     }
 }
