@@ -22,10 +22,7 @@ class VariableCache
 
     public function insert(_locals : Array<LocalVariable>)
     {
-        return addModels(_locals.map(l -> switch l {
-            case Native(_model): _model;
-            case Haxe(_model): _model;
-        }));
+        return addModels(_locals.map(localToModel));
     }
 
     public function get(_id : Int) : Option<Array<Variable>>
@@ -83,6 +80,17 @@ class VariableCache
         return addModels(_data.mapi((i, d) -> new Model(MInt(i), d)));
     }
 
+    static function localToModel(_local : LocalVariable)
+    {
+        return switch _local
+        {
+            case Native(_model):
+                _model;
+            case Haxe(_model):
+                _model;
+        }
+    }
+
     function modelToVariable(_model : Model) : Variable
     {
         final children = switch process(_model.data)
@@ -101,7 +109,7 @@ class VariableCache
         }
     }
 
-    function keyAsName(_data : ModelData)
+    static function keyAsName(_data : ModelData)
     {
         return switch _data
         {
@@ -118,7 +126,7 @@ class VariableCache
         }
     }
 
-    function dataAsValue(_data : ModelData)
+    static function dataAsValue(_data : ModelData)
     {
         return switch _data
         {
@@ -147,7 +155,7 @@ class VariableCache
         }
     }
 
-    function dataType(_data : ModelData)
+    static function dataType(_data : ModelData)
     {
         return switch _data
         {
