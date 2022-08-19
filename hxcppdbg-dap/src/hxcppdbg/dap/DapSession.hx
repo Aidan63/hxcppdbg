@@ -200,7 +200,7 @@ class DapSession
         return switch _request.command
         {
             case 'initialize':
-                sendResponse(tink.core.Outcome.Success({ supportsConfigurationDoneRequest : true }))
+                sendResponse(tink.core.Outcome.Success({ supportsConfigurationDoneRequest : true, supportsVariableType : true }))
                     .flatMap(sendInitialisedEvent);
             case 'setExceptionBreakpoints':
                 sendResponse(tink.core.Outcome.Success({ filters : [] }));
