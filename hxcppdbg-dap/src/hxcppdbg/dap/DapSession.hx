@@ -690,7 +690,7 @@ class DapSession
                         event : 'stopped',
                         body  : {
                             reason            : 'breakpoint',
-                            description       : 'Paused on exception',
+                            description       : 'Paused on breakpoint',
                             allThreadsStopped : true,
                             threadId          : threadIndex,
                             hitBreakpointsIds : [ id ],
