@@ -160,11 +160,11 @@ class Hxcppdbg
                         {
                             case Some(bp):
                                 Sys.println('Thread ${ idx } hit breakpoint ${ bp.id } at ${ bp.file } Line ${ bp.line }');
-                
+
                                 final minLine = Std.int(Math.max(1, bp.line - 3)) - 1;
                                 final maxLine = bp.line + 3;
-                                final input   = bp.file.toFile().openInput(false);
-                
+                                final input   = sys.io.File.read(bp.file.toString(), false);
+
                                 // Read all lines up until the ones we're actually interested in.
                                 var i = 0;
                                 while (i < minLine)
@@ -223,12 +223,12 @@ class Hxcppdbg
                                 case Haxe(haxe, _):
                                     final exnFile = haxe.file.haxe;
                                     final exnLine = haxe.expr.haxe.start.line;
-            
+
                                     Sys.println('Thread $idx has thrown an exception at $exnFile Line $exnLine');
-            
+
                                     final minLine = Std.int(Math.max(1, exnLine - 3)) - 1;
                                     final maxLine = exnLine + 3;
-                                    final input   = exnFile.toFile().openInput(false);
+                                    final input   = sys.io.File.read(exnFile.toString(), false);
             
                                     // Read all lines up until the ones we're actually interested in.
                                     var i = 0;

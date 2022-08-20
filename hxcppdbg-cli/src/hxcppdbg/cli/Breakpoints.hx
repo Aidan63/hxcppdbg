@@ -62,7 +62,7 @@ class Add
     @:defaultCommand public function run()
     {
         return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            driver.create(Path.of(file).normalize(), line, char, result -> {
+            driver.create(Path.of(file), line, char, result -> {
                 switch result
                 {
                     case Success(bp):
