@@ -4,12 +4,10 @@ class Main {
 			.load('test')
 			.subscribe(() -> {
 				final f = (i) -> {
-					trace(i);
+					sys.io.File.read('does_not_exist.txt');
 				}
 
 				f(7);
-
-				trace('callback');
 
 				while (true)
 				{
