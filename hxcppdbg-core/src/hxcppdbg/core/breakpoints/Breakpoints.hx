@@ -28,19 +28,19 @@ class Breakpoints
 
     public function create(_hxFile : Path, _hxLine, _hxChar, _callback : Result<Breakpoint, Exception>->Void)
     {
-        switch sourcemap.files.find(f -> f.haxe.matches(_hxFile))
+        switch sourcemap.files.filter(f -> f.haxe.matches(_hxFile))
         {
-            case null:
+            case []:
                 _callback(Result.Error(new Exception('Unable to find file in sourcemap with name $_hxFile')));
-            case file:
-                switch findExpr(file, _hxLine, _hxChar)
+            case files:
+                switch findExpr(files, _hxLine, _hxChar)
                 {
-                    case Success(mapping):
-                        driver.create(file.cpp.toString(), mapping.cpp, result -> {
+                    case Success(found):
+                        driver.create(found.cpp.toString(), found.expr.cpp, result -> {
                             switch result
                             {
                                 case Success(id):
-                                    _callback(Result.Success(active[id] = new Breakpoint(id, file.haxe, mapping.haxe.start.line, _hxChar, mapping)));
+                                    _callback(Result.Success(active[id] = new Breakpoint(id, found.haxe, found.expr.haxe.start.line, _hxChar, found.expr)));
                                 case Error(exn):
                                     _callback(Result.Error(new Exception('Unable to set breakpoint', exn)));
                             }
@@ -72,42 +72,46 @@ class Breakpoints
         return active.array();
     }
 
-    function findExpr(_file : GeneratedFile, _hxLine : Int, _hxChar : Int)
+    function findExpr(_files : Array<GeneratedFile>, _hxLine : Int, _hxChar : Int)
     {
         final collected = [];
 
-        for (func in _file.functions)
+        for (file in _files)
         {
-            for (closure in func.closures)
+            for (func in file.functions)
             {
-                for (e in closure.exprs.filter(expr -> _hxLine >= expr.haxe.start.line && _hxLine <= expr.haxe.end.line))
+                for (closure in func.closures)
+                {
+                    for (e in closure.exprs.filter(expr -> _hxLine >= expr.haxe.start.line && _hxLine <= expr.haxe.end.line))
+                    {
+                        collected.push(e);
+                    }
+                }
+    
+                for (e in func.exprs.filter(expr -> _hxLine >= expr.haxe.start.line && _hxLine <= expr.haxe.end.line))
                 {
                     collected.push(e);
                 }
             }
 
-            for (e in func.exprs.filter(expr -> _hxLine >= expr.haxe.start.line && _hxLine <= expr.haxe.end.line))
+            // I don't think there should ever be a situation where there are valid expressions in two different classes.
+            // So if we have any collected expressions we can exit early.
+            if (collected.length > 0)
             {
-                collected.push(e);
+                // Sort so we can find the most specific expression at the top of the array.
+                collected.sort((e1, e2) -> (e1.haxe.end.line - e1.haxe.start.line) - (e2.haxe.end.line - e2.haxe.start.line));
+
+                return switch findInnerExpr(collected, _hxChar)
+                {
+                    case Some(expr):
+                        Success(new ExprSearchResult(expr, file.haxe, file.cpp));
+                    case None:
+                        Error(new Exception('Unable to map ${ _files[0].haxe }:$_hxLine:$_hxChar'));
+                }
             }
         }
 
-        return switch collected
-        {
-            case []:
-                Error(new Exception('Unable to map ${ _file.haxe }:$_hxLine'));
-            case exprs:
-                // Sort so we can find the most specific expression at the top of the array.
-                exprs.sort((e1, e2) -> (e1.haxe.end.line - e1.haxe.start.line) - (e2.haxe.end.line - e2.haxe.start.line));
-
-                switch findInnerExpr(exprs, _hxChar)
-                {
-                    case Some(expr):
-                        Success(expr);
-                    case None:
-                        Error(new Exception('Unable to map ${ _file.haxe }:$_hxLine:$_hxChar'));
-                }
-        }
+        return Error(new Exception('Unable to map ${ _files[0].haxe }:$_hxLine'));
     }
 
     function findInnerExpr(_exprs : Array<ExprMap>, _hxChar : Int)
@@ -127,5 +131,21 @@ class Breakpoints
                     Option.Some(filtered[filtered.length - 1]);
             }
         }
+    }
+}
+
+private class ExprSearchResult
+{
+    public final expr : ExprMap;
+
+    public final haxe : Path;
+
+    public final cpp : Path;
+
+    public function new(_expr, _haxe, _cpp)
+    {
+        expr = _expr;
+        haxe = _haxe;
+        cpp  = _cpp;
     }
 }
