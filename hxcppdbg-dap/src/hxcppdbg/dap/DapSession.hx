@@ -84,8 +84,6 @@ class DapSession
         switch _result
         {
             case Success(data):
-                Sys.println('RAW : ${ data.toString() }');
-
                 Future
                     .inSequence(buffer.append(data).map(makeMessage))
                     .handle(onMessagesProcessed);
