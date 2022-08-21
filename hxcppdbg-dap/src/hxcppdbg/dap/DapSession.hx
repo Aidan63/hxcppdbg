@@ -739,7 +739,7 @@ class DapSession
                             reason            : 'exception',
                             description       : 'Paused on exception',
                             allThreadsStopped : true,
-                            threadId          : threadIndex,
+                            threadId          : idOrNull(threadIndex),
                             preserveFocusHint : false
                         }
                     });
@@ -752,8 +752,8 @@ class DapSession
                             reason            : 'breakpoint',
                             description       : 'Paused on breakpoint',
                             allThreadsStopped : true,
-                            threadId          : threadIndex,
-                            hitBreakpointsIds : [ id ],
+                            threadId          : idOrNull(threadIndex),
+                            hitBreakpointsIds : [ idOrNull(id) ],
                             preserveFocusHint : false
                         }
                     });
@@ -765,6 +765,17 @@ class DapSession
     function nextOutSequence()
     {
         return outSequence++;
+    }
+
+    static function idOrNull(_option : Option<Int>)
+    {
+        return switch _option
+        {
+            case Some(v):
+                v;
+            case None:
+                null;
+        }
     }
 
     static function breakpointToProtocolBreakpoint(_breakpoint : hxcppdbg.core.breakpoints.Breakpoint) : Breakpoint
