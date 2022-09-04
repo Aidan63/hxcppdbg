@@ -79,12 +79,20 @@ class LLDBDriver extends Driver
         ctx.ptr.interrupt(1);
 
         dbgThread.events.run(() -> {
-            final onSuccess = () -> cbThread.events.run(() -> _callback(Result.Success(true)));
-            final onFailure = str -> cbThread.events.run(() -> _callback(Result.Error(new Exception(str))));
-
-            if (ctx.ptr.suspend(onSuccess, onFailure))
+            try
             {
-                cbThread.events.run(() -> _callback(Result.Success(false)));
+                if (ctx.ptr.suspend(onSuccess, onFailure))
+                {
+                    cbThread.events.run(() -> _callback(Result.Success(false)));
+                }
+                else
+                {
+                    cbThread.events.run(() -> _callback(Result.Success(true)));
+                }
+            }
+            catch (error : String)
+            {
+                cbThread.events.run(() -> _callback(Result.Error(new Exception(error))));
             }
         });
     }

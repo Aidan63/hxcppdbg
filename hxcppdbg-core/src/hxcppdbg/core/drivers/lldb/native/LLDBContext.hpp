@@ -31,7 +31,7 @@ namespace hxcppdbg::core::drivers::lldb::native
 
         void wait(Dynamic, Dynamic, Dynamic, Dynamic);
         void interrupt(int);
-        bool suspend(Dynamic, Dynamic);
+        bool suspend();
 
         void start(String);
         void stop();

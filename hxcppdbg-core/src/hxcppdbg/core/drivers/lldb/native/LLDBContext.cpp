@@ -139,7 +139,7 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::interrupt(int _event)
     interruptBroadcaster.BroadcastEventByType(static_cast<InterruptEvent>(_event));
 }
 
-bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend(Dynamic _onSuccess, Dynamic _onFailure)
+bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
 {
     switch (process->GetState())
     {
@@ -150,13 +150,9 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend(Dynamic _onSucc
                 auto error = process->Stop();
                 if (error.Fail())
                 {
-                    _onFailure(String::create(error.GetCString()));
+                    hx::Throw(String::create(error.GetCString()));
                 }
-                else
-                {
-                    _onSuccess();
-                }
-
+                
                 return false;
             }
     }
