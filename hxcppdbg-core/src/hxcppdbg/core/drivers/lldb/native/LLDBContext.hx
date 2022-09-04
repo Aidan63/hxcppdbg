@@ -11,6 +11,8 @@ extern class LLDBContext
 
     function start(_cwd : String) : Void;
 
+    function resume() : Void;
+
     function wait(_onException : Int->Void, _onBreakpoint : Int->Void, _onInterrupt : Void->Void, _onBreak : Void->Void) : Void;
 
     function interrupt(_v : Int) : Void;

@@ -99,7 +99,18 @@ class LLDBDriver extends Driver
 
 	public function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
     {
-        throw new NotImplementedException();
+        dbgThread.events.run(() -> {
+            try
+            {
+                ctx.ptr.resume();
+
+                cbThread.events.run(() -> _callback(Result.Success(run)));
+            }
+            catch (error : String)
+            {
+                cbThread.events.run(() -> _callback(Result.Error(new Exception(error))));
+            }
+        });
     }
 
 	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void

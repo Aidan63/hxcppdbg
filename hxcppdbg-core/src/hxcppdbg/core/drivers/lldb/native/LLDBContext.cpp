@@ -181,7 +181,21 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::stop()
 
 void hxcppdbg::core::drivers::lldb::native::LLDBContext::resume()
 {
-    //
+    switch (process->GetState())
+    {
+        case ::lldb::eStateStopped:
+            {
+                auto error = process->Continue();
+                if (error.Fail())
+                {
+                    hx::Throw(String::create(error.GetCString()));
+                }
+
+                break;
+            }
+        default:
+            hx::Throw(HX_CSTRING("Process is not resumable"));
+    }
 }
 
 void hxcppdbg::core::drivers::lldb::native::LLDBContext::step()
