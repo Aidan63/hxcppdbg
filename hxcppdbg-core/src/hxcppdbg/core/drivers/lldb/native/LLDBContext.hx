@@ -17,5 +17,5 @@ extern class LLDBContext
 
     function interrupt(_v : Int) : Void;
 
-    function suspend(_onSuccess : Void->Void, _onFailure : String->Void) : Bool;
+    function suspend() : Bool;
 }
