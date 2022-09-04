@@ -1,61 +1,129 @@
 package hxcppdbg.core.drivers.lldb;
 
-import haxe.ds.Option;
+import sys.thread.Thread;
+import sys.thread.EventLoop.EventHandler;
+import hxcppdbg.core.ds.Result;
 import haxe.Exception;
+import haxe.ds.Option;
+import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.drivers.lldb.native.LLDBBoot;
-import hxcppdbg.core.drivers.lldb.native.LLDBProcess;
-import hxcppdbg.core.drivers.lldb.native.LLDBObjects;
+import hxcppdbg.core.drivers.lldb.native.LLDBContext;
 
 using hxcppdbg.core.utils.ResultUtils;
 
 class LLDBDriver extends Driver
 {
-    final objects : LLDBObjects;
+    var ctx : cpp.Pointer<LLDBContext>;
 
-    final process : LLDBProcess;
+    var heartbeat : Null<EventHandler>;
+
+    final cbThread : Thread;
+
+	final dbgThread : Thread;
+
+    // final objects : LLDBObjects;
+
+    // final process : LLDBProcess;
 
     public function new(_file)
     {
-        LLDBBoot.boot();
+        // LLDBBoot.boot();
 
-        objects     = LLDBObjects.createFromFile(_file).resultOrThrow();
-        process     = objects.launch();
-        breakpoints = new LLDBBreakpoints(objects);
-        stack       = new LLDBStack(process);
-        locals      = new LLDBLocals(process);
+        ctx       = null;
+        heartbeat = null;
+        cbThread  = Thread.current();
+        dbgThread = Thread.createWithEventLoop(() -> {
+            LLDBBoot.boot();
+            LLDBContext.create(
+                _file,
+                _ptr -> {
+                    ctx = _ptr;
+                },
+                _err -> {
+                    throw new Exception(_err);
+                });
+
+            heartbeat = Thread.current().events.repeat(noop, 1000);
+        });
+
+        // objects     = LLDBObjects.createFromFile(_file).resultOrThrow();
+        // process     = objects.launch();
+        // breakpoints = new LLDBBreakpoints(objects);
+        // stack       = new LLDBStack(process);
+        // locals      = new LLDBLocals(process);
     }
 
-	public function start()
+	public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
     {
-        return process.start(Sys.getCwd());
+        dbgThread.events.run(() -> {
+            try
+            {
+                ctx.ptr.start(Sys.getCwd());
+    
+                cbThread.events.run(() -> _callback(Result.Success(run)));
+            }
+            catch (error : String)
+            {
+                cbThread.events.run(() -> _callback(Result.Error(new Exception(error))));
+            }
+        });
     }
 
-	public function stop()
+	public function stop(_callback : Option<Exception>->Void) : Void
     {
-        return Option.Some(new Exception(''));
+        throw new NotImplementedException();
     }
 
-    public function pause()
+    public function pause(_callback : Result<Bool, Exception>->Void) : Void
     {
-        return process.pause();
+        ctx.ptr.interrupt(1);
+
+        dbgThread.events.run(() -> {
+            final onSuccess = () -> cbThread.events.run(() -> _callback(Result.Success(true)));
+            final onFailure = str -> cbThread.events.run(() -> _callback(Result.Error(new Exception(str))));
+
+            if (ctx.ptr.suspend(onSuccess, onFailure))
+            {
+                cbThread.events.run(() -> _callback(Result.Success(false)));
+            }
+        });
     }
 
-	public function resume()
+	public function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
     {
-        return process.resume();
+        throw new NotImplementedException();
     }
 
-	public function step(_thread:Int, _type:StepType)
+	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
     {
-        return switch _type
-        {
-            case In:
-                process.stepIn(_thread);
-            case Over:
-                process.stepOver(_thread);
-            case Out:
-                process.stepOut(_thread);
-        }
+        throw new NotImplementedException();
+    }
+
+    function run(_callback : Result<Option<Interrupt>, Exception>->Void)
+    {
+        dbgThread.events.run(() -> {
+            ctx.ptr.wait(
+                exn -> {
+                    trace('exn');
+                },
+                bp -> {
+                    trace('bp');
+                },
+                () -> {
+                    cbThread.events.run(() -> {
+                        _callback(Result.Success(Option.Some(Interrupt.Other)));
+                    });
+                },
+                () -> {
+                    cbThread.events.run(() -> {
+                        _callback(Result.Success(Option.None));
+                    });
+                });
+        });
+    }
+
+    function noop()
+    {
+        //
     }
 }
-

@@ -1,25 +1,25 @@
 package hxcppdbg.core.drivers.lldb;
 
 import hxcppdbg.core.drivers.lldb.native.LLDBProcess;
-
-using StringTools;
+import haxe.Exception;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.stack.NativeFrame;
+import haxe.exceptions.NotImplementedException;
 
 class LLDBStack implements IStack
 {
-    final process : LLDBProcess;
-
-    public function new(_process)
+    public function new()
     {
-        process = _process;
+        //
     }
 
-	public function getCallStack(_thread)
+	public function getCallStack(_thread : Int, _result : Result<Array<NativeFrame>, Exception>->Void) : Void
     {
-		return process.getStackFrames(_thread);
+		throw new NotImplementedException();
 	}
 
-    public function getFrame(_thread:Int, _index:Int)
+    public function getFrame(_thread : Int, _index : Int, _result : Result<NativeFrame, Exception>->Void) : Void
     {
-		return process.getStackFrame(_thread, _index);
+		throw new NotImplementedException();
 	}
 }

@@ -1,23 +1,24 @@
 package hxcppdbg.core.drivers.lldb;
 
-import hxcppdbg.core.drivers.lldb.native.LLDBObjects;
+import haxe.exceptions.NotImplementedException;
+import haxe.Exception;
+import haxe.ds.Option;
+import hxcppdbg.core.ds.Result;
 
 class LLDBBreakpoints implements IBreakpoints
 {
-    final object : LLDBObjects;
-
-    public function new(_object)
+    public function new()
     {
-        object = _object;
+        //
     }
 
-	public function create(_file : String, _line : Int)
+	public function create(_file : String, _line : Int, _result : Result<Int, Exception>->Void) : Void
     {
-		return object.setBreakpoint(_file, _line);
+		throw new NotImplementedException();
 	}
 
-	public function remove(_id : Int)
+	public function remove(_id : Int, _result : Option<Exception>->Void) : Void
     {
-        return object.removeBreakpoint(_id);
+        throw new NotImplementedException();
     }
 }

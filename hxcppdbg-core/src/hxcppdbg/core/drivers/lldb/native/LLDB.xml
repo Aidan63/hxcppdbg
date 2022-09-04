@@ -10,11 +10,9 @@
     <files id='haxe'>
         <compilerflag value='-I${FmtDir}/include'/>
         <compilerflag value='-I${LLDBDir}'/>
-        <compilerflag value='-I/usr/lib/llvm-10/include/lldb/API'/>
+        <compilerflag value='-I/usr/lib/llvm-14/include/lldb/API'/>
         <file name='${LLDBDir}/LLDBBoot.cpp'/>
-        <file name='${LLDBDir}/LLDBObjects.cpp'/>
-        <file name='${LLDBDir}/LLDBProcess.cpp'/>
-        <file name='${LLDBDir}/TypeConverters.cpp'/>
+        <file name='${LLDBDir}/LLDBContext.cpp'/>
     </files>
 
     <target id='haxe'>

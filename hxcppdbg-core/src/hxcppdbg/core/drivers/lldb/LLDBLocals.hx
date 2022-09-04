@@ -1,26 +1,26 @@
 package hxcppdbg.core.drivers.lldb;
 
+import haxe.Exception;
+import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.Model;
+import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.drivers.lldb.native.LLDBProcess;
 
 class LLDBLocals implements ILocals
 {
-    final process : LLDBProcess;
-
-    public function new(_process)
+    public function new()
     {
-        process = _process;
+        //
     }
 
-	public function getVariables(_thread : Int, _frame : Int)
+	public function getVariables(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void) : Void
     {
-		return process.getStackVariables(_thread, _frame);
+		throw new NotImplementedException();
 	}
 
-	public function getArguments(_thread:Int, _frame:Int)
+	public function getArguments(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void) : Void
     {
-        process.getStackVariables(_thread, _frame);
-
-        return Result.Success([]);
+        throw new NotImplementedException();
     }
 }
