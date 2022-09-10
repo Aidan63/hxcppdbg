@@ -202,3 +202,20 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::step()
 {
     //
 }
+
+cpp::Int64Struct hxcppdbg::core::drivers::lldb::native::LLDBContext::createBreakpoint(String _file, int _line)
+{
+    auto bp = target.BreakpointCreateByLocation(_file.utf8_str(), _line);
+    if (!bp.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Unable to create breakpoint"));
+    }
+
+    return cpp::Int64Struct(bp.GetID());
+}
+
+bool hxcppdbg::core::drivers::lldb::native::LLDBContext::removeBreakpoint(cpp::Int64Struct _id)
+{
+    return target.BreakpointDelete(_id.get());
+}
+

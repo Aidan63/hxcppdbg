@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.lldb;
 
+import hxcppdbg.core.ds.Lazy;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
 import hxcppdbg.core.ds.Result;
@@ -46,9 +47,7 @@ class LLDBDriver extends Driver
             heartbeat = Thread.current().events.repeat(noop, 1000);
         });
 
-        // objects     = LLDBObjects.createFromFile(_file).resultOrThrow();
-        // process     = objects.launch();
-        // breakpoints = new LLDBBreakpoints(objects);
+        breakpoints = new LLDBBreakpoints(new Lazy(() -> ctx), dbgThread.events, cbThread.events);
         // stack       = new LLDBStack(process);
         // locals      = new LLDBLocals(process);
     }

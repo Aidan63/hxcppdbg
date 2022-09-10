@@ -18,4 +18,8 @@ extern class LLDBContext
     function interrupt(_v : Int) : Void;
 
     function suspend() : Bool;
+
+    function createBreakpoint(_file : String, _line : Int) : haxe.Int64;
+
+    function removeBreakpoint(_id : haxe.Int64) : Bool;
 }

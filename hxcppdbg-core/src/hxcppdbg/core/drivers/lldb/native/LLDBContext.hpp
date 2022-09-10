@@ -4,6 +4,8 @@
 #include <hxcpp.h>
 #endif
 
+#include <cpp/Int64.h>
+
 #include <optional>
 
 #include <SBEvent.h>
@@ -37,6 +39,9 @@ namespace hxcppdbg::core::drivers::lldb::native
         void stop();
         void resume();
         void step();
+
+        cpp::Int64Struct createBreakpoint(String, int);
+        bool removeBreakpoint(cpp::Int64Struct);
     private:
         ::lldb::SBDebugger debugger;
         ::lldb::SBTarget target;
