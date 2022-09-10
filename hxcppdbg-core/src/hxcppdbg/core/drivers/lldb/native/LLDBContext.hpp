@@ -42,6 +42,9 @@ namespace hxcppdbg::core::drivers::lldb::native
 
         cpp::Int64Struct createBreakpoint(String, int);
         bool removeBreakpoint(cpp::Int64Struct);
+
+        hx::Anon getStackFrame(int, int);
+        Array<hx::Anon> getStackFrames(int);
     private:
         ::lldb::SBDebugger debugger;
         ::lldb::SBTarget target;
@@ -51,5 +54,7 @@ namespace hxcppdbg::core::drivers::lldb::native
         std::optional<::lldb::SBProcess> process;
 
         LLDBContext(::lldb::SBDebugger, ::lldb::SBTarget);
+
+        bool endsWith(std::string const &, std::string const &);
     };
 }

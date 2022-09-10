@@ -1,6 +1,7 @@
 #include <hxcpp.h>
 #include "LLDBContext.hpp"
 #include <limits>
+#include "fmt/format.h"
 
 void hxcppdbg::core::drivers::lldb::native::LLDBContext::create(String _exe, Dynamic _success, Dynamic _failure)
 {
@@ -250,3 +251,125 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::removeBreakpoint(cpp::I
     return target.BreakpointDelete(_id.get());
 }
 
+hx::Anon hxcppdbg::core::drivers::lldb::native::LLDBContext::getStackFrame(int _threadIndex, int _frameIndex)
+{
+    if (!process.has_value())
+    {
+        hx::Throw(HX_CSTRING("Process has not started"));
+    }
+
+    auto thread = process.value().GetThreadAtIndex(_threadIndex);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Unable to get thread"));
+    }
+
+    auto frame = thread.GetFrameAtIndex(_frameIndex);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Unable to get frame"));
+    }
+
+    auto lineEntry  = frame.GetLineEntry();
+    auto fileSpec   = lineEntry.GetFileSpec();
+    auto lineNumber = lineEntry.GetLine();
+    auto directory  = fileSpec.GetDirectory();
+    auto filename   = fileSpec.GetFilename();
+    auto rawSymbol  = frame.GetFunctionName();
+
+    auto filePath   = String::create(directory == nullptr ? filename : fmt::format("{0}/{1}", directory, filename).c_str());
+
+    auto symbol        = std::string(frame.GetSymbol().GetName());
+    auto anonNamespace = std::string("(anonymous namespace)::");
+    auto buffer        = std::string();
+    auto skip          = false;
+    auto i             = 0;
+    auto code          = char{ 0 };
+
+    while (i < symbol.length())
+    {
+        switch (code = symbol.at(i))
+        {
+            case '(':
+                if (!endsWith(buffer, "operator"))
+                {
+                    if (symbol.substr(i, anonNamespace.length()) == anonNamespace)
+                    {
+                        i += anonNamespace.length();
+
+                        continue;
+                    }
+                    else
+                    {
+                        skip = true;
+                    }
+                }
+                else
+                {
+                    buffer.push_back(code);
+                }
+                break;
+            
+
+            case ')':
+                if (skip)
+                {
+                    skip = false;
+                }
+                else
+                {
+                    buffer.push_back(code);
+                }
+                break;
+
+            default:
+                if (!skip)
+                {
+                    buffer.push_back(code);
+                }
+        }
+
+        i++;
+    }
+
+    auto anon = new hx::Anon_obj();
+    anon->Add(HX_CSTRING("path"), filePath);
+    anon->Add(HX_CSTRING("symbol"), String::create(buffer.c_str(), buffer.length()));
+    anon->Add(HX_CSTRING("line"), lineNumber);
+
+    return hx::Anon(anon);
+}
+
+Array<hx::Anon> hxcppdbg::core::drivers::lldb::native::LLDBContext::getStackFrames(int _threadIndex)
+{
+    if (!process.has_value())
+    {
+        hx::Throw(HX_CSTRING("Process has not started"));
+    }
+
+    auto thread = process.value().GetThreadAtIndex(_threadIndex);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Unable to get thread"));
+    }
+
+    auto frames = Array<hx::Anon>(0, 0);
+    for (auto i = 0; i < thread.GetNumFrames(); i++)
+    {
+        frames->push(getStackFrame(_threadIndex, i));
+    }
+
+    return frames;
+}
+
+bool hxcppdbg::core::drivers::lldb::native::LLDBContext::endsWith(std::string const &_input, std::string const &_ending)
+{
+    if (_input.length() >= _ending.length())
+    {
+        return (0 == _input.compare(_input.length() - _ending.length(), _ending.length(), _ending));
+    }
+    else
+    {
+        return false;
+    }
+}

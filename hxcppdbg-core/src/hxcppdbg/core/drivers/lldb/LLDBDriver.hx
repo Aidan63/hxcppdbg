@@ -47,8 +47,10 @@ class LLDBDriver extends Driver
             heartbeat = Thread.current().events.repeat(noop, 1000);
         });
 
-        breakpoints = new LLDBBreakpoints(new Lazy(() -> ctx), dbgThread.events, cbThread.events);
-        // stack       = new LLDBStack(process);
+        final lazy = new Lazy(() -> ctx);
+
+        breakpoints = new LLDBBreakpoints(lazy, dbgThread.events, cbThread.events);
+        stack       = new LLDBStack(lazy, dbgThread.events, cbThread.events);
         // locals      = new LLDBLocals(process);
     }
 

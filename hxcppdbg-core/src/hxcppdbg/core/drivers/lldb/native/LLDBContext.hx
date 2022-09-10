@@ -1,5 +1,11 @@
 package hxcppdbg.core.drivers.lldb.native;
 
+typedef LLDBFrame = {
+    final path : String;
+    final line : Int;
+    final symbol : String;
+}
+
 @:keep
 @:structAccess
 @:include('LLDBContext.hpp')
@@ -22,4 +28,8 @@ extern class LLDBContext
     function createBreakpoint(_file : String, _line : Int) : haxe.Int64;
 
     function removeBreakpoint(_id : haxe.Int64) : Bool;
+
+    function getStackFrame(_threadIndex : Int, _frameIndex : Int) : LLDBFrame;
+
+    function getStackFrames(_threadIndex : Int) : Array<LLDBFrame>;
 }
