@@ -9,6 +9,7 @@ import haxe.ds.Option;
 import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.drivers.lldb.native.LLDBBoot;
 import hxcppdbg.core.drivers.lldb.native.LLDBContext;
+import hxcppdbg.core.drivers.lldb.native.LLDBContext.LLDBStepType;
 
 using hxcppdbg.core.utils.ResultUtils;
 
@@ -118,7 +119,26 @@ class LLDBDriver extends Driver
 
 	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
     {
-        throw new NotImplementedException();
+        dbgThread.events.run(() -> {
+            try
+            {
+                switch _type
+                {
+                    case In:
+                        ctx.ptr.step(_thread, LLDBStepType.In);
+                    case Over:
+                        ctx.ptr.step(_thread, LLDBStepType.Over);
+                    case Out:
+                        ctx.ptr.step(_thread, LLDBStepType.Out);
+                }
+
+                cbThread.events.run(() -> _callback(Result.Success(run)));
+            }
+            catch (error : String)
+            {
+                cbThread.events.run(() -> _callback(Result.Error(new Exception(error))));
+            }
+        });
     }
 
     function run(_callback : Result<Option<Interrupt>, Exception>->Void)

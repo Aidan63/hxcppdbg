@@ -6,6 +6,13 @@ typedef LLDBFrame = {
     final symbol : String;
 }
 
+enum abstract LLDBStepType(Int)
+{
+    var In;
+    var Over;
+    var Out;
+}
+
 @:keep
 @:structAccess
 @:include('LLDBContext.hpp')
@@ -32,4 +39,6 @@ extern class LLDBContext
     function getStackFrame(_threadIndex : Int, _frameIndex : Int) : LLDBFrame;
 
     function getStackFrames(_threadIndex : Int) : Array<LLDBFrame>;
+
+    function step(_threadIndex : Int, _step : LLDBStepType) : Void;
 }

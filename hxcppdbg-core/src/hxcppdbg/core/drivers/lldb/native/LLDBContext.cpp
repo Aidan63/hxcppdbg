@@ -100,8 +100,13 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                                         }
 
                                     case ::lldb::StopReason::eStopReasonPlanComplete:
-                                        //
-                                        break;
+                                        {
+                                            hx::ExitGCFreeZone();
+
+                                            _onBreak();
+
+                                            return;
+                                        }
                                 }
                             }
                             break;
@@ -137,7 +142,7 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                         {
                             hx::ExitGCFreeZone();
 
-                            _onBreak();
+                            _onInterrupt();
 
                             return;
                         }
@@ -230,9 +235,51 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::resume()
     }
 }
 
-void hxcppdbg::core::drivers::lldb::native::LLDBContext::step()
+void hxcppdbg::core::drivers::lldb::native::LLDBContext::step(int _threadIndex, int _type)
 {
-    //
+    if (!process.has_value())
+    {
+        hx::Throw(HX_CSTRING("Process has not started"));
+    }
+
+    auto thread = process.value().GetThreadAtIndex(_threadIndex);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Unable to get thread"));
+    }
+
+    switch (_type)
+    {
+        case 0:
+            {
+                hx::AutoGCFreeZone();
+
+                thread.StepInto();
+
+                break;
+            }
+
+        case 1:
+            {
+                hx::AutoGCFreeZone();
+
+                thread.StepOver();
+
+                break;
+            }
+
+        case 2:
+            {
+                hx::AutoGCFreeZone();
+
+                thread.StepOut();
+
+                break;
+            }
+
+        default:
+            hx::Throw(HX_CSTRING("Unknown step mode"));
+    }
 }
 
 cpp::Int64Struct hxcppdbg::core::drivers::lldb::native::LLDBContext::createBreakpoint(String _file, int _line)

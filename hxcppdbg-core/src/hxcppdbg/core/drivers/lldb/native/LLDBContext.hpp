@@ -38,7 +38,7 @@ namespace hxcppdbg::core::drivers::lldb::native
         void start(String);
         void stop();
         void resume();
-        void step();
+        void step(int, int);
 
         cpp::Int64Struct createBreakpoint(String, int);
         bool removeBreakpoint(cpp::Int64Struct);
