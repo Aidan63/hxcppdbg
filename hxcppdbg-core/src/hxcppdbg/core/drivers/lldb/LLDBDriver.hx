@@ -126,8 +126,10 @@ class LLDBDriver extends Driver
                 exn -> {
                     trace('exn');
                 },
-                bp -> {
-                    trace('bp');
+                (thread, bp) -> {
+                    cbThread.events.run(() -> {
+                        _callback(Result.Success(Option.Some(Interrupt.BreakpointHit(Option.Some(thread), Option.Some(bp.low)))));
+                    });
                 },
                 () -> {
                     cbThread.events.run(() -> {

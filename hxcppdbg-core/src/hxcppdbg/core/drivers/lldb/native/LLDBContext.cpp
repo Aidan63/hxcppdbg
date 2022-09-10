@@ -71,10 +71,18 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                                 switch (reason)
                                 {
                                     case ::lldb::StopReason::eStopReasonBreakpoint:
-                                        //
+                                        {
+                                            _onBreakpoint(i, cpp::Int64Struct(thread.GetStopReasonDataAtIndex(0)));
+
+                                            return;
+                                        }
                                         break;
 
                                     case ::lldb::StopReason::eStopReasonException:
+                                        //
+                                        break;
+
+                                    case ::lldb::StopReason::eStopReasonPlanComplete:
                                         //
                                         break;
                                 }

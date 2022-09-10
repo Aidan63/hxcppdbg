@@ -13,7 +13,7 @@ extern class LLDBContext
 
     function resume() : Void;
 
-    function wait(_onException : Int->Void, _onBreakpoint : Int->Void, _onInterrupt : Void->Void, _onBreak : Void->Void) : Void;
+    function wait(_onException : Int->Void, _onBreakpoint : (_threadIndex : Int, _breakpoint : haxe.Int64)->Void, _onInterrupt : Void->Void, _onBreak : Void->Void) : Void;
 
     function interrupt(_v : Int) : Void;
 
