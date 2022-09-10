@@ -1,0 +1,3 @@
+# @install: lix --silent download "git:https://github.com/Aidan63/hxcpp_luv_io#6a3d14df2ea686246672faa20b24cd6001480a8a" into hxcpp_luv_io/0.0.1/git/6a3d14df2ea686246672faa20b24cd6001480a8a
+-cp ${HAXE_LIBCACHE}/hxcpp_luv_io/0.0.1/git/6a3d14df2ea686246672faa20b24cd6001480a8a/src
+-D hxcpp_luv_io=0.0.1
