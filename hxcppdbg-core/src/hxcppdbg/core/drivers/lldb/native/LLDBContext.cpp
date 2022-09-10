@@ -44,6 +44,8 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
     auto event = ::lldb::SBEvent();
     auto done  = false;
 
+    hx::EnterGCFreeZone();
+
     while (!done)
     {
         if (listener.WaitForEvent(std::numeric_limits<uint32_t>::max(), event))
@@ -72,6 +74,8 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                                 {
                                     case ::lldb::StopReason::eStopReasonBreakpoint:
                                         {
+                                            hx::ExitGCFreeZone();
+
                                             _onBreakpoint(i, cpp::Int64Struct(thread.GetStopReasonDataAtIndex(0)));
 
                                             return;
@@ -113,6 +117,8 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                 {
                     case InterruptEvent::Pause:
                         {
+                            hx::ExitGCFreeZone();
+
                             _onBreak();
 
                             return;
