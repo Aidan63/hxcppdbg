@@ -47,6 +47,7 @@ namespace hxcppdbg::core::drivers::lldb::native
         ::lldb::SBTarget target;
         ::lldb::SBListener listener;
         ::lldb::SBBroadcaster interruptBroadcaster;
+        ::lldb::SBBreakpoint exceptionBreakpoint;
         std::optional<::lldb::SBProcess> process;
 
         LLDBContext(::lldb::SBDebugger, ::lldb::SBTarget);

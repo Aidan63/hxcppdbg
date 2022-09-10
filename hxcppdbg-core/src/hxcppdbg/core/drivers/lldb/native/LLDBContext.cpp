@@ -30,6 +30,7 @@ hxcppdbg::core::drivers::lldb::native::LLDBContext::LLDBContext(::lldb::SBDebugg
     , target(_target)
     , listener(_debugger.GetListener())
     , interruptBroadcaster(::lldb::SBBroadcaster("user-interrupt"))
+    , exceptionBreakpoint(target.BreakpointCreateForException(::lldb::eLanguageTypeC_plus_plus, false, true))
     , process(std::nullopt)
 {
     interruptBroadcaster.AddListener(listener, InterruptEvent::Pause);
@@ -76,15 +77,26 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                                         {
                                             hx::ExitGCFreeZone();
 
-                                            _onBreakpoint(i, cpp::Int64Struct(thread.GetStopReasonDataAtIndex(0)));
+                                            auto bp = thread.GetStopReasonDataAtIndex(0);
+                                            if (bp == exceptionBreakpoint.GetID())
+                                            {
+                                                _onException(i);
+                                            }
+                                            {
+                                                _onBreakpoint(i, cpp::Int64Struct(bp));
+                                            }
 
                                             return;
                                         }
-                                        break;
 
                                     case ::lldb::StopReason::eStopReasonException:
-                                        //
-                                        break;
+                                        {
+                                            hx::ExitGCFreeZone();
+
+                                            _onException(i);
+
+                                            return;
+                                        }
 
                                     case ::lldb::StopReason::eStopReasonPlanComplete:
                                         //
@@ -107,8 +119,13 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                         break;
 
                     case ::lldb::eStateExited:
-                        //
-                        break;
+                        {
+                            hx::ExitGCFreeZone();
+
+                            _onInterrupt();
+
+                            return;
+                        }
                 }
             }
             else if (event.BroadcasterMatchesRef(interruptBroadcaster))

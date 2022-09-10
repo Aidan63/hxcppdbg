@@ -124,7 +124,9 @@ class LLDBDriver extends Driver
         dbgThread.events.run(() -> {
             ctx.ptr.wait(
                 exn -> {
-                    trace('exn');
+                    cbThread.events.run(() -> {
+                        _callback(Result.Success(Option.Some(Interrupt.ExceptionThrown(Option.Some(exn)))));
+                    });
                 },
                 (thread, bp) -> {
                     cbThread.events.run(() -> {
