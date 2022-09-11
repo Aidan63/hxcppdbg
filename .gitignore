@@ -8,3 +8,4 @@ vcpkg_installed/
 .vscode
 .vs
 .idea
+sourcemap.json
