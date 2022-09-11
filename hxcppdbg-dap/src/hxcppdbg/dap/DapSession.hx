@@ -46,6 +46,8 @@ class DapSession
     final close : Void->Void;
 
     final buffer : InputBuffer;
+    
+    final messageQueue : Array<ProtocolMessage>;
 
     var variables : VariableCache;
 
@@ -61,6 +63,7 @@ class DapSession
         output       = _output;
         close        = _close;
         buffer       = new InputBuffer();
+        messageQueue = [];
 
         outSequence = 1;
         session     = Option.None;
@@ -84,12 +87,36 @@ class DapSession
         switch _result
         {
             case Success(data):
-                Future
-                    .inSequence(buffer.append(data).map(makeMessage))
-                    .handle(onMessagesProcessed);
+                final messages = buffer.append(data);
+                final length   = messageQueue.length;
+
+                for (message in messages)
+                {
+                    messageQueue.push(message);
+                }
+
+                if (length == 0)
+                {
+                    consumeMessage();
+                }
             case Error(error):
                 Sys.println(error.toString());
         }
+    }
+
+    function consumeMessage()
+    {
+        if (messageQueue.length <= 0)
+        {
+            return;
+        }
+
+        makeMessage(messageQueue[0])
+            .handle(_ -> {
+                messageQueue.shift();
+
+                consumeMessage();
+            });
     }
 
     function makeMessage(_message : ProtocolMessage)
@@ -254,10 +281,19 @@ class DapSession
 
     function onLaunch(_request : LaunchRequest)
     {
-        session = Option.Some(new Session(_request.arguments.program, _request.arguments.sourcemap));
-        launch  = Option.Some(_request);
+        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            Session.create(_request.arguments.program, _request.arguments.sourcemap, result -> {
+                switch result {
+                    case Success(created):
+                        session = Option.Some(created);
+                        launch  = Option.Some(_request);
 
-        return Promise.resolve(null);
+                        _resolve(null);
+                    case Error(exn):
+                        _reject(errorFromException(exn));
+                }
+            });
+        });
     }
 
     function onPause()
@@ -632,11 +668,6 @@ class DapSession
     }
 
     // #endregion
-
-    function onMessagesProcessed(_result : Array<Outcome<Noise, Error>>)
-    {
-        Sys.println('${ _result.length } messages processed');
-    }
 
     function onRunCallback(_result : Result<Option<Interrupt>, Exception>)
     {
