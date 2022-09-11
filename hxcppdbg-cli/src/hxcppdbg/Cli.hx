@@ -39,8 +39,6 @@ class Cli
                 switch result
                 {
                     case Success(signal):
-                        Thread.current().events.repeat(() -> {}, 1000);
-
                         Session.create(
                             FileSystem.absolutePath(target),
                             FileSystem.absolutePath(sourcemap), 

@@ -1,5 +1,6 @@
 package hxcppdbg.core;
 
+import sys.thread.Thread;
 import sys.io.File;
 import haxe.Exception;
 import haxe.ds.Option;
@@ -48,6 +49,9 @@ class Session
     {
         final parser    = new JsonParser<Sourcemap>();
         final sourcemap = parser.fromJson(File.getContent(_sourcemapPath));
+        final cbThread  = Thread.current();
+
+        cbThread.events.promise();
 
 #if HX_WINDOWS
         hxcppdbg.core.drivers.dbgeng.DbgEngDriver.create(
@@ -58,9 +62,9 @@ class Session
                 switch result
                 {
                     case Success(driver):
-                        _callback(Result.Success(new Session(driver, sourcemap)));
+                        cbThread.events.runPromised(() -> _callback(Result.Success(new Session(driver, sourcemap))));
                     case Error(exn):
-                        _callback(Result.Error(exn));
+                        cbThread.events.runPromised(() -> _callback(Result.Error(exn)));
                 }
             });
 #else
