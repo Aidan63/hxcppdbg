@@ -20,21 +20,14 @@ class DbgEngDriver extends Driver
 
 	final dbgThread : Thread;
 
-	var heartbeat : Null<EventHandler>;
+	final heartbeat : EventHandler;
 
-	public function new(_file, _enums, _classes)
+	function new(_objects, _cbThread)
 	{
-		objects     = DbgEngObjects.alloc();
-		cbThread    = Thread.current();
-		dbgThread   = Thread.createWithEventLoop(() -> {
-			switch objects.ptr.createFromFile(_file, _enums, _classes)
-			{
-				case Some(v):
-					throw v;
-				case None:
-					heartbeat = Thread.current().events.repeat(noop, 1000);
-			};
-		});
+		objects   = _objects;
+		cbThread  = _cbThread;
+		dbgThread = Thread.current();
+		heartbeat = Thread.current().events.repeat(noop, 1000);
 
 		breakpoints = new DbgEngBreakpoints(objects, cbThread, dbgThread);
 		stack       = new DbgEngStack(objects, cbThread, dbgThread);
@@ -145,7 +138,25 @@ class DbgEngDriver extends Driver
 		});
 	}
 
-	function noop()
+	public static function create(_file, _enums, _classes, _callback : Result<DbgEngDriver, Exception>->Void)
+	{
+		final cbThread = Thread.current();
+
+		Thread.createWithEventLoop(() -> {
+			final ctx    = DbgEngObjects.alloc();
+			final result = switch ctx.ptr.createFromFile(_file, _enums, _classes)
+			{
+				case Some(exn):
+					Result.Error((exn : Exception));
+				case None:
+					Result.Success(new DbgEngDriver(ctx, cbThread));
+			}
+
+			cbThread.events.run(() -> _callback(result));
+		});
+	}
+
+	static function noop()
 	{
 		//
 	}
