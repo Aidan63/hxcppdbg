@@ -3,3 +3,9 @@ dump/
 haxe/
 node_modules/
 sample/
+vcpkg/
+vcpkg_installed/
+.vscode
+.vs
+.idea
+sourcemap.json
