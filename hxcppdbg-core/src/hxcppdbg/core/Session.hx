@@ -5,6 +5,7 @@ import sys.io.File;
 import haxe.Exception;
 import haxe.ds.Option;
 import json2object.JsonParser;
+import json2object.ErrorUtils;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.breakpoints.Breakpoints;
@@ -47,37 +48,42 @@ class Session
 
     public static function create(_targetPath, _sourcemapPath, _callback : Result<Session, Exception>->Void)
     {
-        final parser    = new JsonParser<Sourcemap>();
-        final sourcemap = parser.fromJson(File.getContent(_sourcemapPath));
-        final cbThread  = Thread.current();
+        final cbThread = Thread.current();
+        final parser   = new JsonParser<Sourcemap>();
 
         cbThread.events.promise();
 
+        switch parser.fromJson(File.getContent(_sourcemapPath))
+        {
+            case null:
+                cbThread.events.runPromised(() -> _callback(Result.Error(new Exception(ErrorUtils.convertErrorArray(parser.errors)))));
+            case sourcemap:
 #if HX_WINDOWS
-        hxcppdbg.core.drivers.dbgeng.DbgEngDriver.create(
-            _targetPath,
-            sourcemap.cppEnumNames(),
-            sourcemap.cppClassNames(),
-            result -> {
-                switch result
-                {
-                    case Success(driver):
-                        cbThread.events.runPromised(() -> _callback(Result.Success(new Session(driver, sourcemap))));
-                    case Error(exn):
-                        cbThread.events.runPromised(() -> _callback(Result.Error(exn)));
-                }
-            });
+                hxcppdbg.core.drivers.dbgeng.DbgEngDriver.create(
+                    _targetPath,
+                    sourcemap.cppEnumNames(),
+                    sourcemap.cppClassNames(),
+                    result -> {
+                        switch result
+                        {
+                            case Success(driver):
+                                cbThread.events.runPromised(() -> _callback(Result.Success(new Session(driver, sourcemap))));
+                            case Error(exn):
+                                cbThread.events.runPromised(() -> _callback(Result.Error(exn)));
+                        }
+                    });
 #else
-        hxcppdbg.core.drivers.lldb.LLDBDriver.create(_targetPath, result -> {
-            switch result
-            {
-                case Success(driver):
-                    _callback(Result.Success(new Session(driver, sourcemap)));
-                case Error(exn):
-                    _callback(Result.Error(exn));
-            }
-        });
+                hxcppdbg.core.drivers.lldb.LLDBDriver.create(_targetPath, result -> {
+                    switch result
+                    {
+                        case Success(driver):
+                            cbThread.events.runPromised(() -> _callback(Result.Success(new Session(driver, sourcemap))));
+                        case Error(exn):
+                            cbThread.events.runPromised(() -> _callback(Result.Error(exn)));
+                    }
+                });
 #end
+        }
     }
 
     public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
