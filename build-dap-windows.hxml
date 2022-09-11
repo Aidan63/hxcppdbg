@@ -1,11 +1,11 @@
--p hxcppdbg-cli/src
+-p hxcppdbg-dap/src
 -p hxcppdbg-core/src
 -m hxcppdbg.Main
 -L tink_cli
 -L json2object
 -L hscript
--L hxcpp_luv
+-L hxcpp_luv_io
 -D HXCPP_M64
 -D HX_WINDOWS
---cpp hxcppdbg-cli/bin/windows
+--cpp hxcppdbg-dap/bin/windows
 --debug

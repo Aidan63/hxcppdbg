@@ -1,0 +1,9 @@
+-p hxcppdbg-cli/src
+-p hxcppdbg-core/src
+-m hxcppdbg.Main
+-L tink_cli
+-L json2object
+-L hscript
+-L hxcpp_luv_io
+--cpp hxcppdbg-cli/bin/linux
+--debug

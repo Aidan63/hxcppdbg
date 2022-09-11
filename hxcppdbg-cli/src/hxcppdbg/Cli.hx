@@ -34,32 +34,41 @@ class Cli
 
     @:defaultCommand public function run()
     {
-        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            final session = new Session(FileSystem.absolutePath(target), FileSystem.absolutePath(sourcemap));
-
+        return Promise.irreversible((_ : Noise->Void, _reject : Error->Void) -> {
             cpp.asio.Signal.open(result -> {
                 switch result
                 {
                     case Success(signal):
-                        signal.start(Interrupt, result -> {
-                            switch result
-                            {
-                                case Success(data):
-                                    new Hxcppdbg(session).pause();
-                                case Error(error):
-                                    _reject(new Error(error.toString()));
-                            }
-                        });
-
-                        cpp.asio.TTY.open(Stdin, result -> {
-                            switch result
-                            {
-                                case Success(stdin):
-                                    waitForInput(stdin.read, session, _reject);
-                                case Error(error):
-                                    _reject(new Error(error.toString()));
-                            }
-                        });
+                        Session.create(
+                            FileSystem.absolutePath(target),
+                            FileSystem.absolutePath(sourcemap), 
+                            result -> {
+                                switch result
+                                {
+                                    case Success(session):
+                                        signal.start(Interrupt, result -> {
+                                            switch result
+                                            {
+                                                case Success(data):
+                                                    new Hxcppdbg(session).pause();
+                                                case Error(error):
+                                                    _reject(new Error(error.toString()));
+                                            }
+                                        });
+                
+                                        cpp.asio.TTY.open(Stdin, result -> {
+                                            switch result
+                                            {
+                                                case Success(stdin):
+                                                    waitForInput(stdin.read, session, _reject);
+                                                case Error(error):
+                                                    _reject(new Error(error.toString()));
+                                            }
+                                        });
+                                    case Error(exn):
+                                        _reject(new Error(exn.message));
+                                }
+                            });
                     case Error(error):
                         _reject(new Error(error.toString()));
                 }
