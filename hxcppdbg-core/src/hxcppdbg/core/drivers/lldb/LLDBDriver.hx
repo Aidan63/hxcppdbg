@@ -1,13 +1,11 @@
 package hxcppdbg.core.drivers.lldb;
 
-import hxcppdbg.core.ds.Lazy;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
 import hxcppdbg.core.ds.Result;
 import haxe.Exception;
 import haxe.ds.Option;
 import haxe.exceptions.NotImplementedException;
-import hxcppdbg.core.drivers.lldb.native.LLDBBoot;
 import hxcppdbg.core.drivers.lldb.native.LLDBContext;
 import hxcppdbg.core.drivers.lldb.native.LLDBContext.LLDBStepType;
 
@@ -15,44 +13,41 @@ using hxcppdbg.core.utils.ResultUtils;
 
 class LLDBDriver extends Driver
 {
-    var ctx : cpp.Pointer<LLDBContext>;
+    final ctx : cpp.Pointer<LLDBContext>;
 
-    var heartbeat : Null<EventHandler>;
+    final heartbeat : EventHandler;
 
     final cbThread : Thread;
 
 	final dbgThread : Thread;
 
-    // final objects : LLDBObjects;
-
-    // final process : LLDBProcess;
-
-    public function new(_file)
+    function new(_ctx, _cbThread)
     {
-        // LLDBBoot.boot();
+        ctx         = _ctx;
+        cbThread    = _cbThread;
+        heartbeat   = Thread.current().events.repeat(noop, 1000);
+        dbgThread   = Thread.current();
+        breakpoints = new LLDBBreakpoints(ctx, cbThread.events);
+        stack       = new LLDBStack(ctx, cbThread.events);
+        locals      = new LLDBLocals();
+    }
 
-        ctx       = null;
-        heartbeat = null;
-        cbThread  = Thread.current();
-        dbgThread = Thread.createWithEventLoop(() -> {
-            LLDBBoot.boot();
-            LLDBContext.create(
-                _file,
-                _ptr -> {
-                    ctx = _ptr;
-                },
-                _err -> {
-                    throw new Exception(_err);
-                });
+    public static function create(_file, _callback : Result<LLDBDriver, Exception>->Void)
+    {
+        final cbThread = Thread.current();
 
-            heartbeat = Thread.current().events.repeat(noop, 1000);
+        Thread.createWithEventLoop(() -> {
+            final result = try
+            {
+                Result.Success(new LLDBDriver(LLDBContext.create(_file), cbThread));
+            }
+            catch (error : String)
+            {
+                Result.Error(new Exception(error));
+            }
+
+            cbThread.events.run(() -> _callback(result));
         });
-
-        final lazy = new Lazy(() -> ctx);
-
-        breakpoints = new LLDBBreakpoints(lazy, dbgThread.events, cbThread.events);
-        stack       = new LLDBStack(lazy, dbgThread.events, cbThread.events);
-        // locals      = new LLDBLocals(process);
     }
 
 	public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
@@ -78,26 +73,21 @@ class LLDBDriver extends Driver
 
     public function pause(_callback : Result<Bool, Exception>->Void) : Void
     {
-        ctx.ptr.interrupt(1);
+        cbThread.events.run(() -> {
+            ctx.ptr.interrupt(1);
 
-        dbgThread.events.run(() -> {
-            final result = try
-            {
-                if (ctx.ptr.suspend())
+            dbgThread.events.run(() -> {
+                final result = try
                 {
-                    Result.Success(false);
+                    Result.Success(ctx.ptr.suspend());
                 }
-                else
+                catch (error : String)
                 {
-                    Result.Success(true);
+                    Result.Error(new Exception(error));
                 }
-            }
-            catch (error : String)
-            {
-                Result.Error(new Exception(error));
-            }
-
-            cbThread.events.run(() -> _callback(result));
+    
+                cbThread.events.run(() -> _callback(result));
+            });
         });
     }
 

@@ -7,16 +7,22 @@
         <file name='${FmtDir}/src/os.cc'/>
     </files>
 
+    <files id='lldb'>
+        <compilerflag value='-I${FmtDir}/include'/>
+        <compilerflag value='-I${LLDBDir}'/>
+        <compilerflag value='-I/usr/lib/llvm-14/include/lldb/API'/>
+        <file name='${LLDBDir}/LLDBContext.cpp'/>
+    </files>
+
     <files id='haxe'>
         <compilerflag value='-I${FmtDir}/include'/>
         <compilerflag value='-I${LLDBDir}'/>
         <compilerflag value='-I/usr/lib/llvm-14/include/lldb/API'/>
-        <file name='${LLDBDir}/LLDBBoot.cpp'/>
-        <file name='${LLDBDir}/LLDBContext.cpp'/>
     </files>
 
     <target id='haxe'>
         <files id='fmt'/>
+        <files id='lldb'/>
 
         <lib name='-llldb'/>
     </target>

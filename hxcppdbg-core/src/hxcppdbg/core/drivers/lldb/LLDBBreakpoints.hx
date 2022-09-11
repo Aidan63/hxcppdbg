@@ -1,26 +1,26 @@
 package hxcppdbg.core.drivers.lldb;
 
 import haxe.Int64;
+import sys.thread.Thread;
 import sys.thread.EventLoop;
 import haxe.exceptions.NotImplementedException;
 import haxe.Exception;
 import haxe.ds.Option;
-import hxcppdbg.core.ds.Lazy;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.drivers.lldb.native.LLDBContext;
 
 class LLDBBreakpoints implements IBreakpoints
 {
-    final ctx : Lazy<cpp.Pointer<LLDBContext>>;
+    final ctx : cpp.Pointer<LLDBContext>;
 
     final dbgThread : EventLoop;
 
     final cbThread : EventLoop;
 
-    public function new(_ctx, _dbgThread, _cbThread)
+    public function new(_ctx, _cbThread)
     {
         ctx       = _ctx;
-        dbgThread = _dbgThread;
+        dbgThread = Thread.current().events;
         cbThread  = _cbThread;
     }
 
@@ -29,7 +29,7 @@ class LLDBBreakpoints implements IBreakpoints
 		dbgThread.run(() -> {
             final result = try
             {
-                Result.Success(ctx.value.ptr.createBreakpoint(_file, _line).low);
+                Result.Success(ctx.ptr.createBreakpoint(_file, _line).low);
             }
             catch (err : String)
             {
@@ -43,7 +43,7 @@ class LLDBBreakpoints implements IBreakpoints
 	public function remove(_id : Int, _callback : Option<Exception>->Void) : Void
     {
         dbgThread.run(() -> {
-            final error = if (ctx.value.ptr.removeBreakpoint(Int64.make(0, _id)))
+            final error = if (ctx.ptr.removeBreakpoint(Int64.make(0, _id)))
             {
                 Option.None;
             }

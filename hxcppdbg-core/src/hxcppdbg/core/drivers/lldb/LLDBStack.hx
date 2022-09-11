@@ -1,26 +1,26 @@
 package hxcppdbg.core.drivers.lldb;
 
+import sys.thread.Thread;
 import sys.thread.EventLoop;
 import haxe.Exception;
 import hxcppdbg.core.ds.Path;
-import hxcppdbg.core.ds.Lazy;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.NativeFrame;
-import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.drivers.lldb.native.LLDBContext;
+import hxcppdbg.core.drivers.lldb.native.LLDBContext.LLDBFrame;
 
 class LLDBStack implements IStack
 {
-    final ctx : Lazy<cpp.Pointer<LLDBContext>>;
+    final ctx : cpp.Pointer<LLDBContext>;
 
     final dbgThread : EventLoop;
 
     final cbThread : EventLoop;
 
-    public function new(_ctx, _dbgThread, _cbThread)
+    public function new(_ctx, _cbThread)
     {
         ctx       = _ctx;
-        dbgThread = _dbgThread;
+        dbgThread = Thread.current().events;
         cbThread  = _cbThread;
     }
 
@@ -29,7 +29,7 @@ class LLDBStack implements IStack
 		dbgThread.run(() -> {
             final result = try
             {
-                Result.Success(ctx.value.ptr.getStackFrames(_thread).map(nativeFrameFromLLDB));
+                Result.Success(ctx.ptr.getStackFrames(_thread).map(nativeFrameFromLLDB));
             }
             catch (err : String)
             {
@@ -45,7 +45,7 @@ class LLDBStack implements IStack
 		dbgThread.run(() -> {
             final result = try
             {
-                Result.Success(nativeFrameFromLLDB(ctx.value.ptr.getStackFrame(_thread, _index)));
+                Result.Success(nativeFrameFromLLDB(ctx.ptr.getStackFrame(_thread, _index)));
             }
             catch (err : String)
             {

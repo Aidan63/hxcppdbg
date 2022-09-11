@@ -3,27 +3,29 @@
 #include <limits>
 #include "fmt/format.h"
 
-void hxcppdbg::core::drivers::lldb::native::LLDBContext::create(String _exe, Dynamic _success, Dynamic _failure)
+cpp::Pointer<hxcppdbg::core::drivers::lldb::native::LLDBContext> hxcppdbg::core::drivers::lldb::native::LLDBContext::create(String _exe)
 {
-    auto debugger = ::lldb::SBDebugger::Create();
-    if (debugger.IsValid())
+    auto error = ::lldb::SBDebugger::InitializeWithErrorHandling();
+    if (error.Fail())
     {
-        debugger.SetAsync(true);
+        hx::Throw(String::create(error.GetCString()));
+    }
 
-        auto target = debugger.CreateTarget(_exe.utf8_str());
-        if (target.IsValid())
-        {
-            _success(::cpp::Pointer<LLDBContext>(new LLDBContext(debugger, target)));
-        }
-        else
-        {
-            _failure(HX_CSTRING("Unable to create LLDB target"));
-        }
-    }
-    else
+    auto debugger = ::lldb::SBDebugger::Create();
+    if (!debugger.IsValid())
     {
-        _failure(HX_CSTRING("Unable to create LLDB debugger"));
+        hx::Throw(HX_CSTRING("Unable to create debugger"));
     }
+
+    debugger.SetAsync(true);
+
+    auto target = debugger.CreateTarget(_exe.utf8_str());
+    if (!target.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Unable to create target"));
+    }
+    
+    return cpp::Pointer<LLDBContext>(new LLDBContext(debugger, target));
 }
 
 hxcppdbg::core::drivers::lldb::native::LLDBContext::LLDBContext(::lldb::SBDebugger _debugger, ::lldb::SBTarget _target)
@@ -181,7 +183,7 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
     switch (process->GetState())
     {
         case ::lldb::eStateStopped:
-            return true;
+            return false;
         default:
             {
                 auto error = process->Stop();
@@ -190,7 +192,7 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
                     hx::Throw(String::create(error.GetCString()));
                 }
                 
-                return false;
+                return true;
             }
     }
 }

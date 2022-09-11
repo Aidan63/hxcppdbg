@@ -29,7 +29,7 @@ namespace hxcppdbg::core::drivers::lldb::native
     class LLDBContext
     {
     public:
-        static void create(String, Dynamic, Dynamic);
+        static cpp::Pointer<LLDBContext> create(String);
 
         void wait(Dynamic, Dynamic, Dynamic, Dynamic);
         void interrupt(int);
