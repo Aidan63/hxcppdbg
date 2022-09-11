@@ -1,7 +1,0 @@
--p src
--p tests/src
--L buddy
--L json2object
--m Test
---debug
---cpp tests/bin/dap
