@@ -23,6 +23,11 @@ import hxcppdbg.dap.protocol.requests.LaunchRequest;
 import hxcppdbg.dap.protocol.requests.VariablesRequest;
 import hxcppdbg.dap.protocol.requests.StackTraceRequest;
 import hxcppdbg.dap.protocol.requests.SetBreakpointsRequest;
+import hxcppdbg.dap.protocol.responses.ScopesResponse;
+import hxcppdbg.dap.protocol.responses.ThreadsResponse;
+import hxcppdbg.dap.protocol.responses.VariablesResponse;
+import hxcppdbg.dap.protocol.responses.StackTraceResponse;
+import hxcppdbg.dap.protocol.responses.SetBreakpointsResponse;
 import hxcppdbg.core.Session;
 import hxcppdbg.core.StepType;
 import hxcppdbg.core.ds.Path;
@@ -188,7 +193,7 @@ class DapSession
                         return outcome;
                     });
             case other:
-                DapPromise.sync(Outcome.Success(new Exception('Unsupported request command "$other"')));
+                DapPromise.sync(Outcome.Failure(new Exception('Unsupported request command "$other"')));
         }
     }
 
@@ -325,7 +330,7 @@ class DapSession
 
         return
             DapPromise
-                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
+                .irreversible((_resolve : Outcome<ThreadsResponse, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -370,7 +375,7 @@ class DapSession
     {
         return
             DapPromise
-                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
+                .irreversible((_resolve : Outcome<Noise, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -395,7 +400,7 @@ class DapSession
     {
         return
             DapPromise
-                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
+                .irreversible((_resolve : Outcome<Noise, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -466,7 +471,7 @@ class DapSession
 
         return
             DapPromise
-                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
+                .irreversible((_resolve : Outcome<StackTraceResponse, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -555,7 +560,7 @@ class DapSession
 
         return
             DapPromise
-                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
+                .irreversible((_resolve : Outcome<SetBreakpointsResponse, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -610,7 +615,7 @@ class DapSession
     {
         return
             DapPromise
-                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
+                .irreversible((_resolve : Outcome<ScopesResponse, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -643,11 +648,11 @@ class DapSession
     {
         return
             DapPromise
-                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
+                .irreversible((_resolve : Outcome<VariablesResponse, Exception>->Void) -> {
                     switch variables.get(_request.arguments.variablesReference)
                     {
-                        case Some(v):
-                            _resolve(Outcome.Success({ variables : v }));
+                        case Some(vs):
+                            _resolve(Outcome.Success({ variables : vs }));
                         case None:
                             _resolve(Outcome.Failure(new Exception('no variables for reference ${ _request.arguments.variablesReference }')));
                     }
@@ -664,7 +669,8 @@ class DapSession
                 interruptOptionToEvent(opt, 'pause', null)
                     .handle(_ -> {});
             case Error(exn):
-                //
+                // Not sure what to do, should we send a "stopped" event?
+                throw exn;
         }
     }
 
