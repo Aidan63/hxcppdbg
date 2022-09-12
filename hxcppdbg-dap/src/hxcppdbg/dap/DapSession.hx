@@ -8,10 +8,9 @@ import haxe.Exception;
 import haxe.io.Bytes;
 import haxe.ds.Option;
 import tink.CoreApi.Noise;
-import tink.CoreApi.Error;
 import tink.CoreApi.Future;
-import tink.CoreApi.Promise;
 import tink.CoreApi.Outcome;
+import tink.CoreApi.Surprise;
 import hxcppdbg.dap.protocol.Event;
 import hxcppdbg.dap.protocol.Request;
 import hxcppdbg.dap.protocol.ProtocolMessage;
@@ -30,12 +29,11 @@ import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.thread.NativeThread;
 import hxcppdbg.core.drivers.Interrupt;
-import hxcppdbg.core.model.Model;
-import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.locals.LocalVariable;
 
 using Lambda;
 using StringTools;
+
+typedef DapPromise<T> = Surprise<T, Exception>;
 
 class DapSession
 {
@@ -126,13 +124,13 @@ class DapSession
             case 'request':
                 makeRequest(cast _message);
             case other:
-                Promise.reject(new Error('Unsupported message type "$other"'));
+                DapPromise.sync(Outcome.Failure(new Exception('Unsupported message type "$other"')));
         }
     }
 
     function makeRequest(_request : Request<Any>)
     {
-        function sendResponse(_outcome : Outcome<Null<Any>, Error>)
+        function sendResponse(_outcome : Outcome<Any, Exception>)
         {
             return respond(_request, _outcome);
         }
@@ -182,30 +180,30 @@ class DapSession
             case 'disconnect':
                 onDisconnect()
                     .flatMap(sendResponse)
-                    .next(noise -> {
+                    .flatMap(outcome -> {
                         session = Option.None;
 
                         close();
 
-                        return noise;
+                        return outcome;
                     });
             case other:
-                Promise.reject(new Error('Unsupported request command "$other"'));
+                DapPromise.sync(Outcome.Success(new Exception('Unsupported request command "$other"')));
         }
     }
 
-    function sendInitialisedEvent(_outcome : Outcome<Noise, Error>)
+    function sendInitialisedEvent(_outcome : Outcome<Noise, Exception>)
     {
         return switch _outcome
         {
             case Success(data):
                 event({ seq : nextOutSequence(), type : 'event', event : 'initialized' });
-            case Failure(failure):
-                Promise.reject(failure);
+            case Failure(_):
+                DapPromise.sync(_outcome);
         }
     }
 
-    function sendPauseStoppedEvent(_outcome : Outcome<Noise, Error>)
+    function sendPauseStoppedEvent(_outcome : Outcome<Noise, Exception>)
     {
         return switch _outcome
         {
@@ -221,12 +219,12 @@ class DapSession
                         preserveFocusHint : false
                     }
                 });
-            case Failure(failure):
-                Promise.reject(failure);
+            case Failure(exn):
+                DapPromise.sync(Outcome.Failure(exn));
         }
     }
 
-    function startTargetAfterConfiguration(_outcome : Outcome<Noise, Error>)
+    function startTargetAfterConfiguration(_outcome : Outcome<Noise, Exception>)
     {
         return switch _outcome
         {
@@ -237,17 +235,17 @@ class DapSession
                         switch session
                         {
                             case Some(s):
-                                Promise
-                                    .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+                                DapPromise
+                                    .irreversible((_resolve : Outcome<Noise, Exception>->Void) -> {
                                         s.start(result -> {
                                             switch result
                                             {
                                                 case Success(run):
                                                     run(onRunCallback);
 
-                                                    _resolve(null);
+                                                    _resolve(Outcome.Success(null));
                                                 case Error(exn):
-                                                    _reject(errorFromException(exn));
+                                                    _resolve(Outcome.Failure(exn));
                                             }
                                         });
                                     })
@@ -256,18 +254,18 @@ class DapSession
                                         {
                                             case Success(_):
                                                 respond(req, Outcome.Success(null));
-                                            case Failure(failure):
-                                                Promise.reject(failure);
+                                            case Failure(exn):
+                                                DapPromise.sync(Outcome.Failure(exn));
                                         }
                                     });
                             case None:
-                                Promise.reject(noSessionError());
+                                DapPromise.sync(Outcome.Failure(noSessionException()));
                         }
                     case None:
-                        Promise.reject(new Error('no launch request received'));
+                        DapPromise.sync(Outcome.Failure(new Exception('no launch request received')));
                 }
-            case Failure(failure):
-                Promise.reject(failure);
+            case Failure(exn):
+                DapPromise.sync(Outcome.Failure(exn));
         }
     }
 
@@ -275,40 +273,42 @@ class DapSession
 
     function onLaunch(_request : LaunchRequest)
     {
-        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            Session.create(_request.arguments.program, _request.arguments.sourcemap, result -> {
-                switch result {
-                    case Success(created):
-                        session = Option.Some(created);
-                        launch  = Option.Some(_request);
+        return
+            DapPromise
+                .irreversible((_resolve : Outcome<Noise, Exception>->Void) -> {
+                    Session.create(_request.arguments.program, _request.arguments.sourcemap, result -> {
+                        switch result {
+                            case Success(created):
+                                session = Option.Some(created);
+                                launch  = Option.Some(_request);
 
-                        _resolve(null);
-                    case Error(exn):
-                        _reject(errorFromException(exn));
-                }
-            });
-        });
+                                _resolve(Outcome.Success(null));
+                            case Error(exn):
+                                _resolve(Outcome.Failure(exn));
+                        }
+                    });
+                });
     }
 
     function onPause()
     {
         return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Noise, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
                             s.pause(result -> {
                                 switch result
                                 {
-                                    case Success(_):
-                                        _resolve(null);
+                                    case Success(v):
+                                        _resolve(Outcome.Success(null));
                                     case Error(exn):
-                                        _reject(errorFromException(exn));
+                                        _resolve(Outcome.Failure(exn));
                                 }
                             });
                         case None:
-                            _reject(noSessionError());
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
@@ -324,8 +324,8 @@ class DapSession
         }
 
         return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -342,7 +342,8 @@ class DapSession
                                                         case Success(run):
                                                             run(onRunCallback);
                                                         case Error(exn):
-                                                            _reject(errorFromException(exn));
+                                                            // Not sure what to do, should we send a "stopped" event?
+                                                            throw exn;
                                                     }
                                                 });
                                             }
@@ -350,17 +351,17 @@ class DapSession
                                             switch result
                                             {
                                                 case Success(threads):
-                                                    _resolve({ threads : threads.map(toProtocolThread) });
+                                                    _resolve(Outcome.Success({ threads : threads.map(toProtocolThread) }));
                                                 case Error(exn):
-                                                    _reject(errorFromException(exn));
+                                                    _resolve(Outcome.Failure(exn));
                                             }
                                         });
                                     case Error(exn):
-                                        _reject(errorFromException(exn));
+                                        _resolve(Outcome.Failure(exn));
                                 }
                             });
                         case None:
-                            _reject(noSessionError());
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
@@ -368,8 +369,8 @@ class DapSession
     function onContinue()
     {
         return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -379,13 +380,13 @@ class DapSession
                                     case Success(run):
                                         run(onRunCallback);
 
-                                        _resolve(null);
+                                        _resolve(Outcome.Success(null));
                                     case Error(exn):
-                                        _reject(errorFromException(exn));
+                                        _resolve(Outcome.Failure(exn));
                                 }
                             });
                         case None:
-                            _reject(noSessionError());
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
@@ -393,8 +394,8 @@ class DapSession
     function onStep(_request : NextRequest, _type : StepType)
     {
         return
-            Promise
-                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -404,21 +405,13 @@ class DapSession
                                     case Success(opt):
                                         respond(_request, Outcome.Success(null))
                                             .flatMap(_ -> interruptOptionToEvent(opt, 'step', _request.arguments.threadId))
-                                            .handle(outcome -> {
-                                                switch outcome
-                                                {
-                                                    case Success(data):
-                                                        _resolve(data);
-                                                    case Failure(failure):
-                                                        _reject(failure);
-                                                }
-                                            });
+                                            .handle(_resolve);
                                     case Error(exn):
-                                        _reject(errorFromException(exn));
+                                        _resolve(Outcome.Failure(exn));
                                 }
                             });
                         case None:
-                            _reject(noSessionError());
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
@@ -472,8 +465,8 @@ class DapSession
         }
 
         return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -494,13 +487,13 @@ class DapSession
                                             }
                                         }
 
-                                        _resolve({ stackFrames : mapped });
+                                        _resolve(Outcome.Success({ stackFrames : mapped }));
                                     case Error(exn):
-                                        _reject(errorFromException(exn));
+                                        _resolve(Outcome.Failure(exn));
                                 }
                             });
                         case None:
-                            _reject(noSessionError());
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
@@ -508,8 +501,8 @@ class DapSession
     function onDisconnect()
     {
         return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Noise, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -517,13 +510,13 @@ class DapSession
                                 switch result
                                 {
                                     case Some(exn):
-                                        _reject(errorFromException(exn));
+                                        _resolve(Outcome.Failure(exn));
                                     case None:
-                                        _resolve(null);
+                                        _resolve(Outcome.Success(null));
                                 }
                             });
                         case None:
-                            _reject(noSessionError());
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
@@ -532,39 +525,37 @@ class DapSession
     {
         function removeExistingBreakpointsForSource(_session : Session, _existing : Array<hxcppdbg.core.breakpoints.Breakpoint>)
         {
-            return
-                Promise
-                    .inSequence(
-                        _existing
-                            .filter(bp -> bp.file.matches(Path.of(_request.arguments.source.path)))
-                            .map(bp -> promiseForBreakpointRemoval(_session, bp)))
-                    .next(_ -> (null : Noise));
+            final promises =
+                _existing
+                    .filter(bp -> bp.file.matches(Path.of(_request.arguments.source.path)))
+                    .map(bp -> promiseForBreakpointRemoval(_session, bp));
+
+            return @:privateAccess Future.processMany(promises, 1, o -> o, o -> o);
         }
 
         function createBreakpointsForSource(_session : Session)
         {
-            return
-                Promise
-                    .inSequence(
-                        _request.arguments.breakpoints.map(bp -> {
-                            return
-                                promiseForBreakpointCreation(_session, Path.of(_request.arguments.source.path), bp.line, if (bp.column == null) 0 else bp.column)
-                                    .flatMap(outcome -> {
-                                        return Promise.resolve(switch outcome
-                                        {
-                                            case Success(created):
-                                                breakpointToProtocolBreakpoint(created);
-                                            case Failure(failure):
-                                                ({ verified : false, message : failure.message } : Breakpoint);
-                                        });
-                                    });
-                            })
-                        );
+            final promises =
+                _request.arguments.breakpoints.map(bp -> {
+                    return
+                        promiseForBreakpointCreation(_session, Path.of(_request.arguments.source.path), bp.line, if (bp.column == null) 0 else bp.column)
+                            .flatMap(outcome -> {
+                                return switch outcome
+                                {
+                                    case Success(created):
+                                        Outcome.Success(breakpointToProtocolBreakpoint(created));
+                                    case Failure(failure):
+                                        Outcome.Success(({ verified : false, message : failure.message } : Breakpoint));
+                                }
+                            });
+                    });
+
+            return @:privateAccess Future.processMany(promises, 1, o -> o, o -> o);
         }
 
         return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -578,8 +569,8 @@ class DapSession
                                                 {
                                                     case Success(data):
                                                         createBreakpointsForSource(s);
-                                                    case Failure(failure):
-                                                        Promise.reject(failure);
+                                                    case Failure(exn):
+                                                        DapPromise.sync(Outcome.Failure(exn));
                                                 }
                                             })
                                             .handle(outcome -> {
@@ -591,25 +582,26 @@ class DapSession
                                                             case Success(run):
                                                                 run(onRunCallback);
                                                             case Error(exn):
+                                                                // Not sure what to do, should we send a "stopped" event?
                                                                 throw exn;
                                                         }
                                                     });
                                                 }
-
+                                                
                                                 switch outcome
                                                 {
                                                     case Success(created):
-                                                        _resolve({ breakpoints : created });
-                                                    case Failure(failure):
-                                                        _reject(failure);
+                                                        _resolve(Outcome.Success({ breakpoints : created }));
+                                                    case Failure(exn):
+                                                        _resolve(Outcome.Failure(exn));
                                                 }
                                             });
                                     case Error(exn):
-                                        _reject(errorFromException(exn));
+                                        _resolve(Outcome.Failure(exn));
                                 }
                             });
                         case None:
-                            _reject(noSessionError());
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
@@ -617,8 +609,8 @@ class DapSession
     function onScopes(_request : ScopesRequest)
     {
         return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
                     switch session
                     {
                         case Some(s):
@@ -628,7 +620,7 @@ class DapSession
                                 switch result
                                 {
                                     case Result.Success(locals):
-                                        _resolve({
+                                        _resolve(Outcome.Success({
                                             scopes : [
                                                 {
                                                     name               : 'locals',
@@ -636,12 +628,13 @@ class DapSession
                                                     expensive          : false
                                                 }
                                             ]
-                                        });
+                                        }));
                                     case Result.Error(exn):
-                                        _reject(errorFromException(exn));
+                                        _resolve(Outcome.Failure(exn));
                                 }
                             });
                         case None:
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
@@ -649,14 +642,14 @@ class DapSession
     function onVariables(_request : VariablesRequest)
     {
         return
-            Promise
-                .irreversible((_resolve : Null<Any>->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve : Outcome<Null<Any>, Exception>->Void) -> {
                     switch variables.get(_request.arguments.variablesReference)
                     {
                         case Some(v):
-                            _resolve({ variables : v });
+                            _resolve(Outcome.Success({ variables : v }));
                         case None:
-                            _reject(new Error('no variables for reference ${ _request.arguments.variablesReference }'));
+                            _resolve(Outcome.Failure(new Exception('no variables for reference ${ _request.arguments.variablesReference }')));
                     }
                 });
     }
@@ -669,17 +662,17 @@ class DapSession
         {
             case Success(opt):
                 interruptOptionToEvent(opt, 'pause', null)
-                    .handle(handleRunEventPromise);
+                    .handle(_ -> {});
             case Error(exn):
                 //
         }
     }
 
-    function respond(_request : Request<Any>, _result : Outcome<Null<Any>, Error>) : Promise<Noise>
+    function respond(_request : Request<Any>, _result : Outcome<Any, Exception>)
     {
         return
-            Promise
-                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible(_resolve -> {
                     final obj : Dynamic = {
                         seq         : nextOutSequence(),
                         type        : 'response',
@@ -706,9 +699,9 @@ class DapSession
                         switch result
                         {
                             case Some(code):
-                                _reject(errorFromCode(code));
+                                _resolve(Outcome.Failure(exceptionFromCode(code)));
                             case None:
-                                _resolve(null);
+                                _resolve(Outcome.Success((null : Noise)));
                         }
                     });
                 });
@@ -717,17 +710,17 @@ class DapSession
     function event(_event : Event<Any>)
     {
         return
-            Promise
-                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible(_resolve -> {
                     final str = Json.stringify(_event);
 
                     write(str, result -> {
                         switch result
                         {
                             case Some(code):
-                                _reject(errorFromCode(code));
+                                _resolve(Outcome.Failure(exceptionFromCode(code)));
                             case None:
-                                _resolve(null);
+                                _resolve(Outcome.Success((null : Noise)));
                         }
                     });
                 });
@@ -781,7 +774,7 @@ class DapSession
                         }
                     });
                 case Option.Some(Interrupt.Other):
-                    Promise.resolve(null);
+                    DapPromise.sync(Outcome.Success(null));
             }
     }
 
@@ -816,15 +809,15 @@ class DapSession
     static function promiseForBreakpointRemoval(_session : Session, _bp : hxcppdbg.core.breakpoints.Breakpoint)
     {
         return
-            Promise
-                .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible((_resolve) -> {
                     _session.breakpoints.delete(_bp.id, result -> {
                         switch result
                         {
                             case Some(exn):
-                                _reject(errorFromException(exn));
+                                _resolve(Outcome.Failure(exn));
                             case None:
-                                _resolve(null);
+                                _resolve(Outcome.Success((null : Noise)));
                         }
                     });
                 });
@@ -833,37 +826,27 @@ class DapSession
     static function promiseForBreakpointCreation(_session : Session, _file : Path, _line : Int, _char : Int)
     {
         return
-            Promise
-                .irreversible((_resolve : hxcppdbg.core.breakpoints.Breakpoint->Void, _reject : Error->Void) -> {
+            DapPromise
+                .irreversible(_resolve -> {
                     _session.breakpoints.create(_file, _line, _char, result -> {
                         switch result
                         {
                             case Success(bp):
-                                _resolve(bp);
+                                _resolve(Outcome.Success(bp));
                             case Error(exn):
-                                _reject(errorFromException(exn));
+                                _resolve(Outcome.Failure(exn));
                         }
                     });
                 });
     }
 
-    static function noSessionError()
+    static function noSessionException()
     {
-        return new Error('Session has not yet started');
+        return new Exception('Session has not yet started');
     }
 
-    static function errorFromException(_exn : Exception)
+    static function exceptionFromCode(_code : Code)
     {
-        return new Error(_exn.message);
-    }
-
-    static function errorFromCode(_code : Code)
-    {
-        return new Error(_code.toString());
-    }
-
-    static function handleRunEventPromise(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
-    {
-        //
+        return new Exception(_code.toString());
     }
 }
