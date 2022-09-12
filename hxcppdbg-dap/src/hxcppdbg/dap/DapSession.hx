@@ -1,38 +1,38 @@
 package hxcppdbg.dap;
 
-import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.model.Model;
-import hxcppdbg.dap.protocol.ScopesRequest;
-import hxcppdbg.dap.protocol.VariablesRequest;
-import hxcppdbg.core.locals.LocalVariable;
-import hxcppdbg.core.ds.Path;
-import hxcppdbg.dap.protocol.Breakpoint;
-import hxcppdbg.dap.protocol.SetBreakpointsRequest;
-import hxcppdbg.core.StepType;
-import hxcppdbg.dap.protocol.Event;
-import hxcppdbg.dap.protocol.StackFrame;
-import hxcppdbg.dap.protocol.StackTraceRequest;
-import hxcppdbg.core.thread.NativeThread;
-import hxcppdbg.core.drivers.Interrupt;
-import hxcppdbg.dap.protocol.Request;
-import hxcppdbg.dap.protocol.ProtocolMessage;
-import hxcppdbg.dap.protocol.LaunchRequest;
-import hxcppdbg.dap.protocol.Thread;
-import hxcppdbg.dap.protocol.NextRequest;
-import hxcppdbg.core.Session;
-import hxcppdbg.core.ds.Result;
+import cpp.asio.Code;
+import cpp.asio.streams.IReadStream;
+import cpp.asio.streams.IWriteStream;
+import haxe.Json;
 import haxe.Exception;
+import haxe.io.Bytes;
+import haxe.ds.Option;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Future;
 import tink.CoreApi.Promise;
 import tink.CoreApi.Outcome;
-import haxe.ds.Option;
-import cpp.asio.Code;
-import cpp.asio.streams.IReadStream;
-import cpp.asio.streams.IWriteStream;
-import haxe.Json;
-import haxe.io.Bytes;
+import hxcppdbg.dap.protocol.Event;
+import hxcppdbg.dap.protocol.Request;
+import hxcppdbg.dap.protocol.ProtocolMessage;
+import hxcppdbg.dap.protocol.data.Thread;
+import hxcppdbg.dap.protocol.data.StackFrame;
+import hxcppdbg.dap.protocol.data.Breakpoint;
+import hxcppdbg.dap.protocol.requests.NextRequest;
+import hxcppdbg.dap.protocol.requests.ScopesRequest;
+import hxcppdbg.dap.protocol.requests.LaunchRequest;
+import hxcppdbg.dap.protocol.requests.VariablesRequest;
+import hxcppdbg.dap.protocol.requests.StackTraceRequest;
+import hxcppdbg.dap.protocol.requests.SetBreakpointsRequest;
+import hxcppdbg.core.Session;
+import hxcppdbg.core.StepType;
+import hxcppdbg.core.ds.Path;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.thread.NativeThread;
+import hxcppdbg.core.drivers.Interrupt;
+import hxcppdbg.core.model.Model;
+import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.locals.LocalVariable;
 
 using Lambda;
 using StringTools;
@@ -130,94 +130,11 @@ class DapSession
         }
     }
 
-    function makeRequest(_request : Request)
+    function makeRequest(_request : Request<Any>)
     {
-        function sendResponse(_outcome : tink.core.Outcome<Null<Any>, tink.core.Error>)
+        function sendResponse(_outcome : Outcome<Null<Any>, Error>)
         {
-            return switch _outcome
-            {
-                case Success(data):
-                    respond(_request, Result.Success(data));
-                case Failure(failure):
-                    respond(_request, Result.Error(failure));
-            }
-        }
-
-        function sendInitialisedEvent(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
-        {
-            return switch _outcome
-            {
-                case Success(data):
-                    event({ seq : nextOutSequence(), type : 'event', event : 'initialized' });
-                case Failure(failure):
-                    Promise.reject(failure);
-            }
-        }
-
-        function sendPauseStoppedEvent(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
-        {
-            return switch _outcome
-            {
-                case Success(data):
-                    event({
-                        seq   : nextOutSequence(),
-                        type  : 'event',
-                        event : 'stopped',
-                        body  : {
-                            reason            : 'pause',
-                            description       : 'Paused',
-                            allThreadsStopped : true,
-                            preserveFocusHint : false
-                        }
-                    });
-                case Failure(failure):
-                    Promise.reject(failure);
-            }
-        }
-
-        function startTargetAfterConfiguration(_outcome : tink.core.Outcome<Noise, tink.core.Error>)
-        {
-            return switch _outcome
-            {
-                case Success(_):
-                    switch launch
-                    {
-                        case Some(req):
-                            switch session
-                            {
-                                case Some(s):
-                                    Promise
-                                        .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-                                            s.start(result -> {
-                                                switch result
-                                                {
-                                                    case Success(run):
-                                                        run(onRunCallback);
-
-                                                        _resolve(null);
-                                                    case Error(exn):
-                                                        _reject(errorFromException(exn));
-                                                }
-                                            });
-                                        })
-                                        .flatMap(outcome -> {
-                                            return switch outcome
-                                            {
-                                                case Success(_):
-                                                    respond(req, Result.Success(null));
-                                                case Failure(failure):
-                                                    Promise.reject(failure);
-                                            }
-                                        });
-                                case None:
-                                    Promise.reject(noSessionError());
-                            }
-                        case None:
-                            Promise.reject(new Error('no launch request received'));
-                    }
-                case Failure(failure):
-                    Promise.reject(failure);
-            }
+            return respond(_request, _outcome);
         }
 
         Sys.println('MSG : ${ _request }');
@@ -225,15 +142,15 @@ class DapSession
         return switch _request.command
         {
             case 'initialize':
-                sendResponse(tink.core.Outcome.Success({ supportsConfigurationDoneRequest : true, supportsVariableType : true }))
+                sendResponse(Outcome.Success({ supportsConfigurationDoneRequest : true, supportsVariableType : true }))
                     .flatMap(sendInitialisedEvent);
             case 'setExceptionBreakpoints':
-                sendResponse(tink.core.Outcome.Success({ filters : [] }));
+                sendResponse(Outcome.Success({ filters : [] }));
             case 'setBreakpoints':
                 onSetBreakpoints(cast _request)
                     .flatMap(sendResponse);
             case 'configurationDone':
-                sendResponse(tink.core.Outcome.Success(null))
+                sendResponse(Outcome.Success(null))
                     .flatMap(startTargetAfterConfiguration);
             case 'launch':
                 onLaunch(cast _request);
@@ -274,6 +191,83 @@ class DapSession
                     });
             case other:
                 Promise.reject(new Error('Unsupported request command "$other"'));
+        }
+    }
+
+    function sendInitialisedEvent(_outcome : Outcome<Noise, Error>)
+    {
+        return switch _outcome
+        {
+            case Success(data):
+                event({ seq : nextOutSequence(), type : 'event', event : 'initialized' });
+            case Failure(failure):
+                Promise.reject(failure);
+        }
+    }
+
+    function sendPauseStoppedEvent(_outcome : Outcome<Noise, Error>)
+    {
+        return switch _outcome
+        {
+            case Success(data):
+                event({
+                    seq   : nextOutSequence(),
+                    type  : 'event',
+                    event : 'stopped',
+                    body  : {
+                        reason            : 'pause',
+                        description       : 'Paused',
+                        allThreadsStopped : true,
+                        preserveFocusHint : false
+                    }
+                });
+            case Failure(failure):
+                Promise.reject(failure);
+        }
+    }
+
+    function startTargetAfterConfiguration(_outcome : Outcome<Noise, Error>)
+    {
+        return switch _outcome
+        {
+            case Success(_):
+                switch launch
+                {
+                    case Some(req):
+                        switch session
+                        {
+                            case Some(s):
+                                Promise
+                                    .irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
+                                        s.start(result -> {
+                                            switch result
+                                            {
+                                                case Success(run):
+                                                    run(onRunCallback);
+
+                                                    _resolve(null);
+                                                case Error(exn):
+                                                    _reject(errorFromException(exn));
+                                            }
+                                        });
+                                    })
+                                    .flatMap(outcome -> {
+                                        return switch outcome
+                                        {
+                                            case Success(_):
+                                                respond(req, Outcome.Success(null));
+                                            case Failure(failure):
+                                                Promise.reject(failure);
+                                        }
+                                    });
+                            case None:
+                                Promise.reject(noSessionError());
+                        }
+                    case None:
+                        Promise.reject(new Error('no launch request received'));
+                }
+            case Failure(failure):
+                Promise.reject(failure);
         }
     }
 
@@ -408,7 +402,7 @@ class DapSession
                                 switch result
                                 {
                                     case Success(opt):
-                                        respond(_request, cpp.asio.Result.Success(null))
+                                        respond(_request, Outcome.Success(null))
                                             .flatMap(_ -> interruptOptionToEvent(opt, 'step', _request.arguments.threadId))
                                             .handle(outcome -> {
                                                 switch outcome
@@ -681,7 +675,7 @@ class DapSession
         }
     }
 
-    function respond(_request : Request, _result : cpp.asio.Result<Null<Any>, tink.CoreApi.Error>) : Promise<Noise>
+    function respond(_request : Request<Any>, _result : Outcome<Null<Any>, Error>) : Promise<Noise>
     {
         return
             Promise
@@ -698,11 +692,11 @@ class DapSession
                         case Success(body):
                             obj.success = true;
                             obj.body    = body;
-                        case Error(exn):
+                        case Failure(error):
                             obj.body = {
                                 error : {
                                     id       : 0,
-                                    format   : exn.message,
+                                    format   : error.message,
                                     showUser : true
                                 }
                             }
@@ -720,7 +714,7 @@ class DapSession
                 });
     }
 
-    function event(_event : Event)
+    function event(_event : Event<Any>)
     {
         return
             Promise

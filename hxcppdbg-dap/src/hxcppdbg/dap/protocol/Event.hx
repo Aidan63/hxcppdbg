@@ -2,8 +2,8 @@ package hxcppdbg.dap.protocol;
 
 import hxcppdbg.dap.protocol.ProtocolMessage;
 
-typedef Event = {
+typedef Event<T> = {
     > ProtocolMessage,
     final event : String;
-    final ?body : Any;
+    final ?body : T;
 }

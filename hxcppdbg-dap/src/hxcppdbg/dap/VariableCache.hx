@@ -5,7 +5,7 @@ import haxe.ds.Option;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.locals.LocalVariable;
-import hxcppdbg.dap.protocol.Variable;
+import hxcppdbg.dap.protocol.data.Variable;
 
 using Lambda;
 

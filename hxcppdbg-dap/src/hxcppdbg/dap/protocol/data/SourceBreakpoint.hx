@@ -1,4 +1,4 @@
-package hxcppdbg.dap.protocol;
+package hxcppdbg.dap.protocol.data;
 
 typedef SourceBreakpoint = {
     final line : Int;

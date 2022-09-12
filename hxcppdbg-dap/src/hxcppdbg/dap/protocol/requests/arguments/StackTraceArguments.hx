@@ -1,11 +1,8 @@
-package hxcppdbg.dap.protocol;
+package hxcppdbg.dap.protocol.requests.arguments;
 
-typedef StackTraceRequest = {
-    > Request,
-    final arguments : StackTraceArguments;
-}
+import hxcppdbg.dap.protocol.data.ValueFormat;
 
-private typedef StackTraceArguments = {
+typedef StackTraceArguments = {
     final threadId : Int;
     final ?startFrame : Int;
     final ?levels : Int;

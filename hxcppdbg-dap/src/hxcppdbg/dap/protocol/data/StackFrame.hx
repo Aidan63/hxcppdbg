@@ -1,4 +1,4 @@
-package hxcppdbg.dap.protocol;
+package hxcppdbg.dap.protocol.data;
 
 typedef StackFrame = {
     final id : Int;
@@ -10,11 +10,4 @@ typedef StackFrame = {
     final ?endColumn : Int;
     final ?presentationHint : StackFramePresentationHint;
     final ?sources : Array<Source>;
-}
-
-enum abstract StackFramePresentationHint(String)
-{
-    final Normal = 'normal';
-    final Label = 'label';
-    final Subtle = 'subtle';
 }
