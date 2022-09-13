@@ -51,7 +51,7 @@ HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::CreateProc
     _In_ ULONG64 threadDataOffset,
     _In_ ULONG64 startOffset)
 {
-    return DEBUG_STATUS_BREAK;
+    return DEBUG_STATUS_NO_CHANGE;
 }
 
 HRESULT hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::ExitProcess(ULONG ExitCode)
