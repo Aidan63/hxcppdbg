@@ -12,23 +12,23 @@ abstract Path(haxe.io.Path)
 
     public function matches(_other : Path)
     {
-        return switch (cast this : Path).isAbsolute
+        return switch abstract.isAbsolute
         {
             case true:
                 switch _other.isAbsolute
                 {
                     case true:
-                        (cast this : Path).toString() == _other.toString();
+                        abstract.toString() == _other.toString();
                     case false:
-                        (cast this : Path).toString().endsWith(_other.toString());
+                        abstract.toString().endsWith(_other.toString());
                 }
             case false:
                 switch _other.isAbsolute
                 {
                     case true:
-                        _other.toString().endsWith((cast this : Path).toString());
+                        _other.toString().endsWith(abstract.toString());
                     case false:
-                        return (cast this : Path).toString().endsWith(_other.toString()) || _other.toString().endsWith((cast this : Path).toString());
+                        return abstract.toString().endsWith(_other.toString()) || _other.toString().endsWith(abstract.toString());
                 }
         }
     }
