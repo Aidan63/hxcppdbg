@@ -1,7 +1,6 @@
 package hxcppdbg.core.stack;
 
 import haxe.Exception;
-import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.IStack;
