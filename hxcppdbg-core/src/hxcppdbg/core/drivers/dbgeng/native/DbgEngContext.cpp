@@ -2,7 +2,7 @@
 #include <filesystem>
 
 #include <comdef.h>
-#include "DbgEngObjects.hpp"
+#include "DbgEngContext.hpp"
 #include "models/extensions/HxcppdbgModelFactory.hpp"
 #include "models/extensions/HxcppdbgModelDataFactory.hpp"
 #include "models/extensions/Utils.hpp"
@@ -75,11 +75,11 @@
 #include <haxe/io/Path.h>
 #endif
 
-IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager = nullptr;
+IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::manager = nullptr;
 
-IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::host = nullptr;
+IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::host = nullptr;
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes)
 {
 	auto result = HRESULT{ S_OK };
 
@@ -218,7 +218,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::cre
 	return haxe::ds::Option_obj::None;
 }
 
-hxcppdbg::core::drivers::dbgeng::NativeFrameReturn hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& _frame)
+hxcppdbg::core::drivers::dbgeng::NativeFrameReturn hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& _frame)
 {
 	auto attr    = _frame.KeyValue(L"Attributes");
 	auto offset  = ULONG64{ attr.KeyValue(L"InstructionOffset") };
@@ -254,7 +254,7 @@ hxcppdbg::core::drivers::dbgeng::NativeFrameReturn hxcppdbg::core::drivers::dbge
 	return hxcppdbg::core::drivers::dbgeng::NativeFrameReturn_obj::__new(hxcppdbg::core::stack::NativeFrame_obj::__new(haxe::io::Path_obj::__new(haxe::io::Path_obj::normalize(file)), name, line), address);
 }
 
-String hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::cleanSymbolName(std::wstring _input)
+String hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::cleanSymbolName(std::wstring _input)
 {
 	// dbgeng symbol names are prefixed with the module followed by a '!' before the rest of the symbol name.
 	auto modulePivot   = _input.find_first_of(L'!');
@@ -326,7 +326,7 @@ String hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::cleanSymbolNa
 	return String::create(buffer.data(), buffer.length());
 }
 
-int hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::backtickCount(std::wstring _input)
+int hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::backtickCount(std::wstring _input)
 {
 	auto count = int{ 0 };
 	for (auto&& character : _input)
@@ -344,7 +344,7 @@ int hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::backtickCount(st
 	return count;
 }
 
-bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::endsWith(std::wstring const &_input, std::wstring const &_ending)
+bool hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::endsWith(std::wstring const &_input, std::wstring const &_ending)
 {
     if (_input.length() >= _ending.length())
     {
@@ -356,7 +356,7 @@ bool hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::endsWith(std::w
     }
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::createBreakpoint(String _file, int _line)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createBreakpoint(String _file, int _line)
 {
 	auto result = HRESULT{ S_OK };
 
@@ -392,7 +392,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return hxcppdbg::core::ds::Result_obj::Success(id);
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::removeBreakpoint(int id)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::removeBreakpoint(int id)
 {
 	auto result = HRESULT{ S_OK };
 
@@ -410,7 +410,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::rem
 	return haxe::ds::Option_obj::None;
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getThreads()
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getThreads()
 {
 	auto result = S_OK;
 
@@ -435,7 +435,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getCallStack(int _threadIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getCallStack(int _threadIndex)
 {
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
@@ -465,7 +465,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getFrame(int _threadIndex, int _frameIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getFrame(int _threadIndex, int _frameIndex)
 {
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
@@ -489,7 +489,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getVariables(int _threadIndex, int _frameIndex)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getVariables(int _threadIndex, int _frameIndex)
 {
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
@@ -552,12 +552,12 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::getArguments(int thread, int frame)
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getArguments(int thread, int frame)
 {
 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Not Implemented"), S_FALSE));
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::interrupt()
+hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::interrupt()
 {
 	auto result = S_OK;
 	auto status = 0UL;
@@ -582,7 +582,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngObject
 	return hxcppdbg::core::ds::Result_obj::Success(1);
 }
 
-hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::wait()
+hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::wait()
 {
 	hx::EnterGCFreeZone();
 
@@ -671,7 +671,7 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 	}
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::step(int _threadIndex, int _step)
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::step(int _threadIndex, int _step)
 {
 	auto result = S_OK;
 
@@ -767,7 +767,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::ste
 	return haxe::ds::Option_obj::None;
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::go()
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::go()
 {
 	auto result  = S_OK;
 	auto current = 0UL;
@@ -790,7 +790,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::go(
 	return haxe::ds::Option_obj::None;
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::pause()
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::pause()
 {
 	auto result = S_OK;
 
@@ -818,7 +818,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::pau
 	return haxe::ds::Option_obj::None;
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::end()
+haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::end()
 {
 	auto result = 0;
 	

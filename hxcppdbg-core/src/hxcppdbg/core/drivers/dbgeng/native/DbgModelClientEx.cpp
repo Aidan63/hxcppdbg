@@ -1,13 +1,13 @@
 #include "hxcpp.h"
-#include "DbgEngObjects.hpp"
+#include "DbgEngContext.hpp"
 #include "DbgModelClientEx.hpp"
 
 IDataModelManager* Debugger::DataModel::ClientEx::GetManager()
 {
-    return hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::manager;
+    return hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::manager;
 }
 
 IDebugHost* Debugger::DataModel::ClientEx::GetHost()
 {
-    return hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj::host;
+    return hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::host;
 }

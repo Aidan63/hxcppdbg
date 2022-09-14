@@ -3,8 +3,6 @@
 #include <hxcpp.h>
 #include <DbgEng.h>
 
-HX_DECLARE_CLASS4(hxcppdbg, core, drivers, native, DbgEngObjects)
-
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
     class DebugEventCallbacks : public DebugBaseEventCallbacksWide

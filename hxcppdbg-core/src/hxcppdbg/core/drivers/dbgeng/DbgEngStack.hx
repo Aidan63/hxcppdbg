@@ -5,7 +5,7 @@ import haxe.Exception;
 import sys.thread.Thread;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.NativeFrame;
-import hxcppdbg.core.drivers.dbgeng.native.DbgEngObjects;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 
 using Lambda;
 using StringTools;
@@ -13,7 +13,7 @@ using hxcppdbg.core.utils.ResultUtils;
 
 class DbgEngStack implements IStack
 {
-    final objects : Pointer<DbgEngObjects>;
+    final objects : Pointer<DbgEngContext>;
 
     final cbThread : Thread;
 

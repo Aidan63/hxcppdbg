@@ -4,14 +4,14 @@ import cpp.Pointer;
 import sys.thread.Thread;
 import haxe.Exception;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.drivers.dbgeng.native.DbgEngObjects;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 import hxcppdbg.core.thread.NativeThread;
 
 using Lambda;
 
 class DbgEngThreads implements IThreads
 {
-    final objects : Pointer<DbgEngObjects>;
+    final objects : Pointer<DbgEngContext>;
 
     final cbThread : Thread;
 

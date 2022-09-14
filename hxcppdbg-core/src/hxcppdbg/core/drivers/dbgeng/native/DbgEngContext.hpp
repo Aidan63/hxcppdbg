@@ -23,13 +23,12 @@ HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
 HX_DECLARE_CLASS3(hxcppdbg, core, model, ModelData)
 HX_DECLARE_CLASS3(hxcppdbg, core, drivers, StopReason)
 HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, DbgEngObjects)
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, WaitResult)
 HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
-    class DbgEngObjects_obj
+    class DbgEngContext
     {
     private:
         ComPtr<IDebugClient7> client;
@@ -47,8 +46,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static bool endsWith(std::wstring const &_input, std::wstring const &_ending);
 
     public:
-        DbgEngObjects_obj() = default;
-        virtual ~DbgEngObjects_obj() = default;
+        DbgEngContext() = default;
+        virtual ~DbgEngContext() = default;
 
         haxe::ds::Option createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
 

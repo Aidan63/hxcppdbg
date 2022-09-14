@@ -16,7 +16,7 @@
         <compilerflag value='-I${DbgEngDir}'/>
         <compilerflag value='-DWIN32_LEAN_AND_MEAN'/>
 
-        <file name='${DbgEngDir}/DbgEngObjects.cpp'/>
+        <file name='${DbgEngDir}/DbgEngContext.cpp'/>
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgExtensionModel.cpp'/>

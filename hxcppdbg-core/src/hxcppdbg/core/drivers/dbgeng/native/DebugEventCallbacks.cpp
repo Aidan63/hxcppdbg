@@ -1,7 +1,7 @@
 #include <hxcpp.h>
 
 #include "DebugEventCallbacks.hpp"
-#include "DbgEngObjects.hpp"
+#include "DbgEngContext.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::DebugEventCallbacks::DebugEventCallbacks()
 {

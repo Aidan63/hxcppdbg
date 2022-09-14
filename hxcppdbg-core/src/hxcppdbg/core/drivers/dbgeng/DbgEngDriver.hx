@@ -7,14 +7,14 @@ import sys.thread.EventLoop.EventHandler;
 import haxe.Exception;
 import haxe.ds.Option;
 import haxe.exceptions.NotImplementedException;
-import hxcppdbg.core.drivers.dbgeng.native.DbgEngObjects;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 
 using hxcppdbg.core.utils.ResultUtils;
 using hxcppdbg.core.utils.OptionUtils;
 
 class DbgEngDriver extends Driver
 {
-	final objects : Pointer<DbgEngObjects>;
+	final objects : Pointer<DbgEngContext>;
 
 	final cbThread : Thread;
 
@@ -143,7 +143,7 @@ class DbgEngDriver extends Driver
 		final cbThread = Thread.current();
 
 		Thread.createWithEventLoop(() -> {
-			final ctx    = DbgEngObjects.alloc();
+			final ctx    = DbgEngContext.alloc();
 			final result = switch ctx.ptr.createFromFile(_file, _enums, _classes)
 			{
 				case Some(exn):

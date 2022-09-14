@@ -23,15 +23,15 @@ enum WaitResult
 }
 
 @:keep
-@:include('DbgEngObjects.hpp')
-@:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj')
+@:include('DbgEngContext.hpp')
+@:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngContext')
 #if !display
 @:build(hxcppdbg.core.utils.HxcppUtils.xml('DbgEng'))
 #end
-extern class DbgEngObjects
+extern class DbgEngContext
 {
-    @:native('new hxcppdbg::core::drivers::dbgeng::native::DbgEngObjects_obj')
-    static function alloc() : cpp.Pointer<DbgEngObjects>;
+    @:native('new hxcppdbg::core::drivers::dbgeng::native::DbgEngContext')
+    static function alloc() : cpp.Pointer<DbgEngContext>;
 
     function createFromFile(_file : String, _enums : Array<GeneratedType>, _classes : Array<GeneratedType>) : Option<HResultException>;
 

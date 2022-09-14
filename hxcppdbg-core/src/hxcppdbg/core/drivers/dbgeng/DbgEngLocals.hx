@@ -5,14 +5,14 @@ import sys.thread.Thread;
 import haxe.Exception;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Model;
-import hxcppdbg.core.drivers.dbgeng.native.DbgEngObjects;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 
 using Lambda;
 using hxcppdbg.core.utils.ResultUtils;
 
 class DbgEngLocals implements ILocals
 {
-    final driver : Pointer<DbgEngObjects>;
+    final driver : Pointer<DbgEngContext>;
 
     final cbThread : Thread;
 
