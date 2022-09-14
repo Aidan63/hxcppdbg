@@ -51,7 +51,7 @@ abstract Path(haxe.io.Path)
 
         return if (first.length >= 2 && first.fastCodeAt(1) == ':'.code)
         {
-            first.substr(0, 1).toLowerCase() + first.substr(1);
+            first.substr(0, 1).toUpperCase() + first.substr(1);
         }
         else
         {
