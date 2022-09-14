@@ -1,9 +1,8 @@
 package hxcppdbg.core.breakpoints;
 
-import hxcppdbg.core.ds.Path;
 import haxe.Exception;
 import haxe.ds.Option;
-import hxcppdbg.core.ds.Signal;
+import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.IBreakpoints;
