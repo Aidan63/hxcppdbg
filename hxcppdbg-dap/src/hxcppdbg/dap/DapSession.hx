@@ -11,6 +11,7 @@ import tink.CoreApi.Noise;
 import tink.CoreApi.Future;
 import tink.CoreApi.Outcome;
 import tink.CoreApi.Surprise;
+import hxcppdbg.dap.FrameId;
 import hxcppdbg.dap.protocol.Event;
 import hxcppdbg.dap.protocol.Request;
 import hxcppdbg.dap.protocol.ProtocolMessage;
@@ -20,11 +21,13 @@ import hxcppdbg.dap.protocol.data.Breakpoint;
 import hxcppdbg.dap.protocol.requests.NextRequest;
 import hxcppdbg.dap.protocol.requests.ScopesRequest;
 import hxcppdbg.dap.protocol.requests.LaunchRequest;
+import hxcppdbg.dap.protocol.requests.EvaluateRequest;
 import hxcppdbg.dap.protocol.requests.VariablesRequest;
 import hxcppdbg.dap.protocol.requests.StackTraceRequest;
 import hxcppdbg.dap.protocol.requests.SetBreakpointsRequest;
 import hxcppdbg.dap.protocol.responses.ScopesResponse;
 import hxcppdbg.dap.protocol.responses.ThreadsResponse;
+import hxcppdbg.dap.protocol.responses.EvaluateResponse;
 import hxcppdbg.dap.protocol.responses.VariablesResponse;
 import hxcppdbg.dap.protocol.responses.StackTraceResponse;
 import hxcppdbg.dap.protocol.responses.SetBreakpointsResponse;
@@ -32,6 +35,9 @@ import hxcppdbg.core.Session;
 import hxcppdbg.core.StepType;
 import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.Model;
+import hxcppdbg.core.model.Printer;
+import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.thread.NativeThread;
 import hxcppdbg.core.drivers.Interrupt;
 
@@ -181,6 +187,9 @@ class DapSession
                     .flatMap(sendResponse);
             case 'variables':
                 onVariables(cast _request)
+                    .flatMap(sendResponse);
+            case 'evaluate':
+                onEvaluate(cast _request)
                     .flatMap(sendResponse);
             case 'disconnect':
                 onDisconnect()
@@ -655,6 +664,54 @@ class DapSession
                             _resolve(Outcome.Success({ variables : vs }));
                         case None:
                             _resolve(Outcome.Failure(new Exception('no variables for reference ${ _request.arguments.variablesReference }')));
+                    }
+                });
+    }
+
+    function onEvaluate(_request : EvaluateRequest)
+    {
+        return
+            DapPromise
+                .irreversible((_resolve : Outcome<EvaluateResponse, Exception>->Void) -> {
+                    switch session
+                    {
+                        case Some(s):
+                            switch _request.arguments.frameId
+                            {
+                                case null:
+                                    _resolve(Outcome.Failure(new Exception('no frame ID')));
+                                case frame:
+                                    s.eval.evaluate(_request.arguments.expression, frame.thread, frame.number, result -> {
+                                        switch result
+                                        {
+                                            case Success(data):
+                                                final reference = switch data
+                                                {
+                                                    case MEnum(_, _, _), MArray(_), MMap(_), MDynamic(_), MAnon(_), MClass(_, _):
+                                                        variables.insert([ LocalVariable.Haxe(new Model(ModelData.MString('children'), data)) ]);
+                                                    case _:
+                                                        0;
+                                                }
+
+                                                final type = switch data {
+                                                    case MEnum(type, _, _), MClass(type, _):
+                                                        printType(type);
+                                                    case _:
+                                                        null;
+                                                }
+
+                                                _resolve(Outcome.Success({
+                                                    result             : printModelData(data),
+                                                    variablesReference : reference,
+                                                    type               : type
+                                                }));
+                                            case Error(exn):
+                                                _resolve(Outcome.Failure(exn));
+                                        }
+                                    });
+                            }
+                        case None:
+                            _resolve(Outcome.Failure(noSessionException()));
                     }
                 });
     }
