@@ -1,6 +1,5 @@
 package hxcppdbg.cli;
 
-import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
 import hxcppdbg.core.stack.StackFrame;
@@ -25,42 +24,23 @@ class Stack
         driver = _driver;
     }
 
-    @:command public function list()
+    @:command public function list(_prompt : tink.cli.Prompt)
     {
-        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            driver.getCallStack(thread, result -> {
-                switch result
-                {
-                    case Success(frames):
-                        for (idx => frame in frames.filter(filterFrame))
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    driver.getCallStack(thread, result -> {
+                        switch result
                         {
-                            switch frame
-                            {
-                                case Haxe(haxe, frame):
-                                    if (native)
-                                    {
-                                        Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
-                                    }
-                                    else
-                                    {
-                                        switch haxe.closure
-                                        {
-                                            case Some(closure):
-                                                Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }');
-                                            case None:
-                                                Sys.println('\t$idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }');
-                                        }
-                                    }
-                                case Native(frame):
-                                    Sys.println('\t$idx: [native] ${ frame.func } Line ${ frame.line }');
-                            }
+                            case Success(frames):
+                                _resolve(frames);
+                            case Error(exn):
+                                _reject(new Error(exn.message));
                         }
-                        _resolve(null);
-                    case Error(exn):
-                        _reject(new Error('\t${ exn.message }'));
-                }
-            });
-        });
+                    });
+                })
+                .next(frames -> frames.filter(filterFrame).mapi(printFrame).join('\n'))
+                .next(_prompt.println);
     }
 
     @:defaultCommand public function help()
@@ -76,6 +56,30 @@ class Stack
                 true;
             case Native(_):
                 all;
+        }
+    }
+
+    function printFrame(_idx : Int, _stackFrame : StackFrame)
+    {
+        return switch _stackFrame
+        {
+            case Haxe(haxe, frame):
+                if (native)
+                {
+                    '\t$_idx: [native] ${ frame.func } Line ${ frame.line }';
+                }
+                else
+                {
+                    switch haxe.closure
+                    {
+                        case Some(closure):
+                            '\t$_idx: ${ haxe.file.type }.${ haxe.func.name }.${ closure.name }() Line ${ haxe.expr.haxe.start.line }';
+                        case None:
+                            '\t$_idx: ${ haxe.file.type }.${ haxe.func.name }() Line ${ haxe.expr.haxe.start.line }';
+                    }
+                }
+            case Native(frame):
+                '\t$_idx: [native] ${ frame.func } Line ${ frame.line }';
         }
     }
 }

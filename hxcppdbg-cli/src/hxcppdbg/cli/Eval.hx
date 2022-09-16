@@ -1,10 +1,9 @@
 package hxcppdbg.cli;
 
-import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
-import hxcppdbg.core.evaluator.Evaluator in CoreEval;
 import hxcppdbg.core.model.Printer;
+import hxcppdbg.core.evaluator.Evaluator in CoreEval;
 
 class Eval
 {
@@ -17,28 +16,29 @@ class Eval
         evaluate = _evaluate;
     }
 
-    @:defaultCommand public function eval()
+    @:defaultCommand public function eval(_prompt : tink.cli.Prompt)
     {
-        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            evaluate.evaluate(expr, 0, 0, result -> {
-                switch result
-                {
-                    case Success(v):
-                        switch v
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    evaluate.evaluate(expr, 0, 0, result -> {
+                        switch result
                         {
-                            case MEnum(type, _):
-                                Sys.println('\t${ printType(type) }\t${ printModelData(v) }');
-                            case MClass(type, _):
-                                Sys.println('\t${ printType(type) }\t${ printModelData(v) }');
-                            case _:
-                                Sys.println('\t${ printModelData(v) }');
+                            case Success(v):
+                                switch v
+                                {
+                                    case MEnum(type, _):
+                                        _resolve('\t${ printType(type) }\t${ printModelData(v) }');
+                                    case MClass(type, _):
+                                        _resolve('\t${ printType(type) }\t${ printModelData(v) }');
+                                    case _:
+                                        _resolve('\t${ printModelData(v) }');
+                                }
+                            case Error(exn):
+                                _reject(new Error('\tError : ${ exn.message }'));
                         }
-
-                        _resolve(null);
-                    case Error(exn):
-                        _reject(new Error('\tError : ${ exn.message }'));
-                }
-            });
-        });
+                    });
+                })
+                .next(_prompt.println);
     }
 }

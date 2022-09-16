@@ -1,7 +1,14 @@
 package hxcppdbg.cli;
 
-import haxe.Exception;
+import haxe.ds.Option;
+import tink.CoreApi.Error;
+import tink.CoreApi.Future;
+import tink.cli.Prompt;
+import tink.core.Promise;
+import hxcppdbg.cli.Utils;
 import hxcppdbg.core.Session;
+import hxcppdbg.core.StepType;
+import hxcppdbg.core.drivers.Interrupt;
 
 class Step
 {
@@ -14,73 +21,19 @@ class Step
         session = _session;
     }
 
-    @:defaultCommand('in') public function step()
+    @:defaultCommand('in') public function step(_prompt : Prompt)
     {
-        session.step(thread, In, result -> {
-            switch result
-            {
-                case Success(Some(interrupt)):
-                    switch interrupt
-                    {
-                        case ExceptionThrown(threadIndex):
-                            //
-                        case BreakpointHit(threadIndex, id):
-                            //
-                        case Other:
-                            //
-                    }
-                case Success(None):
-                    printLocation();
-                case Error(exn):
-                    trace(exn.message);
-            }
-        });
+        return stepPromise(_prompt, In);
     }
 
-    @:command public function out()
+    @:command public function out(_prompt : Prompt)
     {
-        session.step(thread, Out, result -> {
-            switch result
-            {
-                case Success(Some(interrupt)):
-                    switch interrupt
-                    {
-                        case ExceptionThrown(threadIndex):
-                            //
-                        case BreakpointHit(threadIndex, id):
-                            //
-                        case Other:
-                            //
-                    }
-                case Success(None):
-                    printLocation();
-                case Error(exn):
-                    trace(exn.message);
-            }
-        });
+        return stepPromise(_prompt, Out);
     }
 
-    @:command public function over()
+    @:command public function over(_prompt : Prompt)
     {
-        session.step(thread, Over, result -> {
-            switch result
-            {
-                case Success(Some(interrupt)):
-                    switch interrupt
-                    {
-                        case ExceptionThrown(threadIndex):
-                            //
-                        case BreakpointHit(threadIndex, id):
-                            //
-                        case Other:
-                            //
-                    }
-                case Success(None):
-                    printLocation();
-                case Error(exn):
-                    trace(exn.message);
-            }
-        });
+        return stepPromise(_prompt, Over);
     }
 
     @:command public function help()
@@ -88,26 +41,60 @@ class Step
         //
     }
 
+    function stepPromise(_prompt : Prompt, _step : StepType)
+    {
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    session.step(thread, _step, result -> {
+                        switch result
+                        {
+                            case Success(opt):
+                                _resolve(opt);
+                            case Error(exn):
+                                _reject(new Error(exn.message));
+                        }
+                    });
+                })
+                .next(onStopReason)
+                .next(_prompt.println);
+    }
+
+    function onStopReason(_opt : Option<Interrupt>)
+    {
+        return switch _opt
+        {
+            case Some(interrupt):
+                printStopReason(session, interrupt);
+            case None:
+                printLocation();
+        }
+    }
+
     function printLocation()
     {
-        session.stack.getFrame(thread, 0, result -> {
-            switch result
-            {
-                case Success(v):
-                    switch v
-                    {
-                        case Haxe(haxe, _):
-                            Sys.println('Thread $thread at ${ haxe.file.haxe } Line ${ haxe.expr.haxe.start.line }');
-                        case Native(_):
-                            // We should never end up in a native function.
-                            // Eventually a native flag might be added which means we could.
-                            // We could also step out of the haxe main so maybe we should continue running the program (and check for exit).
-                            Sys.println('Location is a native frame');
-            
-                    }
-                case Error(e):
-                    Sys.println(e.message);
-            }
-        });
+        return
+            Future
+                .irreversible(_handle -> {
+                    session.stack.getFrame(thread, 0, result -> {
+                        switch result
+                        {
+                            case Success(v):
+                                switch v
+                                {
+                                    case Haxe(haxe, _):
+                                        _handle('Thread $thread at ${ haxe.file.haxe } Line ${ haxe.expr.haxe.start.line }');
+                                    case Native(_):
+                                        // We should never end up in a native function.
+                                        // Eventually a native flag might be added which means we could.
+                                        // We could also step out of the haxe main so maybe we should continue running the program (and check for exit).
+                                        _handle('Location is a native frame');
+                        
+                                }
+                            case Error(e):
+                                _handle(e.message);
+                        }
+                    });
+                });
     }
 }

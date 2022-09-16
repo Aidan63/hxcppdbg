@@ -1,5 +1,6 @@
 package hxcppdbg.cli;
 
+import hxcppdbg.core.locals.LocalVariable;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
@@ -26,36 +27,49 @@ class Locals
         locals = _locals;
     }
 
-    @:command public function list()
+    @:command public function list(_prompt : tink.cli.Prompt)
     {
-        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            locals.getLocals(thread, frame, result -> {
-                switch result
-                {
-                    case Success(vars):
-                        for (hxVar in vars)
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    locals.getLocals(thread, frame, result -> {
+                        switch result
                         {
-                            switch hxVar
-                            {
-                                case Native(model):
-                                    if (native)
-                                    {
-                                        Sys.println('\t[native]${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
-                                    }
-                                case Haxe(model):
-                                    Sys.println('\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }');
-                            }
+                            case Success(vars):
+                                _resolve(vars);
+                            case Error(exn):
+                                _reject(new Error('Error : ${ exn.message }'));
                         }
-                        _resolve(null);
-                    case Error(exn):
-                        _reject(new Error('\tError : ${ exn.message }'));
-                }
-            });
-        });
+                    });
+                })
+                .next(vars -> vars.filter(filterLocalVariable).map(printLocalVariable).join('\n'))
+                .next(_prompt.println);
     }
 
     @:defaultCommand public function help()
     {
         //
+    }
+
+    function filterLocalVariable(_local : LocalVariable)
+    {
+        return switch _local
+        {
+            case Native(_):
+                native;
+            case Haxe(_):
+                true;
+        }
+    }
+
+    function printLocalVariable(_local : LocalVariable)
+    {
+        return switch _local
+        {
+            case Native(model):
+                '\t[native]${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }';
+            case Haxe(model):
+                '\t${ printModelData(model.key) }\t${ if (json) printModelData(model.data) else '' }';
+        }
     }
 }

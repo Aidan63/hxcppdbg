@@ -1,6 +1,5 @@
 package hxcppdbg.cli;
 
-import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
 import hxcppdbg.core.thread.Threads in CoreThreads;
@@ -14,23 +13,28 @@ class Threads
         driver = _driver;
     }
 
-    @:defaultCommand
-    public function list()
+    @:defaultCommand public function list(_prompt : tink.cli.Prompt)
     {
-        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            driver.getThreads(result -> {
-                switch result
-                {
-                    case Success(threads):
-                        for (thread in threads)
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    driver.getThreads(result -> {
+                        switch result
                         {
-                            Sys.println('\t${ thread.name }');
+                            case Success(threads):
+                                final buffer = new StringBuf();
+
+                                for (thread in threads)
+                                {
+                                    buffer.add('\t${ thread.name }\n');
+                                }
+
+                                _resolve(buffer.toString());
+                            case Error(exn):
+                                _reject(new Error(exn.message));
                         }
-                        _resolve(null);
-                    case Error(exn):
-                        _reject(new Error(exn.message));
-                }
-            });
-        });
+                    });
+                })
+                .next(_prompt.print);
     }
 }

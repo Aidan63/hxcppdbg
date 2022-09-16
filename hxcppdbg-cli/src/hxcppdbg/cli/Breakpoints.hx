@@ -1,9 +1,8 @@
 package hxcppdbg.cli;
 
-import hxcppdbg.core.ds.Path;
-import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
+import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.breakpoints.Breakpoints in CoreBreakpoints;
 
 using Lambda;
@@ -24,14 +23,15 @@ class Breakpoints
         remove = new Remove(_driver);
     }
 
-    @:defaultCommand public function help()
+    @:defaultCommand public function help(_prompt : tink.cli.Prompt)
     {
-        Sys.println(tink.Cli.getDoc(this));
+        _prompt.println(tink.Cli.getDoc(this));
     }
 
-    @:command public function list()
+    @:command public function list(_prompt : tink.cli.Prompt)
     {
         final breakpoints = driver.list();
+        final buffer      = new StringBuf();
 
         breakpoints.sort((b1, b2) -> b1.id - b2.id);
 
@@ -39,8 +39,10 @@ class Breakpoints
         {
             final end = if (breakpoint.char != 0) 'Character ${ breakpoint.char }' else '';
 
-            Sys.println('[${ breakpoint.id }] ${ breakpoint.file } Line ${ breakpoint.line } ${ end }');
+            buffer.add('[${ breakpoint.id }] ${ breakpoint.file } Line ${ breakpoint.line } ${ end }\n');
         }
+
+        return _prompt.print(buffer.toString());
     }
 }
 
@@ -59,21 +61,22 @@ class Add
         driver = _driver;
     }
 
-    @:defaultCommand public function run()
+    @:defaultCommand public function run(_prompt : tink.cli.Prompt)
     {
-        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            driver.create(Path.of(file), line, char, result -> {
-                switch result
-                {
-                    case Success(bp):
-                        Sys.println('Breakpoing ${ bp.id } added to ${ bp.file }:${ bp.line }');
-
-                        _resolve(null);
-                    case Error(exn):
-                        _reject(new Error('Failed to add breakpoing : ${ exn.message }'));
-                }
-            });
-        });
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    driver.create(Path.of(file), line, char, result -> {
+                        switch result
+                        {
+                            case Success(bp):
+                                _resolve('Breakpoint ${ bp.id } added to ${ bp.file }:${ bp.line }');
+                            case Error(exn):
+                                _reject(new Error('Failed to add breakpoint : ${ exn.message }'));
+                        }
+                    });
+                })
+                .next(_prompt.println);
     }
 }
 
@@ -88,20 +91,21 @@ class Remove
         driver = _driver;
     }
 
-    @:defaultCommand public function run()
+    @:defaultCommand public function run(_prompt : tink.cli.Prompt)
     {
-        return Promise.irreversible((_resolve : Noise->Void, _reject : Error->Void) -> {
-            driver.delete(id, error -> {
-                switch error
-                {
-                    case Some(exn):
-                        _reject(new Error('Failed to remove breakpoing $id : ${ exn.message }'));
-                    case None:
-                        Sys.println('Breakpoint $id removed');
-
-                        _resolve(null);
-                }
-            });
-        });
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    driver.delete(id, error -> {
+                        switch error
+                        {
+                            case Some(exn):
+                                _reject(new Error('Failed to remove breakpoing $id : ${ exn.message }'));
+                            case None:
+                                _resolve('Breakpoint $id removed');
+                        }
+                    });
+                })
+                .next(_prompt.println);
     }
 }
