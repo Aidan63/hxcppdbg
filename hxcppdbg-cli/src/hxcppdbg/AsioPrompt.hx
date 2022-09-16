@@ -2,7 +2,6 @@ package hxcppdbg;
 
 import haxe.io.Bytes;
 import tink.core.Error;
-import tink.CoreApi.Future;
 import tink.Stringly;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Promise;
@@ -28,8 +27,8 @@ class AsioPrompt implements Prompt
             stdout.write(Bytes.ofString(_v), result -> {
                 switch result
                 {
-                    case Some(v):
-                        _failure(Error.withData(error.toString(), error));
+                    case Some(code):
+                        _failure(new Error(code.toString()));
                     case None:
                         _success(null);
                 }
@@ -48,7 +47,7 @@ class AsioPrompt implements Prompt
             switch _type
             {
                 case Simple(prompt):
-                    stdout.write(Bytes.ofString('$prompt: '), result -> {
+                    stdout.write(Bytes.ofString('$prompt : '), result -> {
                         switch result
                         {
                             case Some(error):

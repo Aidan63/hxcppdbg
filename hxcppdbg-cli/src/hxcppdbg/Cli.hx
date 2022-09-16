@@ -1,18 +1,10 @@
 package hxcppdbg;
 
-import cpp.asio.streams.IReadStream;
-import cpp.asio.TTY;
+import sys.FileSystem;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
-import haxe.io.Bytes;
-import haxe.Exception;
-import sys.thread.Thread;
-import hxcppdbg.core.stack.StackFrame;
-import haxe.io.Eof;
-import sys.io.File;
-import hxcppdbg.core.breakpoints.BreakpointHit;
-import sys.FileSystem;
+import tink.cli.Prompt.PromptType;
 import hxcppdbg.cli.Hxcppdbg;
 import hxcppdbg.core.Session;
 
@@ -56,11 +48,19 @@ class Cli
                                             }
                                         });
                 
-                                        cpp.asio.TTY.open(Stdin, result -> {
+                                        cpp.asio.TTY.open(Stdout, result -> {
                                             switch result
                                             {
-                                                case Success(stdin):
-                                                    waitForInput(stdin.read, session, _reject);
+                                                case Success(stdout):
+                                                    cpp.asio.TTY.open(Stdin, result -> {
+                                                        switch result
+                                                        {
+                                                            case Success(stdin):
+                                                                waitForInput(new AsioPrompt(stdin.read, stdout.write), session, _reject);
+                                                            case Error(error):
+                                                                _reject(new Error(error.toString()));
+                                                        }
+                                                    });
                                                 case Error(error):
                                                     _reject(new Error(error.toString()));
                                             }
@@ -81,35 +81,32 @@ class Cli
         //
     }
 
-    function waitForInput(_stdin : IReadStream, _session : Session, _reject : Error->Void)
+    function waitForInput(_prompt : AsioPrompt, _session : Session, _reject : Error->Void)
     {
-        Sys.print('hxcppdbg : ');
+        _prompt
+            .prompt(PromptType.ofString('hxcppdbg'))
+            .handle(outcome -> {
+                switch outcome
+                {
+                    case Success(result):
+                        tink.Cli
+                            .process(regex.split(result), new Hxcppdbg(_session), _prompt)
+                            .handle(outcome -> {
+                                switch outcome
+                                {
+                                    case Success(_):
+                                        //
+                                    case Failure(error):
+                                        _prompt
+                                            .println(error.message)
+                                            .handle(_ -> {});
+                                }
 
-        _stdin.read(result -> {
-            switch result
-            {
-                case Success(data):
-                    _stdin.stop();
-
-                    final str  = data.toString();
-                    final args = regex.split(str);
-
-                    tink.Cli
-                        .process(args, new Hxcppdbg(_session))
-                        .handle(result -> {
-                            switch result
-                            {
-                                case Success(_):
-                                    //
-                                case Failure(failure):
-                                    Sys.println(failure.message);
-                            }
-
-                            waitForInput(_stdin, _session, _reject);
-                        });
-                case Error(error):
-                    _reject(new Error(error.toString()));
-            }
-        });
+                                waitForInput(_prompt, _session, _reject);
+                            });
+                    case Failure(error):
+                        _reject(error);
+                }
+            });
     }
 }
