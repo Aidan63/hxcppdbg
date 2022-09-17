@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.dap.protocol.data.Scope;
 import cpp.asio.Code;
 import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
@@ -629,24 +630,35 @@ class DapSession
                     {
                         case Some(s):
                             final frameId = (cast _request.arguments.frameId : FrameId);
-            
-                            s.locals.getLocals(frameId.thread, frameId.number, result -> {
-                                switch result
-                                {
-                                    case Result.Success(locals):
-                                        _resolve(Outcome.Success({
-                                            scopes : [
-                                                {
-                                                    name               : 'locals',
-                                                    variablesReference : variables.insert(locals),
-                                                    expensive          : false
-                                                }
-                                            ]
-                                        }));
-                                    case Result.Error(exn):
-                                        _resolve(Outcome.Failure(exn));
-                                }
+
+                            final getArguments = Future.irreversible((_resolve : Scope->Void) -> {
+                                s.locals.getArguments(frameId.thread, frameId.number, result -> {
+                                    switch result
+                                    {
+                                        case Success(args):
+                                            _resolve({ name : 'arguments', variablesReference : variables.insert(args), expensive : false });
+                                        case Error(_):
+                                            _resolve({ name : 'arguments', variablesReference : 0, expensive : false });
+                                    }
+                                });
                             });
+
+                            final getLocals = Future.irreversible((_resolve : Scope->Void) -> {
+                                s.locals.getLocals(frameId.thread, frameId.number, result -> {
+                                    switch result
+                                    {
+                                        case Success(locals):
+                                            _resolve({ name : 'locals', variablesReference : variables.insert(locals), expensive : false });
+                                        case Error(_):
+                                            _resolve({ name : 'locals', variablesReference : 0, expensive : false });
+                                    }
+                                });
+                            });
+
+                            Future
+                                .inSequence([ getArguments, getLocals ])
+                                .flatMap(scopes -> Outcome.Success(({ scopes : scopes } : ScopesResponse)))
+                                .handle(_resolve);
                         case None:
                             _resolve(Outcome.Failure(noSessionException()));
                     }

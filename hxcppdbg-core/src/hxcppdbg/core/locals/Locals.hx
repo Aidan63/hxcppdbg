@@ -48,12 +48,50 @@ class Locals
         });
     }
 
+    public function getArguments(_thread, _frame, _callback : Result<Array<LocalVariable>, Exception>->Void)
+    {
+        stack.getFrame(_thread, _frame, result -> {
+            switch result
+            {
+                case Success(frame):
+                    driver.getArguments(_thread, _frame, result -> {
+                        switch result
+                        {
+                            case Success(locals):
+                                _callback(Result.Success(locals.map(mapNativeArgument.bind(frame))));
+                            case Error(e):
+                                _callback(Result.Error(e));
+                        }
+                    });
+                case Error(e):
+                    _callback(Result.Error(e));
+            }
+        });
+    }
+
     function mapNativeLocal(_frame : StackFrame, _native : Model)
     {
         return switch _frame
         {
             case Haxe(haxe, _):
                 switch haxe.func.variables.find(v -> isLocalVar(v.cpp, _native))
+                {
+                    case null:
+                        LocalVariable.Native(_native);
+                    case _:
+                        LocalVariable.Haxe(_native);
+                }
+            case Native(_):
+                LocalVariable.Native(_native);
+        }
+    }
+
+    function mapNativeArgument(_frame : StackFrame, _native : Model)
+    {
+        return switch _frame
+        {
+            case Haxe(haxe, _):
+                switch haxe.func.arguments.find(v -> isLocalVar(v.cpp, _native))
                 {
                     case null:
                         LocalVariable.Native(_native);
