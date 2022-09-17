@@ -181,12 +181,7 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
     }
 }
 
-void hxcppdbg::core::drivers::lldb::native::LLDBContext::interrupt(int _event)
-{
-    interruptBroadcaster.BroadcastEventByType(static_cast<InterruptEvent>(_event));
-}
-
-bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
+bool hxcppdbg::core::drivers::lldb::native::LLDBContext::interrupt(int _event)
 {
     switch (process.GetState())
     {
@@ -194,14 +189,19 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
             return false;
         default:
             {
-                auto error = process.Stop();
-                if (error.Fail())
-                {
-                    hx::Throw(String::create(error.GetCString()));
-                }
-                
+                interruptBroadcaster.BroadcastEventByType(static_cast<InterruptEvent>(_event));
+
                 return true;
             }
+    }
+}
+
+void hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
+{
+    auto error = process.Stop();
+    if (error.Fail())
+    {
+        hx::Throw(String::create(error.GetCString()));
     }
 }
 

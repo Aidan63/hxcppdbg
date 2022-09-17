@@ -74,22 +74,34 @@ class LLDBDriver extends Driver
 
     public function pause(_callback : Result<Bool, Exception>->Void) : Void
     {
-        cbThread.events.run(() -> {
-            ctx.ptr.interrupt(1);
+        try
+        {
+            if (ctx.ptr.interrupt(1))
+            {
+                dbgThread.events.run(() -> {
+                    final result = try
+                    {
+                        ctx.ptr.suspend();
 
-            dbgThread.events.run(() -> {
-                final result = try
-                {
-                    Result.Success(ctx.ptr.suspend());
-                }
-                catch (error : String)
-                {
-                    Result.Error(new Exception(error));
-                }
-    
-                cbThread.events.run(() -> _callback(result));
-            });
-        });
+                        Result.Success(true);
+                    }
+                    catch (error : String)
+                    {
+                        Result.Error(new Exception(error));
+                    }
+
+                    cbThread.events.run(() -> _callback(result));
+                });
+            }
+            else
+            {
+                _callback(Result.Success(false));
+            }
+        }
+        catch (error : String)
+        {
+            _callback(Result.Error(new Exception(error)));
+        }
     }
 
 	public function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void

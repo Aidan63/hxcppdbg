@@ -38,9 +38,9 @@ extern class LLDBContext
 
     function wait(_onException : Int->Void, _onBreakpoint : (_threadIndex : Int, _breakpoint : haxe.Int64)->Void, _onInterrupt : Void->Void, _onBreak : Void->Void) : Void;
 
-    function interrupt(_v : Int) : Void;
+    function interrupt(_v : Int) : Bool;
 
-    function suspend() : Bool;
+    function suspend() : Void;
 
     function createBreakpoint(_file : String, _line : Int) : haxe.Int64;
 

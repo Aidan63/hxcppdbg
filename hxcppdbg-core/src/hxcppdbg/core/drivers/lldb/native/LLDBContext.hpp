@@ -32,8 +32,8 @@ namespace hxcppdbg::core::drivers::lldb::native
         static cpp::Pointer<LLDBContext> create(String, String);
 
         void wait(Dynamic, Dynamic, Dynamic, Dynamic);
-        void interrupt(int);
-        bool suspend();
+        bool interrupt(int);
+        void suspend();
 
         void start();
         void stop();
