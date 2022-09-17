@@ -3,7 +3,7 @@
 #include <limits>
 #include "fmt/format.h"
 
-cpp::Pointer<hxcppdbg::core::drivers::lldb::native::LLDBContext> hxcppdbg::core::drivers::lldb::native::LLDBContext::create(String _exe)
+cpp::Pointer<hxcppdbg::core::drivers::lldb::native::LLDBContext> hxcppdbg::core::drivers::lldb::native::LLDBContext::create(String _cwd, String _exe)
 {
     auto error = ::lldb::SBDebugger::InitializeWithErrorHandling();
     if (error.Fail())
@@ -24,17 +24,28 @@ cpp::Pointer<hxcppdbg::core::drivers::lldb::native::LLDBContext> hxcppdbg::core:
     {
         hx::Throw(HX_CSTRING("Unable to create target"));
     }
+
+    auto options = target.GetLaunchInfo();
+    options.SetWorkingDirectory(_cwd.utf8_str());
+    options.SetLaunchFlags(::lldb::LaunchFlags::eLaunchFlagStopAtEntry);
+
+    auto process = target.Launch(options, error);
+
+    if (error.Fail())
+    {
+        hx::Throw(String::create(error.GetCString()));
+    }
     
-    return cpp::Pointer<LLDBContext>(new LLDBContext(debugger, target));
+    return cpp::Pointer<LLDBContext>(new LLDBContext(debugger, target, process));
 }
 
-hxcppdbg::core::drivers::lldb::native::LLDBContext::LLDBContext(::lldb::SBDebugger _debugger, ::lldb::SBTarget _target)
+hxcppdbg::core::drivers::lldb::native::LLDBContext::LLDBContext(::lldb::SBDebugger _debugger, ::lldb::SBTarget _target, ::lldb::SBProcess _process)
     : debugger(_debugger)
     , target(_target)
     , listener(_debugger.GetListener())
     , interruptBroadcaster(::lldb::SBBroadcaster("user-interrupt"))
     , exceptionBreakpoint(target.BreakpointCreateForException(::lldb::eLanguageTypeC_plus_plus, false, true))
-    , process(std::nullopt)
+    , process(_process)
 {
     interruptBroadcaster.AddListener(listener, InterruptEvent::Pause);
 }
@@ -157,10 +168,7 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
 
                     case InterruptEvent::Restart:
                         {
-                            if (process.has_value())
-                            {
-                                //
-                            }
+                            //
                         }
                         break;
                 }
@@ -180,13 +188,13 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::interrupt(int _event)
 
 bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
 {
-    switch (process->GetState())
+    switch (process.GetState())
     {
         case ::lldb::eStateStopped:
             return false;
         default:
             {
-                auto error = process->Stop();
+                auto error = process.Stop();
                 if (error.Fail())
                 {
                     hx::Throw(String::create(error.GetCString()));
@@ -197,20 +205,13 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
     }
 }
 
-void hxcppdbg::core::drivers::lldb::native::LLDBContext::start(String _cwd)
+void hxcppdbg::core::drivers::lldb::native::LLDBContext::start()
 {
-    auto options = target.GetLaunchInfo();
-    options.SetWorkingDirectory(_cwd.utf8_str());
-
-    auto error = ::lldb::SBError();
-    auto proc  = target.Launch(options, error);
-
+    auto error = process.Continue();
     if (error.Fail())
     {
         hx::Throw(String::create(error.GetCString()));
     }
-    
-    process = std::optional<::lldb::SBProcess>(proc);
 }
 
 void hxcppdbg::core::drivers::lldb::native::LLDBContext::stop()
@@ -220,11 +221,11 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::stop()
 
 void hxcppdbg::core::drivers::lldb::native::LLDBContext::resume()
 {
-    switch (process->GetState())
+    switch (process.GetState())
     {
         case ::lldb::eStateStopped:
             {
-                auto error = process->Continue();
+                auto error = process.Continue();
                 if (error.Fail())
                 {
                     hx::Throw(String::create(error.GetCString()));
@@ -239,12 +240,7 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::resume()
 
 void hxcppdbg::core::drivers::lldb::native::LLDBContext::step(int _threadIndex, int _type)
 {
-    if (!process.has_value())
-    {
-        hx::Throw(HX_CSTRING("Process has not started"));
-    }
-
-    auto thread = process.value().GetThreadAtIndex(_threadIndex);
+    auto thread = process.GetThreadAtIndex(_threadIndex);
     if (!thread.IsValid())
     {
         hx::Throw(HX_CSTRING("Unable to get thread"));
@@ -302,12 +298,7 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::removeBreakpoint(cpp::I
 
 hx::Anon hxcppdbg::core::drivers::lldb::native::LLDBContext::getStackFrame(int _threadIndex, int _frameIndex)
 {
-    if (!process.has_value())
-    {
-        hx::Throw(HX_CSTRING("Process has not started"));
-    }
-
-    auto thread = process.value().GetThreadAtIndex(_threadIndex);
+    auto thread = process.GetThreadAtIndex(_threadIndex);
     if (!thread.IsValid())
     {
         hx::Throw(HX_CSTRING("Unable to get thread"));
@@ -391,12 +382,7 @@ hx::Anon hxcppdbg::core::drivers::lldb::native::LLDBContext::getStackFrame(int _
 
 Array<hx::Anon> hxcppdbg::core::drivers::lldb::native::LLDBContext::getStackFrames(int _threadIndex)
 {
-    if (!process.has_value())
-    {
-        hx::Throw(HX_CSTRING("Process has not started"));
-    }
-
-    auto thread = process.value().GetThreadAtIndex(_threadIndex);
+    auto thread = process.GetThreadAtIndex(_threadIndex);
     if (!thread.IsValid())
     {
         hx::Throw(HX_CSTRING("Unable to get thread"));

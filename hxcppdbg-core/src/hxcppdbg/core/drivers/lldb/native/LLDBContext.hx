@@ -30,9 +30,9 @@ extern class LLDBContext
     static function boot() : Void;
 
     @:native('hxcppdbg::core::drivers::lldb::native::LLDBContext::create')
-    static function create(_file : String) : cpp.Pointer<LLDBContext>;
+    static function create(_cwd : String, _file : String) : cpp.Pointer<LLDBContext>;
 
-    function start(_cwd : String) : Void;
+    function start() : Void;
 
     function resume() : Void;
 

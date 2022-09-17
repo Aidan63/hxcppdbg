@@ -40,7 +40,7 @@ class LLDBDriver extends Driver
         Thread.createWithEventLoop(() -> {
             final result = try
             {
-                Result.Success(new LLDBDriver(LLDBContext.create(_file), cbThread));
+                Result.Success(new LLDBDriver(LLDBContext.create(Sys.getCwd(), _file), cbThread));
             }
             catch (error : String)
             {
@@ -56,7 +56,7 @@ class LLDBDriver extends Driver
         dbgThread.events.run(() -> {
             try
             {
-                ctx.ptr.start(Sys.getCwd());
+                ctx.ptr.start();
     
                 cbThread.events.run(() -> _callback(Result.Success(run)));
             }
