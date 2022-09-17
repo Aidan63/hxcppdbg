@@ -29,7 +29,7 @@ class LLDBDriver extends Driver
         dbgThread   = Thread.current();
         breakpoints = new LLDBBreakpoints(ctx, cbThread.events);
         stack       = new LLDBStack(ctx, cbThread.events);
-        locals      = new LLDBLocals();
+        locals      = new LLDBLocals(ctx, cbThread.events);
         threads     = new LLDBThreads(ctx, cbThread.events);
     }
 

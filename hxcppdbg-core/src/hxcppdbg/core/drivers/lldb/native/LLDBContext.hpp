@@ -47,6 +47,9 @@ namespace hxcppdbg::core::drivers::lldb::native
         Array<hx::Anon> getStackFrames(int);
 
         Array<hx::Anon> getThreads();
+
+        Array<hx::Anon> getLocals(int, int);
+        Array<hx::Anon> getArguments(int, int);
     private:
         ::lldb::SBDebugger debugger;
         ::lldb::SBTarget target;

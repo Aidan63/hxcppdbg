@@ -432,3 +432,89 @@ Array<hx::Anon> hxcppdbg::core::drivers::lldb::native::LLDBContext::getThreads()
 
     return output;
 }
+
+Array<hx::Anon> hxcppdbg::core::drivers::lldb::native::LLDBContext::getLocals(int _threadIdx, int _frameIdx)
+{
+    auto thread = process.GetThreadAtIndex(_threadIdx);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Failed to get thread"));
+    }
+
+    auto frame = thread.GetFrameAtIndex(_frameIdx);
+    if (!frame.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Failed to get frame"));
+    }
+
+    auto locals = frame.GetVariables(false, true, false, true);
+    if (!locals.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Failed to get local variables"));
+    }
+
+    auto output = Array<hx::Anon>(0, 0);
+
+    for (auto i = 0; i < locals.GetSize(); i++)
+    {
+        auto local = locals.GetValueAtIndex(i);
+        if (!local.IsValid())
+        {
+            hx::Throw(HX_CSTRING("Local variable is not valid"));
+        }
+
+        auto name = String::create(local.GetName());
+        auto type = String::create(local.GetTypeName());
+        auto anon = new hx::Anon_obj();
+
+        anon->Add(HX_CSTRING("name"), name);
+        anon->Add(HX_CSTRING("type"), type);
+
+        output.Add(anon);
+    }
+
+    return output;
+}
+
+Array<hx::Anon> hxcppdbg::core::drivers::lldb::native::LLDBContext::getArguments(int _threadIdx, int _frameIdx)
+{
+    auto thread = process.GetThreadAtIndex(_threadIdx);
+    if (!thread.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Failed to get thread"));
+    }
+
+    auto frame  = thread.GetFrameAtIndex(_frameIdx);
+    if (!frame.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Failed to get frame"));
+    }
+
+    auto locals = frame.GetVariables(true, false, false, true);
+    if (!locals.IsValid())
+    {
+        hx::Throw(HX_CSTRING("Failed to get local variables"));
+    }
+
+    auto output = Array<hx::Anon>(0, 0);
+
+    for (auto i = 0; i < locals.GetSize(); i++)
+    {
+        auto local = locals.GetValueAtIndex(i);
+        if (!local.IsValid())
+        {
+            hx::Throw(HX_CSTRING("Local variable is not valid"));
+        }
+        
+        auto name = String::create(local.GetName());
+        auto type = String::create(local.GetTypeName());
+        auto anon = new hx::Anon_obj();
+
+        anon->Add(HX_CSTRING("name"), name);
+        anon->Add(HX_CSTRING("type"), type);
+
+        output.Add(anon);
+    }
+
+    return output;
+}
