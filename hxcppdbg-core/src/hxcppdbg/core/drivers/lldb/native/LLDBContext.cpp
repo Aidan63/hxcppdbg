@@ -422,3 +422,27 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::endsWith(std::string co
         return false;
     }
 }
+
+Array<hx::Anon> hxcppdbg::core::drivers::lldb::native::LLDBContext::getThreads()
+{
+    auto output = Array<hx::Anon>(0, 0);
+
+    for (auto i = 0; i < process.GetNumThreads(); i++)
+    {
+        auto thread = process.GetThreadAtIndex(i);
+        if (!thread.IsValid())
+        {
+            hx::Throw(HX_CSTRING("Invalid thread"));
+        }
+
+        // String::create(thread.GetName())
+
+        auto anon = new hx::Anon_obj();
+        anon->Add(HX_CSTRING("index"), i);
+        anon->Add(HX_CSTRING("name"), HX_CSTRING("thread"));
+
+        output->Add(anon);
+    }
+
+    return output;
+}

@@ -30,6 +30,7 @@ class LLDBDriver extends Driver
         breakpoints = new LLDBBreakpoints(ctx, cbThread.events);
         stack       = new LLDBStack(ctx, cbThread.events);
         locals      = new LLDBLocals();
+        threads     = new LLDBThreads(ctx, cbThread.events);
     }
 
     public static function create(_file, _callback : Result<LLDBDriver, Exception>->Void)

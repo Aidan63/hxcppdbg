@@ -29,13 +29,13 @@ namespace hxcppdbg::core::drivers::lldb::native
     class LLDBContext
     {
     public:
-        static cpp::Pointer<LLDBContext> create(String);
+        static cpp::Pointer<LLDBContext> create(String, String);
 
         void wait(Dynamic, Dynamic, Dynamic, Dynamic);
         void interrupt(int);
         bool suspend();
 
-        void start(String);
+        void start();
         void stop();
         void resume();
         void step(int, int);
@@ -45,15 +45,17 @@ namespace hxcppdbg::core::drivers::lldb::native
 
         hx::Anon getStackFrame(int, int);
         Array<hx::Anon> getStackFrames(int);
+
+        Array<hx::Anon> getThreads();
     private:
         ::lldb::SBDebugger debugger;
         ::lldb::SBTarget target;
         ::lldb::SBListener listener;
         ::lldb::SBBroadcaster interruptBroadcaster;
         ::lldb::SBBreakpoint exceptionBreakpoint;
-        std::optional<::lldb::SBProcess> process;
+        ::lldb::SBProcess process;
 
-        LLDBContext(::lldb::SBDebugger, ::lldb::SBTarget);
+        LLDBContext(::lldb::SBDebugger, ::lldb::SBTarget, ::lldb::SBProcess);
 
         bool endsWith(std::string const &, std::string const &);
     };

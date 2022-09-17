@@ -6,6 +6,11 @@ typedef LLDBFrame = {
     final symbol : String;
 }
 
+typedef LLDBThread = {
+    final index : Int;
+    final name : String;
+}
+
 enum abstract LLDBStepType(Int)
 {
     var In;
@@ -44,6 +49,8 @@ extern class LLDBContext
     function getStackFrame(_threadIndex : Int, _frameIndex : Int) : LLDBFrame;
 
     function getStackFrames(_threadIndex : Int) : Array<LLDBFrame>;
+
+    function getThreads() : Array<LLDBThread>;
 
     function step(_threadIndex : Int, _step : LLDBStepType) : Void;
 }
