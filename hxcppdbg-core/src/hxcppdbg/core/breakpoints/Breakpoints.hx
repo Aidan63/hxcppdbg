@@ -31,6 +31,14 @@ class Breakpoints
         nextId    = 0;
     }
 
+    /**
+     * Create a breakpoint at the given location.
+     * @param _hxFile Path of the haxe file to create the breakpoint in.
+     * @param _hxLine Line within the haxe file to create the breakpoint at.
+     * @param _hxChar 1 based character offset for finding the most specific haxe expression in a line
+     * If 0 is provided breakpoints are created at all valid expressions within the line.
+     * @param _callback Function called when the create operation has succeeded or failed.
+     */
     public function create(_hxFile : Path, _hxLine, _hxChar, _callback : Result<Breakpoint, Exception>->Void)
     {
         switch sourcemap.files.filter(f -> f.haxe.matches(_hxFile))
@@ -60,6 +68,11 @@ class Breakpoints
         }
     }
 
+    /**
+     * Delete a breakpoint.
+     * @param _id ID of the breakpoint to delete.
+     * @param _callback Function called when the delete operation has succeeded or failed.
+     */
     public function delete(_id, _callback : Option<Exception>->Void)
     {
         switch active.get(_id)
@@ -88,6 +101,10 @@ class Breakpoints
         }
     }
 
+    /**
+     * Get the breakpoint object from a given ID.
+     * @param _id ID of the breakpoint to get.
+     */
     public function get(_id)
     {
         return switch active.get(_id)
@@ -95,10 +112,13 @@ class Breakpoints
             case null:
                 Option.None;
             case bp:
-                Option.Some(bp);
+                Option.Some((bp : Breakpoint));
         }
     }
 
+    /**
+     * Return an array of all breakpoint objects.
+     */
     public function list()
     {
         return active.array();
@@ -108,9 +128,13 @@ class Breakpoints
     {
         final collected = [];
 
-        function isValidExprMap(_expr : ExprMap)
+        /**
+         * Given an expression range returns if the expression falls within the current line and character constraints.
+         * @param _range Haxe expression to check.
+         */
+        function isValidExprRange(_range : ExprRange)
         {
-            return if (_hxLine >= _expr.haxe.start.line && _hxLine <= _expr.haxe.end.line)
+            return if (_hxLine >= _range.start.line && _hxLine <= _range.end.line)
             {
                 if (_hxChar == 0)
                 {
@@ -118,13 +142,13 @@ class Breakpoints
                 }
                 else
                 {
-                    if (_hxLine == _expr.haxe.start.line)
+                    if (_hxLine == _range.start.line)
                     {
-                        _hxChar >= _expr.haxe.start.col;
+                        _hxChar >= _range.start.col;
                     }
-                    else if (_hxLine == _expr.haxe.end.line)
+                    else if (_hxLine == _range.end.line)
                     {
-                        _hxChar < _expr.haxe.end.col;
+                        _hxChar < _range.end.col;
                     }
                     else
                     {
@@ -138,19 +162,34 @@ class Breakpoints
             }
         }
 
-        function takeMostSpecificExpr(_item : ExprMap, _result : ExprMap)
+        /**
+         * Given an expression mapping returns if its valid with the `fundExprs` constraints.
+         * @param _expr Expression map to check.
+         */
+        function isValidExprMap(_expr : ExprMap)
+        {
+            return isValidExprRange(_expr.haxe);
+        }
+
+        /**
+         * Given two expression ranges return the most specific range given the line and character constraints.
+         * If `_results` is null `_item` is returned. This function can be used with `Lambda.fold`
+         * @param _item New expression range to check.
+         * @param _result Current most specific expression range.
+         */
+        function takeMostSpecificExpr(_item : ExprRange, _result : ExprRange)
         {
             return switch _result
             {
                 case null:
                     _item;
                 case best:
-                    final bestLineDelta  = best.haxe.end.line - best.haxe.start.line;
-                    final _itemLineDelta = _item.haxe.end.line - _item.haxe.start.line;
+                    final bestLineDelta  = best.end.line - best.start.line;
+                    final _itemLineDelta = _item.end.line - _item.start.line;
 
                     if (bestLineDelta == _itemLineDelta)
                     {
-                        if (best.haxe.end.col - best.haxe.start.col > _item.haxe.end.col - _item.haxe.start.col)
+                        if (best.end.col - best.start.col > _item.end.col - _item.start.col)
                         {
                             _item;
                         }
@@ -204,6 +243,11 @@ class Breakpoints
         }
     }
 
+    /**
+     * Return a tink promise around creating a native breakpoint.
+     * @param _file C++ file to create the breakpoint in.
+     * @param _line Line to create the breakpoint at.
+     */
     function promiseCreate(_file, _line)
     {
         return
@@ -221,6 +265,10 @@ class Breakpoints
                 });
     }
 
+    /**
+     * Return a tink promise around deleting a native breakpoint.
+     * @param _id ID of the native breakpoint to remove.
+     */
     function promiseDelete(_id)
     {
         return
