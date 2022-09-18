@@ -1,26 +1,42 @@
 package hxcppdbg.core.breakpoints;
 
+import haxe.Int64;
+import haxe.ds.ReadOnlyArray;
 import hxcppdbg.core.ds.Path;
-import hxcppdbg.core.sourcemap.Sourcemap.ExprMap;
 
 class Breakpoint
 {
+    /**
+     * Unique ID of this breakpoint.
+     */
     public final id : Int;
 
+    /**
+     * The haxe file this breakpoint was placed in.
+     */
     public final file : Path;
 
+    /**
+     * The line this breakpoint was placed at.
+     */
     public final line : Int;
 
+    /**
+     * The character offset along the line it was placed at.
+     */
     public final char : Int;
 
-    public final expr : ExprMap;
+    /**
+     * Array native breakpoint IDs which were created due to this breakpoint.
+     */
+    public final native : ReadOnlyArray<Int64>;
 
-    public function new (_id, _file, _line, _char, _expr)
+    public function new (_id, _file, _line, _char, _native)
     {
-        id   = _id;
-        file = _file;
-        line = _line;
-        char = _char;
-        expr = _expr;
+        id     = _id;
+        file   = _file;
+        line   = _line;
+        char   = _char;
+        native = _native;
     }
 }

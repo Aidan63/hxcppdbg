@@ -1,10 +1,11 @@
 package hxcppdbg.core.drivers.dbgeng;
 
 import cpp.Pointer;
-import haxe.ds.Option;
-import haxe.Exception;
-import hxcppdbg.core.ds.Result;
 import sys.thread.Thread;
+import haxe.Int64;
+import haxe.Exception;
+import haxe.ds.Option;
+import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 
 using hxcppdbg.core.utils.ResultUtils;
@@ -25,21 +26,37 @@ class DbgEngBreakpoints implements IBreakpoints
         dbgThread = _dbgThread;
     }
     
-	public function create(_file : String, _line : Int, _result : Result<Int, Exception>->Void)
+	public function create(_file : String, _line : Int, _callback : Result<Int64, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = objects.ptr.createBreakpoint(_file, _line);
+            final result = try
+            {
+                Result.Success(objects.ptr.createBreakpoint(_file, _line));
+            }
+            catch (error : String)
+            {
+                Result.Error(new Exception(error));
+            }
 
-            cbThread.events.run(() -> _result(r.asExceptionResult()));
+            cbThread.events.run(() -> _callback(result));
         });
 	}
 
-	public function remove(_id : Int, _result : Option<Exception>->Void)
+	public function remove(_id : Int64, _callback : Option<Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = objects.ptr.removeBreakpoint(_id);
+            final result = try
+            {
+                objects.ptr.removeBreakpoint(_id);
 
-            cbThread.events.run(() -> _result(r.asExceptionOption()));
+                Option.None;
+            }
+            catch (error : String)
+            {
+                Option.Some(new Exception(error));
+            }
+
+            cbThread.events.run(() -> _callback(result));
         });
 	}
 }

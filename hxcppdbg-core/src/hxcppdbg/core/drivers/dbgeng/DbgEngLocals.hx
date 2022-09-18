@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import haxe.exceptions.NotImplementedException;
 import cpp.Pointer;
 import sys.thread.Thread;
 import haxe.Exception;
@@ -36,10 +37,6 @@ class DbgEngLocals implements ILocals
 
 	public function getArguments(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void)
     {
-        // dbgThread.events.run(() -> {
-        //     final r = driver.ptr.getArguments(_thread, _frame);
-
-        //     cbThread.events.run(() -> _callback(r.asExceptionResult()));
-        // });
+        _callback(Result.Error(new NotImplementedException()));
     }
 }

@@ -1,5 +1,8 @@
 package hxcppdbg.core.breakpoints;
 
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Promise;
 import haxe.Exception;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Path;
@@ -18,13 +21,24 @@ class Breakpoints
 
     final active : Map<Int, Breakpoint>;
 
+    var nextId : Int;
+
     public function new(_sourcemap, _driver)
     {
         sourcemap = _sourcemap;
         driver    = _driver;
         active    = [];
+        nextId    = 0;
     }
 
+    /**
+     * Create a breakpoint at the given location.
+     * @param _hxFile Path of the haxe file to create the breakpoint in.
+     * @param _hxLine Line within the haxe file to create the breakpoint at.
+     * @param _hxChar 1 based character offset for finding the most specific haxe expression in a line
+     * If 0 is provided breakpoints are created at all valid expressions within the line.
+     * @param _callback Function called when the create operation has succeeded or failed.
+     */
     public function create(_hxFile : Path, _hxLine, _hxChar, _callback : Result<Breakpoint, Exception>->Void)
     {
         switch sourcemap.files.filter(f -> f.haxe.matches(_hxFile))
@@ -32,29 +46,65 @@ class Breakpoints
             case []:
                 _callback(Result.Error(new Exception('Unable to find file in sourcemap with name $_hxFile')));
             case files:
-                switch findExpr(files, _hxLine, _hxChar)
+                switch findExprs(files, _hxLine, _hxChar)
                 {
-                    case Success(found):
-                        driver.create(found.cpp.toString(), found.expr.cpp, result -> {
-                            switch result
-                            {
-                                case Success(id):
-                                    _callback(Result.Success(active[id] = new Breakpoint(id, found.haxe, found.expr.haxe.start.line, _hxChar, found.expr)));
-                                case Error(exn):
-                                    _callback(Result.Error(new Exception('Unable to set breakpoint', exn)));
-                            }
-                        });
+                    case Success(mappings):
+                        Promise
+                            .inSequence(mappings.flatMap(o -> [ for (expr in o.exprs) promiseCreate(o.file.cpp.toString(), expr.cpp) ]))
+                            .handle(outcome -> {
+                                switch outcome
+                                {
+                                    case Success(ids):
+                                        final id = nextId++;
+
+                                        _callback(Result.Success(active[id] = new Breakpoint(id, _hxFile, _hxLine, _hxChar, ids)));
+                                    case Failure(failure):
+                                        _callback(Result.Error(new Exception(failure.message)));
+                                }
+                            });
                     case Error(exn):
                         _callback(Result.Error(exn));
                 }
         }
     }
 
-    public function delete(_id, _callback)
+    /**
+     * Delete a breakpoint.
+     * @param _id ID of the breakpoint to delete.
+     * @param _callback Function called when the delete operation has succeeded or failed.
+     */
+    public function delete(_id, _callback : Option<Exception>->Void)
     {
-        driver.remove(_id, _callback);
+        switch active.get(_id)
+        {
+            case null:
+                _callback(Option.Some(new Exception('No exception found with the id $_id')));
+            case bp:
+                Promise
+                    .inSequence(bp.native.map(promiseDelete))
+                    .handle(outcome -> {
+                        switch outcome
+                        {
+                            case Success(_):
+                                if (active.remove(_id))
+                                {
+                                    _callback(Option.None);
+                                }
+                                else
+                                {
+                                    _callback(Option.Some(new Exception('Unable to remove breakpoint from the map')));
+                                }
+                            case Failure(failure):
+                                _callback(Option.Some(new Exception(failure.message)));
+                        }
+                    });
+        }
     }
 
+    /**
+     * Get the breakpoint object from a given ID.
+     * @param _id ID of the breakpoint to get.
+     */
     public function get(_id)
     {
         return switch active.get(_id)
@@ -62,18 +112,102 @@ class Breakpoints
             case null:
                 Option.None;
             case bp:
-                Option.Some(bp);
+                Option.Some((bp : Breakpoint));
         }
     }
 
+    /**
+     * Return an array of all breakpoint objects.
+     */
     public function list()
     {
         return active.array();
     }
 
-    function findExpr(_files : Array<GeneratedFile>, _hxLine : Int, _hxChar : Int)
+    function findExprs(_files : Array<GeneratedFile>, _hxLine : Int, _hxChar : Int)
     {
         final collected = [];
+
+        /**
+         * Given an expression range returns if the expression falls within the current line and character constraints.
+         * @param _range Haxe expression to check.
+         */
+        function isValidExprRange(_range : ExprRange)
+        {
+            return if (_hxLine >= _range.start.line && _hxLine <= _range.end.line)
+            {
+                if (_hxChar == 0)
+                {
+                    true;
+                }
+                else
+                {
+                    if (_hxLine == _range.start.line)
+                    {
+                        _hxChar >= _range.start.col;
+                    }
+                    else if (_hxLine == _range.end.line)
+                    {
+                        _hxChar < _range.end.col;
+                    }
+                    else
+                    {
+                        true;
+                    }
+                }
+            }
+            else
+            {
+                false;
+            }
+        }
+
+        /**
+         * Given an expression mapping returns if its valid with the `fundExprs` constraints.
+         * @param _expr Expression map to check.
+         */
+        function isValidExprMap(_expr : ExprMap)
+        {
+            return isValidExprRange(_expr.haxe);
+        }
+
+        /**
+         * Given two expression ranges return the most specific range given the line and character constraints.
+         * If `_results` is null `_item` is returned. This function can be used with `Lambda.fold`
+         * @param _item New expression range to check.
+         * @param _result Current most specific expression range.
+         */
+        function takeMostSpecificExpr(_item : ExprRange, _result : ExprRange)
+        {
+            return switch _result
+            {
+                case null:
+                    _item;
+                case best:
+                    final bestLineDelta  = best.end.line - best.start.line;
+                    final _itemLineDelta = _item.end.line - _item.start.line;
+
+                    if (bestLineDelta == _itemLineDelta)
+                    {
+                        if (best.end.col - best.start.col > _item.end.col - _item.start.col)
+                        {
+                            _item;
+                        }
+                        else
+                        {
+                            best;
+                        }
+                    }
+                    else if (bestLineDelta > _itemLineDelta)
+                    {
+                        _item;
+                    }
+                    else
+                    {
+                        best;
+                    }
+            }
+        }
 
         for (file in _files)
         {
@@ -81,70 +215,74 @@ class Breakpoints
             {
                 for (closure in func.closures)
                 {
-                    for (e in closure.exprs.filter(expr -> _hxLine >= expr.haxe.start.line && _hxLine <= expr.haxe.end.line))
+                    switch closure.exprs.filter(isValidExprMap)
                     {
-                        collected.push(e);
+                        case []:
+                            // do nothing
+                        case multiple:
+                            collected.push(@:fixed { file : file, exprs : multiple });
                     }
                 }
-    
-                for (e in func.exprs.filter(expr -> _hxLine >= expr.haxe.start.line && _hxLine <= expr.haxe.end.line))
-                {
-                    collected.push(e);
-                }
-            }
 
-            // I don't think there should ever be a situation where there are valid expressions in two different classes.
-            // So if we have any collected expressions we can exit early.
-            if (collected.length > 0)
-            {
-                // Sort so we can find the most specific expression at the top of the array.
-                collected.sort((e1, e2) -> (e1.haxe.end.line - e1.haxe.start.line) - (e2.haxe.end.line - e2.haxe.start.line));
-
-                return switch findInnerExpr(collected, _hxChar)
+                switch func.exprs.filter(isValidExprMap)
                 {
-                    case Some(expr):
-                        Success(new ExprSearchResult(expr, file.haxe, file.cpp));
-                    case None:
-                        Error(new Exception('Unable to map ${ _files[0].haxe }:$_hxLine:$_hxChar'));
+                    case []:
+                        // do nothing
+                    case multiple:
+                        collected.push(@:fixed { file : file, exprs : multiple });
                 }
             }
         }
 
-        return Error(new Exception('Unable to map ${ _files[0].haxe }:$_hxLine'));
-    }
-
-    function findInnerExpr(_exprs : Array<ExprMap>, _hxChar : Int)
-    {
-        return if (_hxChar == 0)
+        return switch collected
         {
-            Option.Some(_exprs[0]);
-        }
-        else
-        {
-            switch _exprs.filter(expr -> _hxChar >= expr.haxe.start.col && _hxChar <= expr.haxe.end.col)
-            {
-                case []:
-                    Option.None;
-                case filtered:
-                    filtered.sort((e1, e2) -> e2.cpp - e1.cpp);
-                    Option.Some(filtered[filtered.length - 1]);
-            }
+            case []:
+                Result.Error(new Exception('Unable to map ${ _files[0].haxe }:$_hxLine:$_hxChar'));
+            case some:
+                Result.Success(some);
         }
     }
-}
 
-private class ExprSearchResult
-{
-    public final expr : ExprMap;
-
-    public final haxe : Path;
-
-    public final cpp : Path;
-
-    public function new(_expr, _haxe, _cpp)
+    /**
+     * Return a tink promise around creating a native breakpoint.
+     * @param _file C++ file to create the breakpoint in.
+     * @param _line Line to create the breakpoint at.
+     */
+    function promiseCreate(_file, _line)
     {
-        expr = _expr;
-        haxe = _haxe;
-        cpp  = _cpp;
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    driver.create(_file, _line, result -> {
+                        switch result
+                        {
+                            case Success(bp):
+                                _resolve(bp);
+                            case Error(exn):
+                                _reject(new Error(exn.message));
+                        }
+                    });
+                });
+    }
+
+    /**
+     * Return a tink promise around deleting a native breakpoint.
+     * @param _id ID of the native breakpoint to remove.
+     */
+    function promiseDelete(_id)
+    {
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    driver.remove(_id, result -> {
+                        switch result
+                        {
+                            case Some(exn):
+                                _reject(new Error(exn.message));
+                            case None:
+                                _resolve((null : Noise));
+                        }
+                    });
+                });
     }
 }

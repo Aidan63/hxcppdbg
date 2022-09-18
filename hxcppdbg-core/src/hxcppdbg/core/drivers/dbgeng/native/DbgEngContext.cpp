@@ -356,58 +356,56 @@ bool hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::endsWith(std::wstri
     }
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createBreakpoint(String _file, int _line)
+int64_t hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createBreakpoint(String _file, int _line)
 {
-	auto result = HRESULT{ S_OK };
+	auto result = S_OK;
 
 	auto entry = DEBUG_SYMBOL_SOURCE_ENTRY();
     auto count = ULONG{ 0 };
 	if (!SUCCEEDED(result = symbols->GetSourceEntriesByLine(_line, _file.utf8_str(), DEBUG_GSEL_NEAREST_ONLY, &entry, 1, &count)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get source entries by line"), result));
+		hx::Throw(HX_CSTRING("Failed to get source entries by line"));
 	}
 
 	auto breakpoint = PDEBUG_BREAKPOINT{ nullptr };
 	if (!SUCCEEDED(result = control->AddBreakpoint(DEBUG_BREAKPOINT_CODE, DEBUG_ANY_ID, &breakpoint)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to add breakpoint"), result));
+		hx::Throw(HX_CSTRING("Failed to add breakpoint"));
 	}
 
 	if (!SUCCEEDED(result = breakpoint->AddFlags(DEBUG_BREAKPOINT_ENABLED)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to enable breakpoint"), result));
+		hx::Throw(HX_CSTRING("Failed to enable breakpoint"));
 	}
 
 	if (!SUCCEEDED(result = breakpoint->SetOffset(entry.Offset)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to set breakpoint offset"), result));
+		hx::Throw(HX_CSTRING("Failed to set breakpoint offset"));
 	}
 
-	auto id = ULONG{ 0 };
+	auto id = 0UL;
 	if (!SUCCEEDED(result = breakpoint->GetId(&id)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get breakpoint ID"), result));
+		hx::Throw(HX_CSTRING("Failed to get breakpoint ID"));
 	}
 
-	return hxcppdbg::core::ds::Result_obj::Success(id);
+	return id;
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::removeBreakpoint(int id)
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::removeBreakpoint(int64_t id)
 {
-	auto result = HRESULT{ S_OK };
+	auto result = S_OK;
 
-	auto breakpoint = PDEBUG_BREAKPOINT{ nullptr };
+	auto breakpoint = PDEBUG_BREAKPOINT();
 	if (!SUCCEEDED(result = control->GetBreakpointById(id, &breakpoint)))
 	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get breakpoint by id"), result));
+		hx::Throw(HX_CSTRING("Failed to get breakpoint by id"));
 	}
 
 	if (!SUCCEEDED(result = control->RemoveBreakpoint(breakpoint)))
 	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to remove breakpoint"), result));
+		hx::Throw(HX_CSTRING("Failed to remove breakpoint"));
 	}
-
-	return haxe::ds::Option_obj::None;
 }
 
 hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getThreads()
