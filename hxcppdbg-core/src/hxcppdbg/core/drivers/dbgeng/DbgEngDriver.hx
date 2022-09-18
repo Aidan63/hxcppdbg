@@ -6,7 +6,6 @@ import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
 import haxe.Exception;
 import haxe.ds.Option;
-import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 
 using hxcppdbg.core.utils.ResultUtils;

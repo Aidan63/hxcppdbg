@@ -1,5 +1,8 @@
 package hxcppdbg.core.breakpoints;
 
+import tink.CoreApi.Noise;
+import tink.CoreApi.Error;
+import tink.CoreApi.Promise;
 import haxe.Exception;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Path;
@@ -18,11 +21,14 @@ class Breakpoints
 
     final active : Map<Int, Breakpoint>;
 
+    var nextId : Int;
+
     public function new(_sourcemap, _driver)
     {
         sourcemap = _sourcemap;
         driver    = _driver;
         active    = [];
+        nextId    = 0;
     }
 
     public function create(_hxFile : Path, _hxLine, _hxChar, _callback : Result<Breakpoint, Exception>->Void)
@@ -32,27 +38,54 @@ class Breakpoints
             case []:
                 _callback(Result.Error(new Exception('Unable to find file in sourcemap with name $_hxFile')));
             case files:
-                switch findExpr(files, _hxLine, _hxChar)
+                switch findExprs(files, _hxLine, _hxChar)
                 {
-                    case Success(found):
-                        driver.create(found.cpp.toString(), found.expr.cpp, result -> {
-                            switch result
-                            {
-                                case Success(id):
-                                    _callback(Result.Success(active[id] = new Breakpoint(id, found.haxe, found.expr.haxe.start.line, _hxChar, found.expr)));
-                                case Error(exn):
-                                    _callback(Result.Error(new Exception('Unable to set breakpoint', exn)));
-                            }
-                        });
+                    case Success(mappings):
+                        Promise
+                            .inSequence(mappings.flatMap(o -> [ for (expr in o.exprs) promiseCreate(o.file.cpp.toString(), expr.cpp) ]))
+                            .handle(outcome -> {
+                                switch outcome
+                                {
+                                    case Success(ids):
+                                        final id = nextId++;
+
+                                        _callback(Result.Success(active[id] = new Breakpoint(id, _hxFile, _hxLine, _hxChar, ids)));
+                                    case Failure(failure):
+                                        _callback(Result.Error(new Exception(failure.message)));
+                                }
+                            });
                     case Error(exn):
                         _callback(Result.Error(exn));
                 }
         }
     }
 
-    public function delete(_id, _callback)
+    public function delete(_id, _callback : Option<Exception>->Void)
     {
-        driver.remove(_id, _callback);
+        switch active.get(_id)
+        {
+            case null:
+                _callback(Option.Some(new Exception('No exception found with the id $_id')));
+            case bp:
+                Promise
+                    .inSequence(bp.native.map(promiseDelete))
+                    .handle(outcome -> {
+                        switch outcome
+                        {
+                            case Success(_):
+                                if (active.remove(_id))
+                                {
+                                    _callback(Option.None);
+                                }
+                                else
+                                {
+                                    _callback(Option.Some(new Exception('Unable to remove breakpoint from the map')));
+                                }
+                            case Failure(failure):
+                                _callback(Option.Some(new Exception(failure.message)));
+                        }
+                    });
+        }
     }
 
     public function get(_id)
@@ -71,9 +104,71 @@ class Breakpoints
         return active.array();
     }
 
-    function findExpr(_files : Array<GeneratedFile>, _hxLine : Int, _hxChar : Int)
+    function findExprs(_files : Array<GeneratedFile>, _hxLine : Int, _hxChar : Int)
     {
         final collected = [];
+
+        function isValidExprMap(_expr : ExprMap)
+        {
+            return if (_hxLine >= _expr.haxe.start.line && _hxLine <= _expr.haxe.end.line)
+            {
+                if (_hxChar == 0)
+                {
+                    true;
+                }
+                else
+                {
+                    if (_hxLine == _expr.haxe.start.line)
+                    {
+                        _hxChar >= _expr.haxe.start.col;
+                    }
+                    else if (_hxLine == _expr.haxe.end.line)
+                    {
+                        _hxChar < _expr.haxe.end.col;
+                    }
+                    else
+                    {
+                        true;
+                    }
+                }
+            }
+            else
+            {
+                false;
+            }
+        }
+
+        function takeMostSpecificExpr(_item : ExprMap, _result : ExprMap)
+        {
+            return switch _result
+            {
+                case null:
+                    _item;
+                case best:
+                    final bestLineDelta  = best.haxe.end.line - best.haxe.start.line;
+                    final _itemLineDelta = _item.haxe.end.line - _item.haxe.start.line;
+
+                    if (bestLineDelta == _itemLineDelta)
+                    {
+                        if (best.haxe.end.col - best.haxe.start.col > _item.haxe.end.col - _item.haxe.start.col)
+                        {
+                            _item;
+                        }
+                        else
+                        {
+                            best;
+                        }
+                    }
+                    else if (bestLineDelta > _itemLineDelta)
+                    {
+                        _item;
+                    }
+                    else
+                    {
+                        best;
+                    }
+            }
+        }
 
         for (file in _files)
         {
@@ -81,70 +176,65 @@ class Breakpoints
             {
                 for (closure in func.closures)
                 {
-                    for (e in closure.exprs.filter(expr -> _hxLine >= expr.haxe.start.line && _hxLine <= expr.haxe.end.line))
+                    switch closure.exprs.filter(isValidExprMap)
                     {
-                        collected.push(e);
+                        case []:
+                            // do nothing
+                        case multiple:
+                            collected.push(@:fixed { file : file, exprs : multiple });
                     }
                 }
-    
-                for (e in func.exprs.filter(expr -> _hxLine >= expr.haxe.start.line && _hxLine <= expr.haxe.end.line))
-                {
-                    collected.push(e);
-                }
-            }
 
-            // I don't think there should ever be a situation where there are valid expressions in two different classes.
-            // So if we have any collected expressions we can exit early.
-            if (collected.length > 0)
-            {
-                // Sort so we can find the most specific expression at the top of the array.
-                collected.sort((e1, e2) -> (e1.haxe.end.line - e1.haxe.start.line) - (e2.haxe.end.line - e2.haxe.start.line));
-
-                return switch findInnerExpr(collected, _hxChar)
+                switch func.exprs.filter(isValidExprMap)
                 {
-                    case Some(expr):
-                        Success(new ExprSearchResult(expr, file.haxe, file.cpp));
-                    case None:
-                        Error(new Exception('Unable to map ${ _files[0].haxe }:$_hxLine:$_hxChar'));
+                    case []:
+                        // do nothing
+                    case multiple:
+                        collected.push(@:fixed { file : file, exprs : multiple });
                 }
             }
         }
 
-        return Error(new Exception('Unable to map ${ _files[0].haxe }:$_hxLine'));
-    }
-
-    function findInnerExpr(_exprs : Array<ExprMap>, _hxChar : Int)
-    {
-        return if (_hxChar == 0)
+        return switch collected
         {
-            Option.Some(_exprs[0]);
-        }
-        else
-        {
-            switch _exprs.filter(expr -> _hxChar >= expr.haxe.start.col && _hxChar <= expr.haxe.end.col)
-            {
-                case []:
-                    Option.None;
-                case filtered:
-                    filtered.sort((e1, e2) -> e2.cpp - e1.cpp);
-                    Option.Some(filtered[filtered.length - 1]);
-            }
+            case []:
+                Result.Error(new Exception('Unable to map ${ _files[0].haxe }:$_hxLine:$_hxChar'));
+            case some:
+                Result.Success(some);
         }
     }
-}
 
-private class ExprSearchResult
-{
-    public final expr : ExprMap;
-
-    public final haxe : Path;
-
-    public final cpp : Path;
-
-    public function new(_expr, _haxe, _cpp)
+    function promiseCreate(_file, _line)
     {
-        expr = _expr;
-        haxe = _haxe;
-        cpp  = _cpp;
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    driver.create(_file, _line, result -> {
+                        switch result
+                        {
+                            case Success(bp):
+                                _resolve(bp);
+                            case Error(exn):
+                                _reject(new Error(exn.message));
+                        }
+                    });
+                });
+    }
+
+    function promiseDelete(_id)
+    {
+        return
+            Promise
+                .irreversible((_resolve, _reject) -> {
+                    driver.remove(_id, result -> {
+                        switch result
+                        {
+                            case Some(exn):
+                                _reject(new Error(exn.message));
+                            case None:
+                                _resolve((null : Noise));
+                        }
+                    });
+                });
     }
 }

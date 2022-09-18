@@ -1,6 +1,5 @@
 package hxcppdbg.dap;
 
-import hxcppdbg.dap.protocol.data.Scope;
 import cpp.asio.Code;
 import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
@@ -16,6 +15,7 @@ import hxcppdbg.dap.FrameId;
 import hxcppdbg.dap.protocol.Event;
 import hxcppdbg.dap.protocol.Request;
 import hxcppdbg.dap.protocol.ProtocolMessage;
+import hxcppdbg.dap.protocol.data.Scope;
 import hxcppdbg.dap.protocol.data.Thread;
 import hxcppdbg.dap.protocol.data.StackFrame;
 import hxcppdbg.dap.protocol.data.Breakpoint;
@@ -874,10 +874,10 @@ class DapSession
         return {
             id        : _breakpoint.id,
             verified  : true,
-            line      : _breakpoint.expr.haxe.start.line,
-            column    : _breakpoint.expr.haxe.start.col,
-            endLine   : _breakpoint.expr.haxe.end.line,
-            endColumn : _breakpoint.expr.haxe.end.col
+            // line      : _breakpoint.expr.haxe.start.line,
+            // column    : _breakpoint.expr.haxe.start.col,
+            // endLine   : _breakpoint.expr.haxe.end.line,
+            // endColumn : _breakpoint.expr.haxe.end.col
         }
     }
 
