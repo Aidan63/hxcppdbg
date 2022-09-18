@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import haxe.Int64;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Model;
@@ -35,9 +36,9 @@ extern class DbgEngContext
 
     function createFromFile(_file : String, _enums : Array<GeneratedType>, _classes : Array<GeneratedType>) : Option<HResultException>;
 
-    function createBreakpoint(_file : String, _line : Int) : Result<Int, HResultException>;
+    function createBreakpoint(_file : String, _line : Int) : Int64;
 
-    function removeBreakpoint(_breakpoint : Int) : Option<HResultException>;
+    function removeBreakpoint(_breakpoint : Int64) : Void;
 
     function getThreads() : Result<Array<NativeThreadReturn>, HResultException>;
 

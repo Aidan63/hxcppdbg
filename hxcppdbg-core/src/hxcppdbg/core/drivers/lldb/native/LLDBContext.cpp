@@ -97,7 +97,7 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                                                 _onException(i);
                                             }
                                             {
-                                                _onBreakpoint(i, cpp::Int64Struct(bp));
+                                                _onBreakpoint(i, bp);
                                             }
 
                                             return;
@@ -280,7 +280,7 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::step(int _threadIndex, 
     }
 }
 
-cpp::Int64Struct hxcppdbg::core::drivers::lldb::native::LLDBContext::createBreakpoint(String _file, int _line)
+int64_t hxcppdbg::core::drivers::lldb::native::LLDBContext::createBreakpoint(String _file, int _line)
 {
     auto bp = target.BreakpointCreateByLocation(_file.utf8_str(), _line);
     if (!bp.IsValid())
@@ -288,12 +288,12 @@ cpp::Int64Struct hxcppdbg::core::drivers::lldb::native::LLDBContext::createBreak
         hx::Throw(HX_CSTRING("Unable to create breakpoint"));
     }
 
-    return cpp::Int64Struct(bp.GetID());
+    return bp.GetID();
 }
 
-bool hxcppdbg::core::drivers::lldb::native::LLDBContext::removeBreakpoint(cpp::Int64Struct _id)
+bool hxcppdbg::core::drivers::lldb::native::LLDBContext::removeBreakpoint(int64_t _id)
 {
-    return target.BreakpointDelete(_id.get());
+    return target.BreakpointDelete(_id);
 }
 
 hx::Anon hxcppdbg::core::drivers::lldb::native::LLDBContext::getStackFrame(int _threadIndex, int _frameIndex)

@@ -1,5 +1,6 @@
 package hxcppdbg.core.breakpoints;
 
+import haxe.Int64;
 import haxe.ds.ReadOnlyArray;
 import hxcppdbg.core.ds.Path;
 
@@ -28,7 +29,7 @@ class Breakpoint
     /**
      * Array native breakpoint IDs which were created due to this breakpoint.
      */
-    public final native : ReadOnlyArray<Int>;
+    public final native : ReadOnlyArray<Int64>;
 
     public function new (_id, _file, _line, _char, _native)
     {

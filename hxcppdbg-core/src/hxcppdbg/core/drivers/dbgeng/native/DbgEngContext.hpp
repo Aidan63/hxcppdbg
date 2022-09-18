@@ -51,8 +51,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         haxe::ds::Option createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
 
-        hxcppdbg::core::ds::Result createBreakpoint(String file, int line);
-        haxe::ds::Option removeBreakpoint(int id);
+        int64_t createBreakpoint(String file, int line);
+        void removeBreakpoint(int64_t id);
 
         hxcppdbg::core::ds::Result getThreads();
 

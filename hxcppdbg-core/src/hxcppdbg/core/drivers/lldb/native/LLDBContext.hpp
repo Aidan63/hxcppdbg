@@ -40,8 +40,8 @@ namespace hxcppdbg::core::drivers::lldb::native
         void resume();
         void step(int, int);
 
-        cpp::Int64Struct createBreakpoint(String, int);
-        bool removeBreakpoint(cpp::Int64Struct);
+        int64_t createBreakpoint(String, int);
+        bool removeBreakpoint(int64_t);
 
         hx::Anon getStackFrame(int, int);
         Array<hx::Anon> getStackFrames(int);
