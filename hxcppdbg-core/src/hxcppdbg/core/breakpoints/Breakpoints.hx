@@ -55,9 +55,10 @@ class Breakpoints
                                 switch outcome
                                 {
                                     case Success(ids):
-                                        final id = nextId++;
+                                        final id   = nextId++;
+                                        final file = mappings[0].file.haxe;
 
-                                        _callback(Result.Success(active[id] = new Breakpoint(id, _hxFile, _hxLine, _hxChar, ids)));
+                                        _callback(Result.Success(active[id] = new Breakpoint(id, file, _hxLine, _hxChar, ids)));
                                     case Failure(failure):
                                         _callback(Result.Error(new Exception(failure.message)));
                                 }
