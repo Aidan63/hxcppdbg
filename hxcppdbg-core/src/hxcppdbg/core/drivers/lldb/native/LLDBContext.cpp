@@ -53,8 +53,8 @@ hxcppdbg::core::drivers::lldb::native::LLDBContext::LLDBContext(::lldb::SBDebugg
 void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
     Dynamic _onException,
     Dynamic _onBreakpoint,
-    Dynamic _onInterrupt,
-    Dynamic _onBreak)
+    Dynamic _onPaused,
+    Dynamic _onExited)
 {
     auto event = ::lldb::SBEvent();
     auto done  = false;
@@ -71,10 +71,6 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
 
                 switch (val)
                 {
-                    case ::lldb::eStateInvalid:
-                        //
-                        break;
-
                     case ::lldb::eStateStopped:
                         {
                             auto process     = ::lldb::SBProcess::GetProcessFromEvent(event);
@@ -87,6 +83,11 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
 
                                 switch (reason)
                                 {
+                                    case ::lldb::StopReason::eStopReasonInvalid:
+                                        {
+                                            break;
+                                        }
+
                                     case ::lldb::StopReason::eStopReasonBreakpoint:
                                         {
                                             hx::ExitGCFreeZone();
@@ -112,11 +113,11 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                                             return;
                                         }
 
-                                    case ::lldb::StopReason::eStopReasonPlanComplete:
+                                    default:
                                         {
                                             hx::ExitGCFreeZone();
 
-                                            _onBreak();
+                                            _onPaused();
 
                                             return;
                                         }
@@ -125,23 +126,13 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                             break;
                         }
 
-                    case ::lldb::eStateRunning:
-                        //
-                        break;
-
-                    case ::lldb::eStateStepping:
-                        //
-                        break;
-
-                    case ::lldb::eStateCrashed:
-                        //
-                        break;
-
                     case ::lldb::eStateExited:
                         {
+                            auto process = ::lldb::SBProcess::GetProcessFromEvent(event);
+
                             hx::ExitGCFreeZone();
 
-                            _onInterrupt();
+                            _onExited(process.GetExitStatus());
 
                             return;
                         }
@@ -153,9 +144,14 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
                 {
                     case InterruptEvent::Pause:
                         {
-                            hx::ExitGCFreeZone();
+                            auto error = process.Stop();
+                            if (error.Fail())
+                            {
+                                hx::ExitGCFreeZone();
+                                hx::Throw(String::create(error.GetCString()));
+                            }
 
-                            _onInterrupt();
+                            _onPaused();
 
                             return;
                         }
@@ -193,15 +189,6 @@ bool hxcppdbg::core::drivers::lldb::native::LLDBContext::interrupt(int _event)
 
                 return true;
             }
-    }
-}
-
-void hxcppdbg::core::drivers::lldb::native::LLDBContext::suspend()
-{
-    auto error = process.Stop();
-    if (error.Fail())
-    {
-        hx::Throw(String::create(error.GetCString()));
     }
 }
 

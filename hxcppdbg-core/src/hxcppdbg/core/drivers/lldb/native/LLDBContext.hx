@@ -41,11 +41,9 @@ extern class LLDBContext
 
     function resume() : Void;
 
-    function wait(_onException : Int->Void, _onBreakpoint : (_threadIndex : Int, _breakpoint : haxe.Int64)->Void, _onInterrupt : Void->Void, _onBreak : Void->Void) : Void;
+    function wait(_onException : Int->Void, _onBreakpoint : Int->haxe.Int64->Void, _onPaused : Void->Void, _onExited : haxe.Int64->Void) : Void;
 
     function interrupt(_v : Int) : Bool;
-
-    function suspend() : Void;
 
     function createBreakpoint(_file : String, _line : Int) : haxe.Int64;
 

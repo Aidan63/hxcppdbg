@@ -8,7 +8,7 @@ import tink.core.Promise;
 import hxcppdbg.cli.Utils;
 import hxcppdbg.core.Session;
 import hxcppdbg.core.StepType;
-import hxcppdbg.core.drivers.Interrupt;
+import hxcppdbg.core.StopReason;
 
 class Step
 {
@@ -49,8 +49,8 @@ class Step
                     session.step(thread, _step, result -> {
                         switch result
                         {
-                            case Success(opt):
-                                _resolve(opt);
+                            case Success(reason):
+                                _resolve(reason);
                             case Error(exn):
                                 _reject(new Error(exn.message));
                         }
@@ -60,14 +60,14 @@ class Step
                 .next(_prompt.println);
     }
 
-    function onStopReason(_opt : Option<Interrupt>)
+    function onStopReason(_reason : StopReason)
     {
-        return switch _opt
+        return switch _reason
         {
-            case Some(interrupt):
-                printStopReason(session, interrupt);
-            case None:
+            case Paused:
                 printLocation();
+            case other:
+                printStopReason(session, other);
         }
     }
 

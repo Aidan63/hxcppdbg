@@ -34,13 +34,13 @@ import hxcppdbg.dap.protocol.responses.StackTraceResponse;
 import hxcppdbg.dap.protocol.responses.SetBreakpointsResponse;
 import hxcppdbg.core.Session;
 import hxcppdbg.core.StepType;
+import hxcppdbg.core.StopReason;
 import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.model.Printer;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.thread.NativeThread;
-import hxcppdbg.core.drivers.Interrupt;
 
 using Lambda;
 using StringTools;
@@ -730,12 +730,12 @@ class DapSession
 
     // #endregion
 
-    function onRunCallback(_result : Result<Option<Interrupt>, Exception>)
+    function onRunCallback(_result : Result<StopReason, Exception>)
     {
         switch _result
         {
-            case Success(opt):
-                interruptOptionToEvent(opt, 'pause', null)
+            case Success(reason):
+                interruptOptionToEvent(reason, 'pause', null)
                     .handle(_ -> {});
             case Error(exn):
                 // Not sure what to do, should we send a "stopped" event?
@@ -801,56 +801,62 @@ class DapSession
                 });
     }
 
-    function interruptOptionToEvent(_interrupt : Option<Interrupt>, _reason : String, _threadId : Null<Int>)
+    function interruptOptionToEvent(_interrupt : StopReason, _reason : String, _threadId : Null<Int>)
     {
         variables = new VariableCache();
 
-        return
-            switch _interrupt
-            {
-                case Option.None:
-                    event({
-                        seq   : nextOutSequence(),
-                        type  : 'event',
-                        event : 'stopped',
-                        body  : {
-                            reason            : _reason,
-                            description       : 'Paused',
-                            threadId          : _threadId,
-                            allThreadsStopped : true,
-                            preserveFocusHint : false
-                        }
-                    });
-                case Option.Some(Interrupt.ExceptionThrown(threadIndex)):
-                    event({
-                        seq   : nextOutSequence(),
-                        type  : 'event',
-                        event : 'stopped',
-                        body  : {
-                            reason            : 'exception',
-                            description       : 'Paused on exception',
-                            allThreadsStopped : true,
-                            threadId          : idOrNull(threadIndex),
-                            preserveFocusHint : false
-                        }
-                    });
-                case Option.Some(Interrupt.BreakpointHit(threadIndex, id)):
-                    event({
-                        seq   : nextOutSequence(),
-                        type  : 'event',
-                        event : 'stopped',
-                        body  : {
-                            reason            : 'breakpoint',
-                            description       : 'Paused on breakpoint',
-                            allThreadsStopped : true,
-                            threadId          : idOrNull(threadIndex),
-                            hitBreakpointsIds : [ idOrNull(id) ],
-                            preserveFocusHint : false
-                        }
-                    });
-                case Option.Some(Interrupt.Other):
-                    DapPromise.sync(Outcome.Success(null));
-            }
+        return switch _interrupt
+        {
+            case Paused:
+                event({
+                    seq   : nextOutSequence(),
+                    type  : 'event',
+                    event : 'stopped',
+                    body  : {
+                        reason            : _reason,
+                        description       : 'Paused',
+                        threadId          : _threadId,
+                        allThreadsStopped : true,
+                        preserveFocusHint : false
+                    }
+                });
+            case BreakpointHit(_threadIndex, _breakpoint):
+                event({
+                    seq   : nextOutSequence(),
+                    type  : 'event',
+                    event : 'stopped',
+                    body  : {
+                        reason            : 'breakpoint',
+                        description       : 'Paused on breakpoint',
+                        allThreadsStopped : true,
+                        threadId          : _threadIndex,
+                        hitBreakpointsIds : [ _breakpoint.id ],
+                        preserveFocusHint : false
+                    }
+                });
+            case ExceptionThrown(_threadIndex):
+                event({
+                    seq   : nextOutSequence(),
+                    type  : 'event',
+                    event : 'stopped',
+                    body  : {
+                        reason            : 'exception',
+                        description       : 'Paused on exception',
+                        allThreadsStopped : true,
+                        threadId          : _threadIndex,
+                        preserveFocusHint : false
+                    }
+                });
+            case Exited(_code):
+                event({
+                    seq   : nextOutSequence(),
+                    type  : 'event',
+                    event : 'exited',
+                    body  : {
+                        exitCode : _code
+                    }
+                });
+        }
     }
 
     function nextOutSequence()

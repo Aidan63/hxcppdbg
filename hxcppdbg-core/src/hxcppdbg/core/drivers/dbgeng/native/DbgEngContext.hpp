@@ -63,12 +63,11 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result getArguments(int _thread, int _frame);
 
         haxe::ds::Option go();
-        haxe::ds::Option pause();
         haxe::ds::Option step(int thread, int status);
         haxe::ds::Option end();
 
-        hxcppdbg::core::ds::Result interrupt();
-        hxcppdbg::core::drivers::dbgeng::native::WaitResult wait();
+        bool interrupt();
+        void wait(Dynamic, Dynamic, Dynamic, Dynamic);
 
         static IDataModelManager* manager;
         static IDebugHost* host;

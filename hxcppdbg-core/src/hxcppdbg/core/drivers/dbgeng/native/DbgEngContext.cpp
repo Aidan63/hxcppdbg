@@ -555,38 +555,41 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContex
 	return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Not Implemented"), S_FALSE));
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::interrupt()
+bool hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::interrupt()
 {
-	auto result = S_OK;
-	auto status = 0UL;
-
 	// It seems like we can use GetExecutionStatus from other threads, but I'm not entirely sure...
 
-	if (!SUCCEEDED(result = control->GetExecutionStatus(&status)))
+	auto status = 0UL;
+	if (!SUCCEEDED(control->GetExecutionStatus(&status)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
+		hx::Throw(HX_CSTRING("Unable to get execution status"));
 	}
 
 	if (status == DEBUG_STATUS_BREAK)
 	{
-		return hxcppdbg::core::ds::Result_obj::Success(0);
+		return false;
 	}
 
-	if (!SUCCEEDED(result = control->SetInterrupt(DEBUG_INTERRUPT_EXIT)))
+	if (!SUCCEEDED(control->SetInterrupt(DEBUG_INTERRUPT_EXIT)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set interrupt"), result));
+		hx::Throw(HX_CSTRING("Unable to set interrupt"));
 	}
 
-	return hxcppdbg::core::ds::Result_obj::Success(1);
+	return true;
 }
 
-hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::wait()
+void hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::wait(
+	Dynamic _onBreakpont,
+	Dynamic _onException,
+	Dynamic _onPaused,
+	Dynamic _onExited
+)
 {
 	hx::EnterGCFreeZone();
 
 	auto result = S_OK;
 
-	switch (control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE))
+	switch (result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE))
 	{
 		case S_OK:
 			{
@@ -596,25 +599,26 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 				auto processIdx = 0UL;
 				auto threadIdx  = 0UL;
 
-				if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processIdx, &threadIdx, nullptr, 0, nullptr, nullptr, 0, nullptr)))
+				if (!SUCCEEDED(control->GetLastEventInformation(&type, &processIdx, &threadIdx, nullptr, 0, nullptr, nullptr, 0, nullptr)))
 				{
-					return WaitResult_obj::Interrupted(InterruptReason_obj::Unknown);
+					hx::Throw(HX_CSTRING("Unable to get last event information"));
 				}
 				else
 				{
 					switch (type)
 					{
 						case 0:
-							return WaitResult_obj::Complete;
+							{
+								_onPaused();
+							}
+							break;
 
 						case DEBUG_EVENT_BREAKPOINT:
 							{
-								auto event        = DEBUG_LAST_EVENT_INFO_BREAKPOINT();
-								auto threadIdxOpt = threadIdx == DEBUG_ANY_ID ? haxe::ds::Option_obj::None : haxe::ds::Option_obj::Some(threadIdx);
-
-								if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
+								auto event = DEBUG_LAST_EVENT_INFO_BREAKPOINT();
+								if (!SUCCEEDED(control->GetLastEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
 								{
-									return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint(threadIdxOpt, haxe::ds::Option_obj::None));
+									hx::Throw(HX_CSTRING("Unable to get last event breakpoint information"));
 								}
 								else
 								{
@@ -622,49 +626,93 @@ hxcppdbg::core::drivers::dbgeng::native::WaitResult hxcppdbg::core::drivers::dbg
 									{
 										stepOutBreakpointId = DEBUG_ANY_ID;
 
-										return WaitResult_obj::Complete;
+										_onPaused();
 									}
 									else
 									{
-										return WaitResult_obj::Interrupted(InterruptReason_obj::Breakpoint(threadIdxOpt, haxe::ds::Option_obj::Some(event.Id)));
+										_onBreakpont(threadIdx, event.Id);
 									}
 								}
 							}
+							break;
 
 						case DEBUG_EVENT_EXCEPTION:
 							{
-								auto event        = DEBUG_LAST_EVENT_INFO_EXCEPTION();
-								auto threadIdxOpt = threadIdx == DEBUG_ANY_ID ? haxe::ds::Option_obj::None : haxe::ds::Option_obj::Some(threadIdx);
-
-								if (!SUCCEEDED(result = control->GetLastEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
+								auto event = DEBUG_LAST_EVENT_INFO_EXCEPTION();
+								if (!SUCCEEDED(control->GetLastEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
 								{
-									return WaitResult_obj::Interrupted(InterruptReason_obj::Exception(threadIdxOpt, haxe::ds::Option_obj::None));
+									hx::Throw(HX_CSTRING("Unable to get last event exception information"));
 								}
 								else
 								{
-									return WaitResult_obj::Interrupted(InterruptReason_obj::Exception(threadIdxOpt, haxe::ds::Option_obj::Some(event.ExceptionRecord.ExceptionCode)));
+									_onException(threadIdx, event.ExceptionRecord.ExceptionCode);
 								}
 
 							}
+							break;
 
 						default:
-							return WaitResult_obj::Interrupted(InterruptReason_obj::Unknown);
+							{
+								hx::Throw(HX_CSTRING("Unaccounted for last event type"));
+							}
 					}
 				}
 			}
+			break;
 
 		case E_PENDING:
 			{
+				// Exit iterrupt was issued due to a pause request.
+				// Restart execution so we can ignore any generated exceptions to break the process.
+
 				hx::ExitGCFreeZone();
 
-				return WaitResult_obj::Interrupted(InterruptReason_obj::Pause);
+				if (!SUCCEEDED(control->SetExecutionStatus(DEBUG_STATUS_GO)))
+				{
+					hx::Throw(HX_CSTRING("Unable to set execution status"));
+				}
+
+				if (!SUCCEEDED(control->SetInterrupt(DEBUG_INTERRUPT_ACTIVE)))
+				{
+					hx::Throw(HX_CSTRING("Unable to set active interrupt"));
+				}
+
+				hx::EnterGCFreeZone();
+
+				if (!SUCCEEDED(control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE)))
+				{
+					hx::ExitGCFreeZone();
+
+					hx::Throw(HX_CSTRING("Unable to wait for event"));
+				}
+
+				hx::ExitGCFreeZone();
+
+				_onPaused();
 			}
+			break;
+
+		case E_UNEXPECTED:
+			{
+				hx::ExitGCFreeZone();
+
+				auto exitCode = 0UL;
+				if (S_OK == client->GetExitCode(&exitCode))
+				{
+					_onExited(exitCode);
+				}
+				else
+				{
+					hx::Throw(HX_CSTRING("Unknown WaitForEvent return value"));
+				}
+			}
+			break;
 
 		default:
 			{
 				hx::ExitGCFreeZone();
 				
-				return WaitResult_obj::WaitFailed;
+				hx::Throw(HX_CSTRING("Unknown WaitForEvent return value"));
 			}
 	}
 }
@@ -784,34 +832,6 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::go()
 	{
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to change execution state"), result));
 	}
-
-	return haxe::ds::Option_obj::None;
-}
-
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::pause()
-{
-	auto result = S_OK;
-
-	if (!SUCCEEDED(result = control->SetExecutionStatus(DEBUG_STATUS_GO)))
-	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set execution status"), result));
-	}
-
-	if (!SUCCEEDED(result = control->SetInterrupt(DEBUG_INTERRUPT_ACTIVE)))
-	{
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set active interrupt"), result));
-	}
-
-	hx::EnterGCFreeZone();
-
-	if (!SUCCEEDED(result = control->WaitForEvent(DEBUG_WAIT_DEFAULT, INFINITE)))
-	{
-		hx::ExitGCFreeZone();
-
-		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to wait for event"), result));
-	}
-
-	hx::ExitGCFreeZone();
 
 	return haxe::ds::Option_obj::None;
 }

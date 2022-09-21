@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.lldb;
 
+import hxcppdbg.core.drivers.Driver.BreakReason;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
 import hxcppdbg.core.ds.Result;
@@ -51,7 +52,7 @@ class LLDBDriver extends Driver
         });
     }
 
-	public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
+	public function start(_callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void) : Void
     {
         dbgThread.events.run(() -> {
             try
@@ -79,18 +80,7 @@ class LLDBDriver extends Driver
             if (ctx.ptr.interrupt(1))
             {
                 dbgThread.events.run(() -> {
-                    final result = try
-                    {
-                        ctx.ptr.suspend();
-
-                        Result.Success(true);
-                    }
-                    catch (error : String)
-                    {
-                        Result.Error(new Exception(error));
-                    }
-
-                    cbThread.events.run(() -> _callback(result));
+                    cbThread.events.run(() -> _callback(Result.Success(true)));
                 });
             }
             else
@@ -104,7 +94,7 @@ class LLDBDriver extends Driver
         }
     }
 
-	public function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
+	public function resume(_callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void) : Void
     {
         dbgThread.events.run(() -> {
             try
@@ -120,7 +110,7 @@ class LLDBDriver extends Driver
         });
     }
 
-	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void) : Void
+	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void) : Void
     {
         dbgThread.events.run(() -> {
             try
@@ -144,30 +134,42 @@ class LLDBDriver extends Driver
         });
     }
 
-    function run(_callback : Result<Option<Interrupt>, Exception>->Void)
+    function run(_callback : Result<BreakReason, Exception>->Void)
     {
+        function onException(_threadIndex)
+        {
+            cbThread.events.run(() -> {
+                _callback(Result.Success(BreakReason.Exception(_threadIndex)));
+            });
+        }
+
+        function onBreakpoint(_threadIndex, _id)
+        {
+            cbThread.events.run(() -> {
+                _callback(Result.Success(BreakReason.Breakpoint(_threadIndex, _id)));
+            });
+        }
+
+        function onPause()
+        {
+            cbThread.events.run(() -> {
+                _callback(Result.Success(BreakReason.Paused));
+            });
+        }
+
+        function onExited(_code)
+        {
+            cbThread.events.run(() -> {
+                _callback(Result.Success(BreakReason.Exited(_code)));
+            });
+        }
+
         dbgThread.events.run(() -> {
             ctx.ptr.wait(
-                exn -> {
-                    cbThread.events.run(() -> {
-                        _callback(Result.Success(Option.Some(Interrupt.ExceptionThrown(Option.Some(exn)))));
-                    });
-                },
-                (thread, bp) -> {
-                    cbThread.events.run(() -> {
-                        _callback(Result.Success(Option.Some(Interrupt.BreakpointHit(Option.Some(thread), Option.Some(bp.low)))));
-                    });
-                },
-                () -> {
-                    cbThread.events.run(() -> {
-                        _callback(Result.Success(Option.Some(Interrupt.Other)));
-                    });
-                },
-                () -> {
-                    cbThread.events.run(() -> {
-                        _callback(Result.Success(Option.None));
-                    });
-                });
+                onException,
+                onBreakpoint,
+                onPause,
+                onExited);
         });
     }
 

@@ -1,7 +1,7 @@
 package hxcppdbg.core;
 
-import sys.thread.Thread;
 import sys.io.File;
+import sys.thread.Thread;
 import haxe.Exception;
 import haxe.ds.Option;
 import json2object.JsonParser;
@@ -10,7 +10,6 @@ import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.breakpoints.Breakpoints;
 import hxcppdbg.core.drivers.Driver;
-import hxcppdbg.core.drivers.Interrupt;
 import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.locals.Locals;
 import hxcppdbg.core.thread.Threads;
@@ -86,14 +85,30 @@ class Session
         }
     }
 
-    public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
+    public function start(_callback : Result<(Result<StopReason, Exception>->Void)->Void, Exception>->Void)
     {
-        driver.start(_callback);
+        driver.start(result -> {
+            switch result
+            {
+                case Success(run):
+                    _callback(Result.Success(makeRunCallback(run)));
+                case Error(exn):
+                    _callback(Result.Error(exn));
+            }
+        });
     }
 
-    public function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
+    public function resume(_callback : Result<(Result<StopReason, Exception>->Void)->Void, Exception>->Void)
     {
-        driver.resume(_callback);
+        driver.resume(result -> {
+            switch result
+            {
+                case Success(run):
+                    _callback(Result.Success(makeRunCallback(run)));
+                case Error(exn):
+                    _callback(Result.Error(exn));
+            }
+        });
     }
 
     public function pause(_result : Result<Bool, Exception>->Void)
@@ -106,7 +121,7 @@ class Session
         driver.stop(_result);
     }
 
-    public function step(_thread : Int, _type : StepType, _callback : Result<Option<Interrupt>, Exception>->Void)
+    public function step(_thread : Int, _type : StepType, _callback : Result<StopReason, Exception>->Void)
     {
         stack.getFrame(_thread, 0, result -> {
             switch result
@@ -123,7 +138,7 @@ class Session
                                     run(result -> {
                                         switch result
                                         {
-                                            case Success(Option.None):
+                                            case Success(BreakReason.Paused):
                                                 stack.getFrame(_thread, 0, result -> {
                                                     switch result
                                                     {
@@ -151,14 +166,14 @@ class Session
                                                             }
                                                             else
                                                             {
-                                                                _callback(Result.Success(Option.None));
+                                                                _callback(Result.Success(StopReason.Paused));
                                                             }
                                                         case Error(exn):
                                                             _callback(Result.Error(exn));
                                                     }
                                                 });
-                                            case Success(interrupt):
-                                                _callback(Result.Success(interrupt));
+                                            case Success(breakReason):
+                                                _callback(mapBreakReason(breakReason));
                                             case Error(exn):
                                                 _callback(Result.Error(exn));
                                         }
@@ -174,5 +189,41 @@ class Session
                     _callback(Result.Error(exn));
             }
         });
+    }
+
+    function makeRunCallback(_run : (Result<BreakReason, Exception>->Void)->Void)
+    {
+        return onStopped -> {
+            _run(result -> {
+                switch result
+                {
+                    case Success(breakReason):
+                        onStopped(mapBreakReason(breakReason));
+                    case Error(exn):
+                        onStopped(Result.Error(exn));
+                }
+            });
+        }
+    }
+
+    function mapBreakReason(_reason : BreakReason)
+    {
+        return switch _reason
+        {
+            case Breakpoint(threadIndex, id):
+                switch breakpoints.list().find(bp -> bp.native.contains(id))
+                {
+                    case null:
+                        Result.Error(new Exception('Unable to find breakpoing from native id $id'));
+                    case bp:
+                        Result.Success(StopReason.BreakpointHit(threadIndex, bp));
+                }
+            case Exception(threadIndex):
+                Result.Success(StopReason.ExceptionThrown(threadIndex));
+            case Paused:
+                Result.Success(StopReason.Paused);
+            case Exited(exitCode):
+                Result.Success(StopReason.Exited(exitCode));
+        }
     }
 }
