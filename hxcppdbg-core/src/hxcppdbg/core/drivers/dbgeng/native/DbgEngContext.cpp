@@ -95,7 +95,12 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createF
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get IDebugControl object from client"), result));
 	}
 
-	if (!SUCCEEDED(result = control->AddEngineOptions( DEBUG_ENGOPT_INITIAL_BREAK)))
+	if (!SUCCEEDED(result = control->AddEngineOptions(DEBUG_ENGOPT_INITIAL_BREAK)))
+	{
+		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set IDebugControl options"), result));
+	}
+
+	if (!SUCCEEDED(result = control->AddEngineOptions(DEBUG_ENGOPT_FINAL_BREAK)))
 	{
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to set IDebugControl options"), result));
 	}
@@ -648,6 +653,20 @@ void hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::wait(
 									_onException(threadIdx, event.ExceptionRecord.ExceptionCode);
 								}
 
+							}
+							break;
+
+						case DEBUG_EVENT_EXIT_PROCESS:
+							{
+								auto code = 0UL;
+								if (S_OK == client->GetExitCode(&code))
+								{
+									_onExited(code);
+								}
+								else
+								{
+									hx::Throw(HX_CSTRING("Process exited but unable to get exit code"));
+								}
 							}
 							break;
 
