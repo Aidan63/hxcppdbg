@@ -1,8 +1,7 @@
 package hxcppdbg.core.breakpoints;
 
-import tink.CoreApi.Noise;
-import tink.CoreApi.Error;
-import tink.CoreApi.Promise;
+import tink.CoreApi.Future;
+import haxe.Int64;
 import haxe.Exception;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Path;
@@ -49,18 +48,18 @@ class Breakpoints
                 switch findExprs(files, _hxLine, _hxChar)
                 {
                     case Success(mappings):
-                        Promise
+                        Future
                             .inSequence(mappings.flatMap(o -> [ for (expr in o.exprs) promiseCreate(o.file.cpp.toString(), expr.cpp) ]))
                             .handle(outcome -> {
-                                switch outcome
+                                switch outcome.filter(isSuccess)
                                 {
-                                    case Success(ids):
+                                    case []:
+                                        _callback(Result.Error(new Exception('Unable to create breakpoint')));
+                                    case some:
                                         final id   = nextId++;
                                         final file = mappings[0].file.haxe;
 
-                                        _callback(Result.Success(active[id] = new Breakpoint(id, file, _hxLine, _hxChar, ids)));
-                                    case Failure(failure):
-                                        _callback(Result.Error(new Exception(failure.message)));
+                                        _callback(Result.Success(active[id] = new Breakpoint(id, file, _hxLine, _hxChar, some.map(takeSuccess))));
                                 }
                             });
                     case Error(exn):
@@ -81,22 +80,15 @@ class Breakpoints
             case null:
                 _callback(Option.Some(new Exception('No exception found with the id $_id')));
             case bp:
-                Promise
+                Future
                     .inSequence(bp.native.map(promiseDelete))
                     .handle(outcome -> {
-                        switch outcome
+                        switch outcome.filter(isSuccess)
                         {
-                            case Success(_):
-                                if (active.remove(_id))
-                                {
-                                    _callback(Option.None);
-                                }
-                                else
-                                {
-                                    _callback(Option.Some(new Exception('Unable to remove breakpoint from the map')));
-                                }
-                            case Failure(failure):
-                                _callback(Option.Some(new Exception(failure.message)));
+                            case some if (some.length == outcome.length):
+                                _callback(Option.None);
+                            default:
+                                _callback(Option.Some(new Exception('Unable to delete breakpoint')));
                         }
                     });
         }
@@ -125,7 +117,29 @@ class Breakpoints
         return active.array();
     }
 
-    function findExprs(_files : Array<GeneratedFile>, _hxLine : Int, _hxChar : Int)
+    static function isSuccess(_result : Result<Int64, Exception>)
+    {
+        return switch _result
+        {
+            case Success(_):
+                true;
+            case Error(_):
+                false;
+        }
+    }
+
+    static function takeSuccess(_result : Result<Int64, Exception>)
+    {
+        return switch _result
+        {
+            case Success(id):
+                id;
+            case Error(exn):
+                throw exn;
+        }
+    }
+
+    static function findExprs(_files : Array<GeneratedFile>, _hxLine : Int, _hxChar : Int)
     {
         final collected = [];
 
@@ -252,17 +266,9 @@ class Breakpoints
     function promiseCreate(_file, _line)
     {
         return
-            Promise
-                .irreversible((_resolve, _reject) -> {
-                    driver.create(_file, _line, result -> {
-                        switch result
-                        {
-                            case Success(bp):
-                                _resolve(bp);
-                            case Error(exn):
-                                _reject(new Error(exn.message));
-                        }
-                    });
+            Future
+                .irreversible(_resolve -> {
+                    driver.create(_file, _line, _resolve);
                 });
     }
 
@@ -273,15 +279,15 @@ class Breakpoints
     function promiseDelete(_id)
     {
         return
-            Promise
-                .irreversible((_resolve, _reject) -> {
+            Future
+                .irreversible(_resolve -> {
                     driver.remove(_id, result -> {
                         switch result
                         {
                             case Some(exn):
-                                _reject(new Error(exn.message));
+                                _resolve(Result.Error(exn));
                             case None:
-                                _resolve((null : Noise));
+                                _resolve(Result.Success(_id));
                         }
                     });
                 });

@@ -214,7 +214,7 @@ class Session
                 switch breakpoints.list().find(bp -> bp.native.contains(id))
                 {
                     case null:
-                        Result.Error(new Exception('Unable to find breakpoing from native id $id'));
+                        Result.Error(new Exception('Unable to find breakpoint from native id $id'));
                     case bp:
                         Result.Success(StopReason.BreakpointHit(threadIndex, bp));
                 }
