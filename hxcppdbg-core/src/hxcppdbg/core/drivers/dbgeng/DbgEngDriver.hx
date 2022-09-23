@@ -1,11 +1,12 @@
 package hxcppdbg.core.drivers.dbgeng;
 
-import hxcppdbg.core.ds.Result;
 import cpp.Pointer;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
 import haxe.Exception;
 import haxe.ds.Option;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.drivers.Driver.BreakReason;
 import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 
 using hxcppdbg.core.utils.ResultUtils;
@@ -34,7 +35,7 @@ class DbgEngDriver extends Driver
 		threads     = new DbgEngThreads(objects, cbThread, dbgThread);
 	}
 
-	public function start(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
+	public function start(_callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
 			switch objects.ptr.go()
@@ -47,38 +48,31 @@ class DbgEngDriver extends Driver
 		});
 	}
 
-	public function resume(_callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
+	public function resume(_callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void)
 	{
 		start(_callback);
 	}
 
-	public function pause(_result : Result<Bool, Exception>->Void)
+	public function pause(_callback : Result<Bool, Exception>->Void)
 	{
-		switch objects.ptr.interrupt()
+		try
 		{
-			case Error(exn):
-				_result(Result.Error(exn));
-			case Success(paused):
-				if (paused == 0)
-				{
-					_result(Result.Success(false));
-				}
-				else
-				{
-					dbgThread.events.run(() -> {
-						final r = objects.ptr.pause();
-			
-						cbThread.events.run(() -> {
-							switch r
-							{
-								case Some(exn):
-									_result(Result.Error(exn));
-								case None:
-									_result(Result.Success(true));
-							}
-						});
-					});
-				}
+			if (objects.ptr.interrupt())
+			{
+				// Interrupt issued, queue up a task on the dbg thread to invoke the callback.
+				// This ensures the callback is not invoked before process has actually been paused.
+				dbgThread.events.run(() -> {
+					cbThread.events.run(() -> _callback(Result.Success(true)));
+				});
+			}
+			else
+			{
+				_callback(Result.Success(false));
+			}
+		}
+		catch (error : String)
+		{
+			_callback(Result.Error(new Exception(error)));
 		}
 	}
 
@@ -99,7 +93,7 @@ class DbgEngDriver extends Driver
 		});
 	}
 
-	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<Option<Interrupt>, Exception>->Void)->Void, Exception>->Void)
+	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
 			switch objects.ptr.step(_thread, _type)
@@ -112,27 +106,37 @@ class DbgEngDriver extends Driver
 		});
 	}
 
-	function run(_callback : Result<Option<Interrupt>, Exception>->Void)
+	function run(_callback : Result<BreakReason, Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			switch objects.ptr.wait()
+
+			function onBreakpoint(_threadIdx : Int, _id : Int)
 			{
-				case Complete:
-					cbThread.events.run(() -> _callback(Result.Success(Option.None)));
-				case WaitFailed:
-					cbThread.events.run(() -> _callback(Result.Error(new Exception('Wait failed'))));
-				case Interrupted(reason):
-					cbThread.events.run(() -> {
-						switch reason
-						{
-							case Breakpoint(idx, id):
-								_callback(Result.Success(Option.Some(Interrupt.BreakpointHit(idx, id))));
-							case Exception(idx, _):
-								_callback(Result.Success(Option.Some(Interrupt.ExceptionThrown(idx))));
-							case Unknown, Pause:
-								_callback(Result.Success(Option.Some(Interrupt.Other)));
-						}
-					});
+				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Breakpoint(_threadIdx, _id))));
+			}
+
+			function onException(_threadIdx : Int, _code : Int)
+			{
+				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Exception(_threadIdx))));
+			}
+
+			function onPaused()
+			{
+				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Paused)));
+			}
+
+			function onExited(_exitCode : Int)
+			{
+				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Exited(_exitCode))));
+			}
+
+			try
+			{
+				objects.ptr.wait(onBreakpoint, onException, onPaused, onExited);
+			}
+			catch (error : String)
+			{
+				cbThread.events.run(() -> _callback(Result.Error(new Exception(error))));
 			}
 		});
 	}

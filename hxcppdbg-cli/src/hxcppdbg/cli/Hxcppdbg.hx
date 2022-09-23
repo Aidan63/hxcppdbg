@@ -7,7 +7,6 @@ import tink.CoreApi.Future;
 import tink.CoreApi.Promise;
 import hxcppdbg.cli.Utils;
 import hxcppdbg.core.Session;
-import hxcppdbg.core.drivers.Interrupt;
 
 using Lambda;
 
@@ -51,8 +50,8 @@ class Hxcppdbg
                                 run(result -> {
                                     switch result
                                     {
-                                        case Success(opt):
-                                            _resolve(opt);
+                                        case Success(reason):
+                                            _resolve(reason);
                                         case Error(exn):
                                             _reject(new Error(exn.message));
                                     }
@@ -62,7 +61,7 @@ class Hxcppdbg
                         }
                     });
                 })
-                .next(onStopReason)
+                .next(reason -> printStopReason(session, reason))
                 .next(_prompt.println);
     }
 
@@ -78,8 +77,8 @@ class Hxcppdbg
                                 run(result -> {
                                     switch result
                                     {
-                                        case Success(opt):
-                                            _resolve(opt);
+                                        case Success(reason):
+                                            _resolve(reason);
                                         case Error(exn):
                                             _reject(new Error(exn.message));
                                     }
@@ -89,7 +88,7 @@ class Hxcppdbg
                         }
                     });
                 })
-                .next(onStopReason)
+                .next(reason -> printStopReason(session, reason))
                 .next(_prompt.println);
     }
 
@@ -121,16 +120,5 @@ class Hxcppdbg
     function shutdown()
     {
         Sys.exit(0);
-    }
-
-    function onStopReason(_opt : Option<Interrupt>)
-    {
-        return switch _opt
-        {
-            case Some(interrupt):
-                printStopReason(session, interrupt);
-            case None:
-                Future.sync('debugee has exited');
-        }
     }
 }

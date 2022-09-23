@@ -8,21 +8,6 @@ import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
-enum InterruptReason
-{
-    Breakpoint(threadIdx : Option<Int>, id : Option<Int>);
-    Exception(threadIdx : Option<Int>, code : Option<Int>);
-    Unknown;
-    Pause;
-}
-
-enum WaitResult
-{
-    Complete;
-    WaitFailed;
-    Interrupted(reason : InterruptReason);
-}
-
 @:keep
 @:include('DbgEngContext.hpp')
 @:native('hxcppdbg::core::drivers::dbgeng::native::DbgEngContext')
@@ -54,11 +39,14 @@ extern class DbgEngContext
 
     function step(_thread : Int, _status : Int) : Option<HResultException>;
 
-    function pause() : Option<HResultException>;
-
     function end() : Option<HResultException>;
 
-    function interrupt() : Result<Int, HResultException>;
+    function interrupt() : Bool;
 
-    function wait() : WaitResult;
+    function wait(
+        _onBreakpoint : Int->Int->Void,
+        _onException : Int->Int->Void,
+        _onPaused : Void->Void,
+        _onExited : Int->Void
+    ) : Void;
 }
