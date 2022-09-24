@@ -1,11 +1,13 @@
 package hxcppdbg.core.evaluator;
 
+import hscript.Expr;
 import haxe.Exception;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.stack.Stack;
+import hxcppdbg.core.evaluator.Contex;
 import hxcppdbg.core.sourcemap.Sourcemap;
 import hxcppdbg.core.drivers.ILocals;
 
@@ -33,16 +35,7 @@ class Evaluator
             switch _result
             {
                 case Success(locals):
-                    final parser = new hscript.Parser();
-                    final ast    = parser.parseString(_expr);
-    
-                    switch fetch(locals, ast)
-                    {
-                        case Success(v):
-                            _callback(Result.Success(v));
-                        case Error(e):
-                            _callback(Result.Error(e));
-                    }
+                    _callback(new Context(locals).interpret(_expr));
                 case Error(e):
                     _callback(Result.Error(e));
             }
