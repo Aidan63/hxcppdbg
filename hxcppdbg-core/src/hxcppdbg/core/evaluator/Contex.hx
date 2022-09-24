@@ -37,7 +37,7 @@ class Context
         }
     }
 
-    function eval(_expr : Expr, _context : ModelData = null) : ModelData
+    function eval(_expr : Expr)
     {
         return switch _expr
         {
@@ -60,7 +60,7 @@ class Context
                         found.data;
                 }
             case EField(e, f):
-                switch eval(e, _context)
+                switch eval(e)
                 {
                     case
                         MMap(children),
@@ -82,26 +82,24 @@ class Context
             case EBinop(op, e1, e2):
                 evalBinop(op, eval(e1), eval(e2));
             case EArray(e, index):
-                switch eval(e, _context)
+                switch eval(e)
                 {
-                    case MArray(items):
-                        switch eval(index, _context)
+                    case MDynamic(MArray(items)), MArray(items):
+                        switch eval(index)
                         {
                             case MInt(i), MDynamic(MInt(i)):
                                 items[i];
                             default:
                                 throw new Exception('Can only index into an array with an integer');
                         }
-                    case MMap(items):
-                        switch items.find(m -> keysearch(eval(index, _context), m.key))
+                    case MDynamic(MMap(items)), MMap(items):
+                        switch items.find(m -> keysearch(eval(index), m.key))
                         {
                             case null:
                                 throw new Exception('Unable to key in map');
                             case found:
                                 found.data;
                         }
-                    case MDynamic(inner):
-                        eval(e, inner);
                     default:
                         throw new Exception('Can only index on an array or map');
                 }
