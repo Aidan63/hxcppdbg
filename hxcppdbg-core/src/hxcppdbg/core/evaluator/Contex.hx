@@ -92,8 +92,14 @@ class Context
                             default:
                                 throw new Exception('Can only index into an array with an integer');
                         }
-                    // case MMap(items):
-                    //     items.find(m -> keysearch(eval(index), m.key));
+                    case MMap(items):
+                        switch items.find(m -> keysearch(eval(index, _context), m.key))
+                        {
+                            case null:
+                                throw new Exception('Unable to key in map');
+                            case found:
+                                found.data;
+                        }
                     case MDynamic(inner):
                         eval(e, inner);
                     default:
@@ -482,58 +488,46 @@ class Context
         }
     }
 
-    function keysearch(_key : hscript.Expr, _data : ModelData)
+    function keysearch(_key : ModelData, _data : ModelData)
     {
         return switch _key
         {
-            case EConst(c):
-                switch c
-                {
-                    case CInt(v):
-                        switch _data
-                        {
-                            case MInt(i):
-                                v == i;
-                            case MFloat(f):
-                                v == f;
-                            case _:
-                                false;
-                        }
-                    case CFloat(v):
-                        switch _data
-                        {
-                            case MFloat(f):
-                                v == f;
-                            case _:
-                                false;
-                        }
-                    case CString(v):
-                        switch _data
-                        {
-                            case MString(s):
-                                v == s;
-                            case _:
-                                false;
-                        }
-                }
-            case EIdent('true'):
+            case MInt(i1):
                 switch _data
                 {
-                    case MBool(true):
-                        true;
-                    case _:
+                    case MInt(i2):
+                        i1 == i2;
+                    case MFloat(f2):
+                        i1 == f2;
+                    default:
                         false;
                 }
-            case EIdent('false'):
+            case MFloat(f1):
                 switch _data
                 {
-                    case MBool(false):
-                        true;
-                    case _:
+                    case MFloat(f2):
+                        f1 == f2;
+                    default:
+                        false;
+                }
+            case MBool(b1):
+                switch _data
+                {
+                    case MBool(b2):
+                        b1 == b2;
+                    default:
+                        false;
+                }
+            case MString(s1):
+                switch _data
+                {
+                    case MString(s2):
+                        s1 == s2;
+                    default:
                         false;
                 }
             case other:
-                false;
+                throw new Exception('${ other.getName() } cannot be used to key a map');
         }
     }
 }
