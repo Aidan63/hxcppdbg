@@ -424,6 +424,48 @@ class Context
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
+            case '!=':
+                switch _e1
+                {
+                    case MInt(i1):
+                        switch _e2
+                        {
+                            case MInt(i2):
+                                ModelData.MBool(i1 != i2);
+                            case MFloat(f2):
+                                ModelData.MBool(i1 != f2);
+                            case MDynamic(inner):
+                                evalBinop(_op, _e1, inner);
+                            case other:
+                                throw new Exception('unable to add ${ other.getName() }');
+                        }
+                    case MFloat(f1):
+                        switch _e2
+                        {
+                            case MInt(i2):
+                                ModelData.MBool(f1 != i2);
+                            case MFloat(f2):
+                                ModelData.MBool(f1 != f2);
+                            case MDynamic(inner):
+                                evalBinop(_op, _e1, inner);
+                            case other:
+                                throw new Exception('unable to add ${ other.getName() }');
+                        }
+                    case MString(s1):
+                        switch _e2
+                        {
+                            case MString(s2):
+                                ModelData.MBool(s1 != s2);
+                            case MDynamic(inner):
+                                evalBinop(_op, _e1, inner);
+                            case other:
+                                throw new Exception('unable to add ${ other.getName() }');
+                        }
+                    case MDynamic(inner):
+                        evalBinop(_op, inner, _e2);
+                    case other:
+                        throw new Exception('unable to add ${ other.getName() }');
+                }
             case other:
                 throw new Exception('unsupported binop $other');
         }
