@@ -62,6 +62,10 @@ class Context
             case EField(e, f):
                 switch eval(e)
                 {
+                    case MDynamic(MString(s)), MString(s) if (f == 'length'):
+                        MInt(s.length);
+                    case MDynamic(MArray(children)), MArray(children) if (f == 'length'):
+                        MInt(children.length);
                     case
                         MMap(children),
                         MDynamic(MMap(children)),
