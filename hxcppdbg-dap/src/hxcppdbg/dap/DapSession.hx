@@ -163,7 +163,16 @@ class DapSession
                 sendResponse(Outcome.Success(null))
                     .flatMap(startTargetAfterConfiguration);
             case 'launch':
-                onLaunch(cast _request);
+                onLaunch(cast _request)
+                    .flatMap(outcome -> {
+                        return switch outcome
+                        {
+                            case Success(data):
+                                DapPromise.sync(Outcome.Success((null : Noise)));
+                            case Failure(failure):
+                                sendResponse(outcome);
+                        }
+                    });
             case 'threads':
                 onThreads()
                     .flatMap(sendResponse);
