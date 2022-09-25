@@ -1,17 +1,11 @@
 package hxcppdbg.dap;
 
+import sys.thread.Thread;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
 import tink.CoreApi.Promise;
-import sys.thread.EventLoop.EventHandler;
-import cpp.asio.streams.IReadStream;
-import cpp.asio.streams.IWriteStream;
-import cpp.asio.Result;
-import haxe.Exception;
-import haxe.ds.Option;
-import hxcppdbg.core.Session;
-import sys.thread.Thread;
 import cpp.asio.Code;
+import cpp.asio.Result;
 import cpp.asio.TcpSocket;
 
 using Lambda;
@@ -33,6 +27,29 @@ class Dap
             {
                 case 'socket':
                     cpp.asio.TcpSocket.bind('127.0.0.1', 7777, onSocketListen.bind(_reject));
+                case 'stdio':
+                    cpp.asio.TTY.open(Stdout, result -> {
+                        switch result
+                        {
+                            case Success(stdout):
+                                cpp.asio.TTY.open(Stdin, result -> {
+                                    switch result
+                                    {
+                                        case Success(stdin):
+                                            new DapSession(stdin.read, stdout.write, () -> {
+                                                stdout.close();
+                                                stdin.close();
+                                                
+                                                _resolve(null);
+                                            });
+                                        case Error(error):
+                                            _reject(new Error('stdin ${ error.toString() }'));
+                                    }
+                                });
+                            case Error(error):
+                                _reject(new Error('stdout ${ error.toString() }'));
+                        }
+                    });
                 case other:
                     _reject(new Error('unknown mode $other'));
             }
