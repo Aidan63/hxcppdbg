@@ -31,9 +31,6 @@ enum abstract LLDBStepType(Int)
 @:build(hxcppdbg.core.utils.HxcppUtils.xml('LLDB'))
 extern class LLDBContext
 {
-    @:native('hxcppdbg::core::drivers::lldb::native::LLDBContext::boot')
-    static function boot() : Void;
-
     @:native('hxcppdbg::core::drivers::lldb::native::LLDBContext::create')
     static function create(_cwd : String, _file : String) : cpp.Pointer<LLDBContext>;
 
