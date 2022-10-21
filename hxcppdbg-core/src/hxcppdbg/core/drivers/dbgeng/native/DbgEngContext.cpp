@@ -47,14 +47,6 @@
 #include <hxcppdbg/core/drivers/dbgeng/NativeThreadReturn.h>
 #endif
 
-#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_WaitResult
-#include <hxcppdbg/core/drivers/dbgeng/native/WaitResult.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_drivers_dbgeng_native_InterruptReason
-#include <hxcppdbg/core/drivers/dbgeng/native/InterruptReason.h>
-#endif
-
 #ifndef INCLUDED_hxcppdbg_core_locals_NativeVariable
 #include <hxcppdbg/core/locals/NativeLocal.h>
 #endif
