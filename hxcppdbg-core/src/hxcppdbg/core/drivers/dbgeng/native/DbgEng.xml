@@ -1,8 +1,4 @@
 <xml>
-    <compiler id="MSVC" exe="cl.exe">
-        <flag value = "/await"/>
-    </compiler>
-
     <set name='FmtDir' value='${DbgEngDir}/../../../../../../libs/fmt'/>
 
     <files id='fmt'>
@@ -15,6 +11,8 @@
         <compilerflag value='-I${FmtDir}/include'/>
         <compilerflag value='-I${DbgEngDir}'/>
         <compilerflag value='-DWIN32_LEAN_AND_MEAN'/>
+        <compilerflag value='/std:c++17'/>
+        <compilerflag value='/await'/>
 
         <file name='${DbgEngDir}/DbgEngContext.cpp'/>
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
