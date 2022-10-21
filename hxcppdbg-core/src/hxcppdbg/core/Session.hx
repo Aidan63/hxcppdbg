@@ -72,6 +72,8 @@ class Session
                         }
                     });
 #else
+                Sys.putEnv('LLDB_DEBUGSERVER_PATH', '/usr/lib/llvm-14/bin/lldb-server-14.0.0');
+
                 hxcppdbg.core.drivers.lldb.LLDBDriver.create(_targetPath, result -> {
                     switch result
                     {

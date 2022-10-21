@@ -10,20 +10,20 @@
     <files id='lldb'>
         <compilerflag value='-I${FmtDir}/include'/>
         <compilerflag value='-I${LLDBDir}'/>
-        <compilerflag value='-I/usr/lib/llvm-14/include/lldb/API'/>
+        <compilerflag value='-I/usr/lib/llvm-14/include'/>
         <file name='${LLDBDir}/LLDBContext.cpp'/>
     </files>
 
     <files id='haxe'>
         <compilerflag value='-I${FmtDir}/include'/>
         <compilerflag value='-I${LLDBDir}'/>
-        <compilerflag value='-I/usr/lib/llvm-14/include/lldb/API'/>
+        <compilerflag value='-I/usr/lib/llvm-14/include'/>
     </files>
 
     <target id='haxe'>
         <files id='fmt'/>
         <files id='lldb'/>
 
-        <lib name='-llldb'/>
+        <lib name='-llldb-14'/>
     </target>
 </xml>

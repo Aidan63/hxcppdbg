@@ -8,14 +8,14 @@
 
 #include <optional>
 
-#include <SBEvent.h>
-#include <SBTarget.h>
-#include <SBThread.h>
-#include <SBProcess.h>
-#include <SBDebugger.h>
-#include <SBListener.h>
-#include <SBBroadcaster.h>
-#include <SBBreakpointLocation.h>
+#include <lldb/API/SBEvent.h>
+#include <lldb/API/SBTarget.h>
+#include <lldb/API/SBThread.h>
+#include <lldb/API/SBProcess.h>
+#include <lldb/API/SBDebugger.h>
+#include <lldb/API/SBListener.h>
+#include <lldb/API/SBBroadcaster.h>
+#include <lldb/API/SBBreakpointLocation.h>
 
 namespace hxcppdbg::core::drivers::lldb::native
 {
