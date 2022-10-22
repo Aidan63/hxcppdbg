@@ -220,8 +220,8 @@ class Session
                     case bp:
                         Result.Success(StopReason.BreakpointHit(threadIndex, bp));
                 }
-            case Exception(threadIndex):
-                Result.Success(StopReason.ExceptionThrown(threadIndex));
+            case Exception(threadIndex, thrown):
+                Result.Success(StopReason.ExceptionThrown(threadIndex, thrown));
             case Paused:
                 Result.Success(StopReason.Paused);
             case Exited(exitCode):

@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import hxcppdbg.core.model.ModelData;
 import cpp.Pointer;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
@@ -115,9 +116,9 @@ class DbgEngDriver extends Driver
 				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Breakpoint(_threadIdx, _id))));
 			}
 
-			function onException(_threadIdx : Int, _code : Int)
+			function onException(_threadIdx : Int, _code : Int, _thrown : Option<ModelData>)
 			{
-				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Exception(_threadIdx))));
+				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Exception(_threadIdx, _thrown))));
 			}
 
 			function onPaused()

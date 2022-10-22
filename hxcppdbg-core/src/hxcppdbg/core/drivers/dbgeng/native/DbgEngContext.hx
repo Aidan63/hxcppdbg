@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import hxcppdbg.core.model.ModelData;
 import haxe.Int64;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
@@ -45,7 +46,7 @@ extern class DbgEngContext
 
     function wait(
         _onBreakpoint : Int->Int->Void,
-        _onException : Int->Int->Void,
+        _onException : Int->Int->Option<ModelData>->Void,
         _onPaused : Void->Void,
         _onExited : Int->Void
     ) : Void;

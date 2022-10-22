@@ -1,11 +1,12 @@
 package hxcppdbg.cli;
 
 import tink.CoreApi.Future;
-import haxe.Int64;
 import haxe.io.Eof;
 import haxe.ds.Option;
 import hxcppdbg.core.Session;
 import hxcppdbg.core.StopReason;
+import hxcppdbg.core.model.Printer;
+import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.breakpoints.Breakpoint;
 
@@ -17,8 +18,8 @@ function printStopReason(_session : Session, _stop : StopReason)
     {
         case BreakpointHit(threadIndex, breakpoint):
             printBreakpointHitLocation(_session, threadIndex, breakpoint);
-        case ExceptionThrown(threadIndex):
-            printExceptionLocation(_session, threadIndex);
+        case ExceptionThrown(threadIndex, object):
+            printExceptionLocation(_session, threadIndex, object);
         case Paused:
             Future.sync('');
         case Exited(exitCode):
@@ -73,7 +74,7 @@ private function printBreakpointHitLocation(_session : Session, _threadIndex : I
     return Future.sync(output.join('\n'));
 }
 
-private function printExceptionLocation(_session : Session, _threadIndex : Int)
+private function printExceptionLocation(_session : Session, _threadIndex : Int, _thrown : Option<ModelData>)
 {
     return Future.irreversible(_resolve -> {
         _session.stack.getCallStack(_threadIndex, result -> {
@@ -126,6 +127,17 @@ private function printExceptionLocation(_session : Session, _threadIndex : Int)
                             }
     
                             input.close();
+
+                            //
+
+                            switch _thrown
+                            {
+                                case Some(v):
+                                    output.push('\n');
+                                    output.push(printModelData(v));
+                                case None:
+                                    //
+                            }
 
                             output.join('\n');
                         case _:

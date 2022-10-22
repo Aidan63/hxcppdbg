@@ -4,11 +4,12 @@ import haxe.Int64;
 import haxe.Exception;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.ModelData;
 
 enum BreakReason
 {
     Breakpoint(threadIndex : Int, id : Int64);
-    Exception(threadIndex : Int);
+    Exception(threadIndex : Int, _thrown : Option<ModelData>);
     Paused;
     Exited(exitCode : Int64);
 }

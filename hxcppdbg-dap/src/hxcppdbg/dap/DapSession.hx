@@ -843,7 +843,7 @@ class DapSession
                         preserveFocusHint : false
                     }
                 });
-            case ExceptionThrown(_threadIndex):
+            case ExceptionThrown(_threadIndex, _):
                 event({
                     seq   : nextOutSequence(),
                     type  : 'event',
