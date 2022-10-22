@@ -33,6 +33,7 @@
       {
         "type": "hxcppdbg",
         "program": "D:/programming/haxe/hxcppdbg/hxcppdbg-dap/bin/windows/Main-debug.exe",
+        "args": [ "--mode", "stdio" ],
         "configurationAttributes": {
           "launch": {
             "required": [ "program", "sourcemap" ],
