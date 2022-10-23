@@ -11,44 +11,47 @@
 #include <hxcppdbg/core/model/Model.h>
 #endif
 
-hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::ModelHashElement(std::wstring signature)
-    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(signature)
+using namespace Debugger::DataModel::ClientEx;
+using namespace Debugger::DataModel::ProviderEx;
+
+hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::ModelHashElement(std::wstring _signature)
+    : ExtensionModel(TypeSignatureExtension(_signature))
 {
-    AddGeneratorFunction(this, &ModelHashElement::getIterator);
+    AddMethod(L"Count", this, &ModelHashElement::count);
+    AddMethod(L"At", this, &ModelHashElement::at);
 }
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+int hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::count(const Object& _object, const std::optional<int> _accumulated)
 {
-    throw std::exception("");
+    auto count = _accumulated.value_or(1);
+    auto next  = _object.FieldValue(L"next");
+
+    return (next.As<uint64_t>() == 0UL)
+        ? count
+        : next.Dereference().GetValue().CallMethod(L"Count", count).As<int>();
 }
 
-std::experimental::generator<hxcppdbg::core::model::Model> hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::getIterator(const Debugger::DataModel::ClientEx::Object& object)
+hxcppdbg::core::model::Model hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::at(const Object& _object, const int _index)
 {
-    auto nextPtr = ULONG64{ NULL };
-    auto current = object;
+    auto current = _object;
+    auto count   = _index;
 
-    while (true)
+    while (count > 0)
     {
-        auto key       = current.FieldValue(L"key");
-        auto keyData   = key.Type().IsIntrinsic()
-            ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(key)
-            : key.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
+        current = current.FieldValue(L"next").Dereference().GetValue();
 
-        auto value     = current.FieldValue(L"value");
-        auto valueData = value.Type().IsIntrinsic()
-            ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(value)
-            : value.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
-
-        auto model = hxcppdbg::core::model::Model_obj::__new(keyData, valueData);
-
-        co_yield(model);
-
-        auto next = current.FieldValue(L"next");
-        if (next.As<ULONG64>() == NULL)
-        {
-            break;
-        }
-
-        current = next.Dereference().GetValue();
+        count--;
     }
+
+    auto key       = current.FieldValue(L"key");
+    auto keyData   = key.Type().IsIntrinsic()
+        ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(key)
+        : key.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
+
+    auto value     = current.FieldValue(L"value");
+    auto valueData = value.Type().IsIntrinsic()
+        ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(value)
+        : value.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
+
+    return hxcppdbg::core::model::Model_obj::__new(keyData, valueData);
 }

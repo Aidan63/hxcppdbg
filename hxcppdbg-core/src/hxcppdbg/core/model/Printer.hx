@@ -22,9 +22,9 @@ function printModelData(_data : ModelData)
         case MString(s):
             '"$s"';
         case MArray(items):
-            '[ ${ items.map(printModelData).join(', ') } ]';
+            '[ ${ items.length() } items ]';
         case MMap(items):
-            '[ ${ items.map(printModel).join(', ') } ]';
+            '[ ${ items.count() } keys ]';
         case MEnum(_, constructor, arguments):
             '$constructor(${ arguments.map(printModelData).join(', ') })';
         case MDynamic(inner):

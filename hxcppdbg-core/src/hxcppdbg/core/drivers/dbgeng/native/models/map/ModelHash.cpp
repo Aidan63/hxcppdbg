@@ -11,48 +11,45 @@
 #include <hxcppdbg/core/model/Model.h>
 #endif
 
+using namespace Debugger::DataModel::ClientEx;
+using namespace Debugger::DataModel::ProviderEx;
+
 hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ModelHash()
-    : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"hx::Hash<*>"))
+    : ExtensionModel(TypeSignatureExtension(std::wstring(L"hx::Hash<*>")))
 {
-    AddGeneratorFunction(this, &ModelHash::getIterator);
+    AddMethod(L"Count", this, &ModelHash::count);
+    AddMethod(L"At", this, &ModelHash::at);
 }
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+int hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::count(const Object& _object)
 {
-    auto output = Array<hxcppdbg::core::model::Model>(0, 0);
-
-    for (auto&& element : object)
-    {
-        auto m = element.As<hxcppdbg::core::model::Model>();
-
-        output->Add(m);
-    }
-    
-    return hxcppdbg::core::model::ModelData_obj::MMap(output);
+    return _object.FieldValue(L"size").As<int>();
 }
 
-std::experimental::generator<hxcppdbg::core::model::Model> hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::getIterator(const Debugger::DataModel::ClientEx::Object& object)
+hxcppdbg::core::model::Model hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::at(const Object& _object, const int _index)
 {
-    auto bucketCount = object.FieldValue(L"bucketCount").As<int>();
-    auto buckets     = object.FieldValue(L"bucket");
+    auto bucketCount = _object.FieldValue(L"bucketCount").As<int>();
+    auto buckets     = _object.FieldValue(L"bucket");
+    auto accumulated = 0;
 
     for (auto i = 0; i < bucketCount; i++)
     {
         // If the current hash pointer is null, skip, not sure if we can exit early or not.
         auto pointer = buckets.Dereference().GetValue();
-        if (pointer.As<ULONG64>() == NULL)
+        if (pointer.As<uint64_t>() == NULL)
         {
             buckets++;
 
             continue;
         }
 
-        auto bucket = pointer.Dereference().GetValue();
-        for (auto&& element : bucket)
+        auto element      = pointer.Dereference().GetValue();
+        auto elementCount = element.CallMethod(L"Count").As<int>();
+        if (_index >= accumulated && _index < accumulated + elementCount)
         {
-            co_yield(element.As<hxcppdbg::core::model::Model>());
+            return element.CallMethod(L"At", _index - accumulated).As<hxcppdbg::core::model::Model>();
         }
 
-        buckets++;
+        accumulated += elementCount;
     }
 }

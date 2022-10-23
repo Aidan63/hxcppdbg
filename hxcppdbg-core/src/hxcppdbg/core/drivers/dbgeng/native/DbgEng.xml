@@ -17,6 +17,7 @@
         <file name='${DbgEngDir}/DbgEngContext.cpp'/>
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
+        <file name='${DbgEngDir}/models/LazyModels.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgExtensionModel.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgModelFactory.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgModelDataFactory.cpp'/>
