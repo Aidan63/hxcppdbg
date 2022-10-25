@@ -4,7 +4,7 @@ import tink.CoreApi.Lazy;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.IArrayModel;
 
-@:keep class DbgModelArrayModel implements IArrayModel
+class DbgModelArrayModel implements IArrayModel
 {
     final model : cpp.Pointer<LazyArray>;
 
@@ -18,8 +18,8 @@ import hxcppdbg.core.model.IArrayModel;
     {
         model          = _model;
         cachedElements = [];
-        elementSize    = Lazy.ofFunc(() -> model.ptr.elementSize());
-        elements       = Lazy.ofFunc(() -> model.ptr.length());
+        elementSize    = Lazy.ofFunc(getElementSize);
+        elements       = Lazy.ofFunc(getLength);
     }
 
 	public function length() : Int
@@ -32,9 +32,22 @@ import hxcppdbg.core.model.IArrayModel;
         return switch cachedElements[_index]
         {
             case null:
-                cachedElements[_index] = model.ptr.at(elements.get(), _index);
+                final o = model.ptr.at(elements.get(), _index);
+                final c = o.toModelData();
+
+                cachedElements[_index] = c;
             case cached:
                 cached;
         }
 	}
+
+    function getElementSize()
+    {
+        return model.ptr.elementSize();
+    }
+
+    function getLength()
+    {
+        return model.ptr.length();
+    }
 }

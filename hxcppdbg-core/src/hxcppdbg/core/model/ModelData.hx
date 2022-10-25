@@ -1,7 +1,5 @@
 package hxcppdbg.core.model;
 
-import hxcppdbg.core.drivers.dbgeng.model.DbgModelMapModel;
-import hxcppdbg.core.drivers.dbgeng.model.DbgModelArrayModel;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 enum ModelData
@@ -12,8 +10,8 @@ enum ModelData
     MBool(b : Bool);
     MString(s : String);
 
-    MArray(model : DbgModelArrayModel);
-    MMap(model : DbgModelMapModel);
+    MArray(model : IArrayModel);
+    MMap(model : IMapModel);
     
     MEnum(type : GeneratedType, constructor : String, arguments : Array<ModelData>);
     MDynamic(inner : ModelData);

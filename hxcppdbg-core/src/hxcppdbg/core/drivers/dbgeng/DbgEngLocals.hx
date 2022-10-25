@@ -7,8 +7,8 @@ import haxe.Exception;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
+import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 
-using Lambda;
 using hxcppdbg.core.utils.ResultUtils;
 
 class DbgEngLocals implements ILocals
@@ -29,7 +29,11 @@ class DbgEngLocals implements ILocals
 	public function getVariables(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = driver.ptr.getVariables(_thread, _frame);
+            final r =
+                driver
+                    .ptr
+                    .getVariables(_thread, _frame)
+                    .map(toModel);
 
             cbThread.events.run(() -> _callback(r.asExceptionResult()));
         });
@@ -38,5 +42,13 @@ class DbgEngLocals implements ILocals
 	public function getArguments(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void)
     {
         _callback(Result.Error(new NotImplementedException()));
+    }
+
+    function toModel(_local : { name : String, data : NativeModelData }) : Model
+    {
+        return
+            new Model(
+                ModelData.MString(_local.name),
+                NativeModelDataTools.toModelData(_local.data));
     }
 }

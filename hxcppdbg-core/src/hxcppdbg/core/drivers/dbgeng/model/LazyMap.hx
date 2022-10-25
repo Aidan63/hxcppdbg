@@ -1,6 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng.model;
 
-import hxcppdbg.core.model.Model;
+import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 
 @:keep
 @:unreflective
@@ -10,5 +10,5 @@ import hxcppdbg.core.model.Model;
 extern class LazyMap
 {
     function count() : Int;
-    function child(_index : Int) : Model;
+    function child(_index : Int) : NativeModelData;
 }

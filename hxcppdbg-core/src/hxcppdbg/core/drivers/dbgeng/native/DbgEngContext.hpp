@@ -17,10 +17,10 @@
 #include <atomic>
 #include "DbgModelClientEx.hpp"
 #include "DebugEventCallbacks.hpp"
+#include "NativeModelData.hpp"
 
 HX_DECLARE_CLASS2(haxe, ds, Option)
 HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
-HX_DECLARE_CLASS3(hxcppdbg, core, model, ModelData)
 HX_DECLARE_CLASS3(hxcppdbg, core, drivers, StopReason)
 HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, WaitResult)

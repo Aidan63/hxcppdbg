@@ -13,7 +13,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::anon
     public:
         ModelVariantKey();
 
-        hxcppdbg::core::model::Model getHxcppdbgModel(const Debugger::DataModel::ClientEx::Object& object);
-        hxcppdbg::core::model::ModelData getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
+        // hxcppdbg::core::model::Model getHxcppdbgModel(const Debugger::DataModel::ClientEx::Object& object);
+        Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
     };
 }

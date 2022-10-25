@@ -26,7 +26,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::count(const
     return _object.FieldValue(L"size").As<int>();
 }
 
-hxcppdbg::core::model::Model hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::at(const Object& _object, const int _index)
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::at(const Object& _object, const int _index)
 {
     auto bucketCount = _object.FieldValue(L"bucketCount").As<int>();
     auto buckets     = _object.FieldValue(L"bucket");
@@ -47,9 +47,11 @@ hxcppdbg::core::model::Model hxcppdbg::core::drivers::dbgeng::native::models::ma
         auto elementCount = element.CallMethod(L"Count").As<int>();
         if (_index >= accumulated && _index < accumulated + elementCount)
         {
-            return element.CallMethod(L"At", _index - accumulated).As<hxcppdbg::core::model::Model>();
+            return element.CallMethod(L"At", _index - accumulated).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
         }
 
         accumulated += elementCount;
     }
+
+    return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
 }

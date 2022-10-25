@@ -2,14 +2,6 @@
 
 #include "models/basic/ModelString.hpp"
 
-#ifndef INCLUDED_hxcppdbg_core_model_ModelData
-#include <hxcppdbg/core/model/ModelData.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_Model
-#include <hxcppdbg/core/model/Model.h>
-#endif
-
 hxcppdbg::core::drivers::dbgeng::native::models::basic::ModelString::ModelString()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"String"))
 {
@@ -36,12 +28,12 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::basic::ModelString
         : readString<char>(length, _string.FieldValue(L"__s"));
 }
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::basic::ModelString::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::basic::ModelString::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
     auto str   = getString(object);
     auto hxStr = String::create(str.c_str());
 
-    return hxcppdbg::core::model::ModelData_obj::MString(hxStr);
+    return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::HxString(hxStr);
 }
 
 template<typename TChar>

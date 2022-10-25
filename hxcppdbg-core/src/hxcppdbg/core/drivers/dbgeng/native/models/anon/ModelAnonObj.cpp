@@ -2,51 +2,45 @@
 
 #include "models/anon/ModelAnonObj.hpp"
 
-#ifndef INCLUDED_hxcppdbg_core_model_ModelData
-#include <hxcppdbg/core/model/ModelData.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_Model
-#include <hxcppdbg/core/model/Model.h>
-#endif
-
 hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::ModelAnonObj()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"hx::Anon_obj"))
 {
     //
 }
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
-    auto output = Array<hxcppdbg::core::model::Model>(0, 0);
+    return Debugger::DataModel::ClientEx::Object();
 
-    // Fields present when anon object was created.
-    auto pointer     = object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, object, L"(hx::Anon_obj::VariantKey *)(self + 1)");
-    auto fixedFields = object.FieldValue(L"mFixedFields").As<int>();
-    for (auto i = 0; i < fixedFields; i++)
-    {
-        output.Add(pointer.Dereference().GetValue().KeyValue(L"HxcppdbgModel").As<hxcppdbg::core::model::Model>());
+    // auto output = Array<hxcppdbg::core::model::Model>(0, 0);
 
-        pointer++;
-    }
+    // // Fields present when anon object was created.
+    // auto pointer     = object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, object, L"(hx::Anon_obj::VariantKey *)(self + 1)");
+    // auto fixedFields = object.FieldValue(L"mFixedFields").As<int>();
+    // for (auto i = 0; i < fixedFields; i++)
+    // {
+    //     output.Add(pointer.Dereference().GetValue().KeyValue(L"HxcppdbgModel").As<hxcppdbg::core::model::Model>());
 
-    // Fields which were added after creation.
-    auto ptr = object.FieldValue(L"mFields").FieldValue(L"mPtr");
-    if (ptr.As<ULONG64>() != NULL)
-    {
-        auto hash =
-            ptr
-                .Dereference()
-                .GetValue()
-                .TryCastToRuntimeType();
+    //     pointer++;
+    // }
 
-        auto type = hash.Type().Name();
+    // // Fields which were added after creation.
+    // auto ptr = object.FieldValue(L"mFields").FieldValue(L"mPtr");
+    // if (ptr.As<ULONG64>() != NULL)
+    // {
+    //     auto hash =
+    //         ptr
+    //             .Dereference()
+    //             .GetValue()
+    //             .TryCastToRuntimeType();
 
-        for (auto&& element : hash)
-        {
-            output.Add(element.As<hxcppdbg::core::model::Model>());
-        }
-    }
+    //     auto type = hash.Type().Name();
 
-    return hxcppdbg::core::model::ModelData_obj::MAnon(output);
+    //     for (auto&& element : hash)
+    //     {
+    //         output.Add(element.As<hxcppdbg::core::model::Model>());
+    //     }
+    // }
+
+    // return hxcppdbg::core::model::ModelData_obj::MAnon(output);
 }

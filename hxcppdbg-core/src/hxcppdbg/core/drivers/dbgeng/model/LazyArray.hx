@@ -1,6 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng.model;
 
-import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 
 @:keep
 @:unreflective
@@ -11,5 +11,5 @@ extern class LazyArray
 {
     function length() : Int;
     function elementSize() : Int;
-    function at(_elementSize : Int, _index : Int) : ModelData;
+    function at(_elementSize : Int, _index : Int) : NativeModelData;
 }

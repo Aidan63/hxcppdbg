@@ -2,15 +2,8 @@
 
 #include "models/array/ModelVirtualArrayObj.hpp"
 
-#ifndef INCLUDED_hxcppdbg_core_model_ModelData
-#include <hxcppdbg/core/model/ModelData.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_Model
-#include <hxcppdbg/core/model/Model.h>
-#endif
-
-enum StoreType {
+enum StoreType
+{
     arrayNull = 0,
     arrayEmpty,
     arrayFixed,
@@ -28,16 +21,18 @@ hxcppdbg::core::drivers::dbgeng::native::models::array::ModelVirtualArrayObj::Mo
     //
 }
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::array::ModelVirtualArrayObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::array::ModelVirtualArrayObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
-    auto storeType = object.FieldValue(L"store").As<int>();
-
-    if (storeType == StoreType::arrayNull)
+    if (object.FieldValue(L"store").As<int>() == StoreType::arrayNull)
     {
-        return hxcppdbg::core::model::ModelData_obj::MNull;
+        return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
     }
 
-    auto arrayBase = object.FieldValue(L"base").Dereference().GetValue().TryCastToRuntimeType();
-
-    return arrayBase.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>();
+    return
+        object
+            .FieldValue(L"base")
+            .Dereference()
+            .GetValue()
+            .TryCastToRuntimeType()
+            .KeyValue(L"HxcppdbgModelData");
 }

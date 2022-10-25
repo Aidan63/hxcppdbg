@@ -1,12 +1,11 @@
 package hxcppdbg.core.drivers.dbgeng.model;
 
-import cpp.Pointer;
-import cpp.Reference;
+import haxe.exceptions.NotImplementedException;
 import tink.CoreApi.Lazy;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.model.IMapModel;
 
-@:keep class DbgModelMapModel implements IMapModel
+class DbgModelMapModel implements IMapModel
 {
     final model : cpp.Pointer<LazyMap>;
 
@@ -17,7 +16,7 @@ import hxcppdbg.core.model.IMapModel;
     public function new(_model)
     {
         model          = _model;
-        elements       = Lazy.ofFunc(() -> model.ptr.count());
+        elements       = Lazy.ofFunc(getElements);
         cachedElements = [];
     }
 
@@ -28,12 +27,18 @@ import hxcppdbg.core.model.IMapModel;
 
 	public function element(_index : Int) : Model
     {
-        return switch cachedElements[_index]
-        {
-            case null:
-                cachedElements[_index] = model.ptr.child(_index);
-            case cached:
-                cached;
-        }
+        throw new NotImplementedException();
+        // return switch cachedElements[_index]
+        // {
+        //     case null:
+        //         cachedElements[_index] = model.ptr.child(_index).toModelData();
+        //     case cached:
+        //         cached;
+        // }
 	}
+
+    function getElements()
+    {
+        return model.ptr.count();
+    }
 }

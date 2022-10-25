@@ -3,8 +3,6 @@
 
 #include <comdef.h>
 #include "DbgEngContext.hpp"
-#include "models/extensions/HxcppdbgModelFactory.hpp"
-#include "models/extensions/HxcppdbgModelDataFactory.hpp"
 #include "models/extensions/Utils.hpp"
 #include "models/ModelObjectPtr.hpp"
 #include "models/basic/ModelString.hpp"
@@ -49,14 +47,6 @@
 
 #ifndef INCLUDED_hxcppdbg_core_locals_NativeVariable
 #include <hxcppdbg/core/locals/NativeLocal.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_ModelData
-#include <hxcppdbg/core/model/ModelData.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_Model
-#include <hxcppdbg/core/model/Model.h>
 #endif
 
 #ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
@@ -160,9 +150,6 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createF
 	}
 
 	models = std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>();
-
-	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory();
-	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory();
 
 	// enums
 	models->push_back(std::make_unique<models::enums::ModelVariant>());
@@ -503,33 +490,36 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContex
 		try
 		{
 			auto locals = frame.KeyValue(L"LocalVariables");
-			auto output = Array<hxcppdbg::core::model::Model>(0, 0);
+			auto output = Array<hx::Anon>(0, 0);
 
 			for (auto&& local : locals.Keys())
 			{
 				auto object = std::get<1>(local).GetValue();
-				auto key    = hxcppdbg::core::model::ModelData_obj::MString(String::create(std::get<0>(local).c_str()));
+				auto anon = hx::Anon_obj::Create(2);
 				auto type   = object.Type();
-				auto name   = type.Name();
+
+				anon->setFixed(0, HX_CSTRING("name"), String::create(std::get<0>(local).c_str()));
 
 				try
 				{
 					// We can't seem to create custom model extensions for these intrinsic types, so we just have to check them manually.
 					if (type.IsIntrinsic())
 					{
-						output->Add(hxcppdbg::core::model::Model_obj::__new(key, hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)));
+						anon->setFixed(1, HX_CSTRING("data"), hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object));
 					}
 					else
 					{
-						output->Add(hxcppdbg::core::model::Model_obj::__new(key, object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>()));
+						anon->setFixed(1, HX_CSTRING("data"), object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>());
 					}
 				}
 				catch (const std::exception& exn)
 				{
 					// If its not a supported intrinsic and it doesn't have the HxcppdbgModelData property then its not something we really know about, so report it as unknown.
 
-					output->Add(hxcppdbg::core::model::Model_obj::__new(key, hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(name.c_str()))));
-				}		
+					anon->setFixed(1, HX_CSTRING("data"), hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull());
+				}
+
+				output->Add(anon);
 			}
 
 			return hxcppdbg::core::ds::Result_obj::Success(output);
@@ -538,7 +528,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContex
 		{
 			// If getting the local variables throws then there are no locals in this frame.
 
-			return hxcppdbg::core::ds::Result_obj::Success(Array<hxcppdbg::core::locals::NativeLocal>(0, 0));
+			return hxcppdbg::core::ds::Result_obj::Success(Array<hx::Anon>(0, 0));
 		}
 	}
 	catch (const std::exception& exn)
