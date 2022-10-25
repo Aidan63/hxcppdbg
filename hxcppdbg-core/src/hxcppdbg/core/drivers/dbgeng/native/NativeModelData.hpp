@@ -22,7 +22,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         HX_DO_ENUM_RTTI;
 
-        static Debugger::DataModel::ProviderEx::TypedInstanceModel<NativeModelData>* getFactory();
+        static Debugger::DataModel::ProviderEx::TypedInstanceModel<NativeModelData>& getFactory();
         static bool __GetStatic(const String&, Dynamic&, hx::PropertyAccess);
 
         String GetEnumName() const { return HX_CSTRING("hxcppdbg.core.drivers.dbgeng.native.NativeModelData"); }
@@ -53,12 +53,12 @@ namespace Debugger::DataModel::ClientEx::Boxing
     {
         static Object Box(const hxcppdbg::core::drivers::dbgeng::native::NativeModelData& model)
         {
-            return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::getFactory()->CreateInstance(model);
+            return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::getFactory().CreateInstance(model);
         }
 
         static hxcppdbg::core::drivers::dbgeng::native::NativeModelData Unbox(const Object& object)
         {
-            return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::getFactory()->GetStoredInstance(object);
+            return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::getFactory().GetStoredInstance(object);
         }
     };
 }

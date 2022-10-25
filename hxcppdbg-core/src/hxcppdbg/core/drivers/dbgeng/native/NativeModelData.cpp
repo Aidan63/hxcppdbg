@@ -7,14 +7,14 @@ using namespace Debugger::DataModel::ProviderEx;
 
 TypedInstanceModel<NativeModelData>* NativeModelData_obj::factory = nullptr;
 
-TypedInstanceModel<NativeModelData>* NativeModelData_obj::getFactory()
+TypedInstanceModel<NativeModelData>& NativeModelData_obj::getFactory()
 {
     if (factory == nullptr)
     {
         factory = new TypedInstanceModel<NativeModelData>();
     }
 
-    return factory;
+    return *factory;
 }
 
 NativeModelData NativeModelData_obj::NNull()
