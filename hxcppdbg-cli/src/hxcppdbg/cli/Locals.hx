@@ -1,5 +1,8 @@
 package hxcppdbg.cli;
 
+import haxe.Timer;
+import cpp.vm.Gc;
+import sys.thread.Thread;
 import hxcppdbg.core.locals.LocalVariable;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;

@@ -42,12 +42,12 @@ NativeModelData NativeModelData_obj::HxString(String s)
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxString"), 4, 1)->_hx_init(0, s);
 }
 
-NativeModelData NativeModelData_obj::HxArray(Dynamic a)
+NativeModelData NativeModelData_obj::HxArray(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyArray> a)
 {
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxArray"), 5, 1)->_hx_init(0, a);
 }
 
-NativeModelData NativeModelData_obj::HxMap(Dynamic m)
+NativeModelData NativeModelData_obj::HxMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap> m)
 {
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxMap"), 6, 1)->_hx_init(0, m);
 }

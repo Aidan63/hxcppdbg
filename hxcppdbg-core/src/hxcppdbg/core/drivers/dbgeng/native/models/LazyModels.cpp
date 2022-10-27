@@ -2,12 +2,10 @@
 #include "LazyModels.hpp"
 #include "NativeModelData.hpp"
 
-using namespace Debugger::DataModel::ClientEx;
-
 //
 
-hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::LazyArray(const Object& _object)
-    : array(Object(_object))
+hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::LazyArray(const Debugger::DataModel::ClientEx::Object& _object)
+    : array(Debugger::DataModel::ClientEx::Object(_object))
 {
     //
 }
@@ -30,12 +28,12 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 //
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::LazyMap()
-    : map(cpp::Reference<Object>())
+    : map(cpp::Reference<Debugger::DataModel::ClientEx::Object>())
 {
     //
 }
 
-hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::LazyMap(const Object& _object)
+hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::LazyMap(const Debugger::DataModel::ClientEx::Object& _object)
     : map(cpp::Reference(_object))
 {
     //

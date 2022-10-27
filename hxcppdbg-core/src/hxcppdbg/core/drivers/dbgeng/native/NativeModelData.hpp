@@ -5,6 +5,7 @@
 #endif
 
 #include "DbgModelClientEx.hpp"
+#include "models/LazyModels.hpp"
 
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, NativeModelData)
 
@@ -18,7 +19,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Debugger::DataModel::ProviderEx::TypedInstanceModel<NativeModelData>* factory;
 
     public:
-        NativeModelData_obj() {};
+        NativeModelData_obj() = default;
 
         HX_DO_ENUM_RTTI;
 
@@ -39,9 +40,9 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         static NativeModelData HxString(String);
         static Dynamic HxString_dyn();
-        static NativeModelData HxArray(Dynamic);
+        static NativeModelData HxArray(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyArray>);
         static Dynamic HxArray_dyn();
-        static NativeModelData HxMap(Dynamic);
+        static NativeModelData HxMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap>);
         static Dynamic HxMap_dyn();
     };
 }

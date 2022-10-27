@@ -1,10 +1,11 @@
 package hxcppdbg.core.drivers.dbgeng.model;
 
+import cpp.Finalizable;
 import tink.CoreApi.Lazy;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.IArrayModel;
 
-class DbgModelArrayModel implements IArrayModel
+class DbgModelArrayModel extends Finalizable implements IArrayModel
 {
     final model : cpp.Pointer<LazyArray>;
 
@@ -16,10 +17,17 @@ class DbgModelArrayModel implements IArrayModel
 
     public function new(_model)
     {
+        super();
+
         model          = _model;
         cachedElements = [];
         elementSize    = Lazy.ofFunc(getElementSize);
         elements       = Lazy.ofFunc(getLength);
+    }
+
+    public override function finalize()
+    {
+        model.destroy();
     }
 
 	public function length() : Int

@@ -17,8 +17,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
 {
     return
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::HxArray(
-            cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyArray>(
-                new hxcppdbg::core::drivers::dbgeng::native::models::LazyArray(_object)));
+            new hxcppdbg::core::drivers::dbgeng::native::models::LazyArray(_object));
 }
 
 hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::at(const Debugger::DataModel::ClientEx::Object& _object, const int _elementSize, const int _index)

@@ -17,8 +17,8 @@ extern enum NativeModelData
     NBool(b : Bool);
 
     HxString(s : String);
-    HxArray(model : Dynamic);
-    HxMap(model : Dynamic);
+    HxArray(model : cpp.Pointer<LazyArray>);
+    HxMap(model : cpp.Pointer<LazyMap>);
 }
 
 class NativeModelDataTools

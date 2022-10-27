@@ -2,10 +2,9 @@ package hxcppdbg.core.drivers.dbgeng.model;
 
 import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 
-@:keep
+@:include('models/LazyModels.hpp')
 @:unreflective
 @:structAccess
-@:include('models/LazyModels.hpp')
 @:native('hxcppdbg::core::drivers::dbgeng::native::models::LazyArray')
 extern class LazyArray
 {

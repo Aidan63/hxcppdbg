@@ -13,7 +13,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     class LazyArray
     {
     private:
-        const Debugger::DataModel::ClientEx::Object array;
+        Debugger::DataModel::ClientEx::Object array;
 
     public:
         LazyArray(const Debugger::DataModel::ClientEx::Object&);
