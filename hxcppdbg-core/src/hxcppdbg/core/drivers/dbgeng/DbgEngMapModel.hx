@@ -1,10 +1,10 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import cpp.NativeGc;
 import hxcppdbg.core.drivers.dbgeng.native.models.LazyMap;
 import hxcppdbg.core.model.MapModel;
-import haxe.exceptions.NotImplementedException;
 import tink.CoreApi.Lazy;
-import hxcppdbg.core.model.Model;
+import hxcppdbg.core.model.ModelData;
 
 class DbgEngMapModel extends MapModel
 {
@@ -12,13 +12,23 @@ class DbgEngMapModel extends MapModel
 
     final elements : Lazy<Int>;
 
-    final cachedElements : Map<Int, Model>;
+    final cachedKeys : Map<Int, ModelData>;
+
+    final cachedValues : Map<Int, ModelData>;
 
     public function new(_model)
     {
-        model          = _model;
-        elements       = Lazy.ofFunc(getElements);
-        cachedElements = [];
+        model        = _model;
+        elements     = Lazy.ofFunc(getElements);
+        cachedKeys   = [];
+        cachedValues = [];
+
+        NativeGc.addFinalizable(this, false);
+    }
+
+    public function finalize()
+    {
+        model.destroy();
     }
 
 	public function count() : Int
@@ -26,17 +36,27 @@ class DbgEngMapModel extends MapModel
 		return elements.get();
 	}
 
-	public function element(_index : Int) : Model
+	public function key(_index : Int)
     {
-        throw new NotImplementedException();
-        // return switch cachedElements[_index]
-        // {
-        //     case null:
-        //         cachedElements[_index] = model.ptr.child(_index).toModelData();
-        //     case cached:
-        //         cached;
-        // }
+        return switch cachedKeys[_index]
+        {
+            case null:
+                cachedKeys[_index] = model.ptr.key(_index).toModelData();
+            case cached:
+                cached;
+        }
 	}
+
+	public function value(_index : Int)
+    {
+        return switch cachedValues[_index]
+        {
+            case null:
+                cachedValues[_index] = model.ptr.key(_index).toModelData();
+            case cached:
+                cached;
+        }
+    }
 
     function getElements()
     {

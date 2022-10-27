@@ -10,10 +10,15 @@ hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::LazyMap(const Debugger
 
 int hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::count() const
 {
-    return map->CallMethod(L"Count").As<int>();
+    return map.CallMethod(L"Count").As<int>();
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::child(const int _index) const
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::key(const int _index) const
 {
-    return map->CallMethod(L"At").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    return map.CallMethod(L"Key").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+}
+
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::value(const int _index) const
+{
+    return map.CallMethod(L"Value").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 }

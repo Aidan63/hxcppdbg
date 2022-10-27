@@ -9,5 +9,6 @@ import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 extern class LazyMap
 {
     function count() : Int;
-    function child(_index : Int) : NativeModelData;
+    function key(_index : Int) : NativeModelData;
+    function value(_index : Int) : NativeModelData;
 }

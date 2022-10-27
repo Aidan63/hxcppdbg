@@ -10,7 +10,8 @@ hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::ModelHas
     : ExtensionModel(TypeSignatureExtension(_signature))
 {
     AddMethod(L"Count", this, &ModelHashElement::count);
-    AddMethod(L"At", this, &ModelHashElement::at);
+    AddMethod(L"Key", this, &ModelHashElement::key);
+    AddMethod(L"Value", this, &ModelHashElement::value);
 }
 
 int hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::count(const Object& _object, const std::optional<int> _accumulated)
@@ -23,7 +24,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::coun
         : next.Dereference().GetValue().CallMethod(L"Count", count).As<int>();
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::at(const Object& _object, const int _index)
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::key(const Object& _object, const int _index)
 {
     auto current = _object;
     auto count   = _index;
@@ -39,6 +40,21 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
     auto keyData   = key.Type().IsIntrinsic()
         ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(key)
         : key.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+
+    return keyData;
+}
+
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHashElement::value(const Object& _object, const int _index)
+{
+    auto current = _object;
+    auto count   = _index;
+
+    while (count > 0)
+    {
+        current = current.FieldValue(L"next").Dereference().GetValue();
+
+        count--;
+    }
 
     auto value     = current.FieldValue(L"value");
     auto valueData = value.Type().IsIntrinsic()

@@ -4,7 +4,9 @@ abstract class MapModel
 {
     public abstract function count() : Int;
 
-    public abstract function element(_index : Int) : Model;
+    public abstract function key(_index : Int) : ModelData;
+
+    public abstract function value(_index : Int) : ModelData;
 
     public function iterator()
     {
@@ -35,7 +37,7 @@ private class MapModelIterator
 
     public function next()
     {
-        return model.element(index++);
+        return new Model(model.value(index), model.value(index++));
     }
 }
 
@@ -56,7 +58,7 @@ private class MapModelKeyValueIterator
     }
 
     public function next()
-    {
-        return { key : index, value : model.element(index++) };
+    {   
+        return { key : model.key(index), value : model.value(index++) };
     }
 }

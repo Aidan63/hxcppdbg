@@ -1,12 +1,10 @@
 package hxcppdbg.core.evaluator;
 
-import haxe.exceptions.NotImplementedException;
 import hscript.Expr;
 import haxe.Exception;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.evaluator.Contex;
 import hxcppdbg.core.sourcemap.Sourcemap;
@@ -128,7 +126,7 @@ class Evaluator
                                                 }
                                                 else
                                                 {
-                                                    Result.Success(items.element(v).data);
+                                                    Result.Success(items.value(v));
                                                 }
                                             case _:
                                                 Result.Error(new Exception('Unable to find item with key $index'));

@@ -66,10 +66,8 @@ class Context
                         MInt(s.length);
                     case MDynamic(MArray(children)), MArray(children) if (f == 'length'):
                         MInt(children.length());
-                    // case
-                    //     MMap(children),
-                    //     MDynamic(MMap(children)):
-
+                    case MMap(children), MDynamic(MMap(children)) if (f == 'count'):
+                        MInt(children.count());
                     case
                         MAnon(children),
                         MDynamic(MAnon(children)),
