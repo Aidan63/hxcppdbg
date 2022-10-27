@@ -39,80 +39,79 @@ class Context
 
     function eval(_expr : Expr)
     {
-        return ModelData.MNull;
-        // return switch _expr
-        // {
-        //     case EConst(c):
-        //         switch c
-        //         {
-        //             case CInt(v):
-        //                 ModelData.MInt(v);
-        //             case CFloat(f):
-        //                 ModelData.MFloat(f);
-        //             case CString(s):
-        //                 ModelData.MString(s);
-        //         }
-        //     case EIdent(v):
-        //         return switch locals.find(m -> identity(v, m.key))
-        //         {
-        //             case null:
-        //                 throw new Exception('no variable with the name "$v"');
-        //             case found:
-        //                 found.data;
-        //         }
-        //     case EField(e, f):
-        //         switch eval(e)
-        //         {
-        //             case MDynamic(MString(s)), MString(s) if (f == 'length'):
-        //                 MInt(s.length);
-        //             case MDynamic(MArray(children)), MArray(children) if (f == 'length'):
-        //                 MInt(children.length());
-        //             // case
-        //             //     MMap(children),
-        //             //     MDynamic(MMap(children)):
+        return switch _expr
+        {
+            case EConst(c):
+                switch c
+                {
+                    case CInt(v):
+                        ModelData.MInt(v);
+                    case CFloat(f):
+                        ModelData.MFloat(f);
+                    case CString(s):
+                        ModelData.MString(s);
+                }
+            case EIdent(v):
+                return switch locals.find(m -> identity(v, m.key))
+                {
+                    case null:
+                        throw new Exception('no variable with the name "$v"');
+                    case found:
+                        found.data;
+                }
+            case EField(e, f):
+                switch eval(e)
+                {
+                    case MDynamic(MString(s)), MString(s) if (f == 'length'):
+                        MInt(s.length);
+                    case MDynamic(MArray(children)), MArray(children) if (f == 'length'):
+                        MInt(children.length());
+                    // case
+                    //     MMap(children),
+                    //     MDynamic(MMap(children)):
 
-        //             case
-        //                 MAnon(children),
-        //                 MDynamic(MAnon(children)),
-        //                 MClass(_, children),
-        //                 MDynamic(MClass(_, children)):
-        //                 switch children.find(m -> identity(f, m.key))
-        //                 {
-        //                     case null:
-        //                         throw new Exception('Unable to find "$f" in children');
-        //                     case found:
-        //                         found.data;
-        //                 }
-        //             case other:
-        //                 throw new Exception('Cannot perform field access on ${ other.getName() }');
-        //         }
-        //     case EBinop(op, e1, e2):
-        //         evalBinop(op, eval(e1), eval(e2));
-        //     case EArray(e, index):
-        //         switch eval(e)
-        //         {
-        //             case MDynamic(MArray(items)), MArray(items):
-        //                 switch eval(index)
-        //                 {
-        //                     case MInt(i), MDynamic(MInt(i)):
-        //                         items[i];
-        //                     default:
-        //                         throw new Exception('Can only index into an array with an integer');
-        //                 }
-        //             case MDynamic(MMap(items)), MMap(items):
-        //                 switch items.find(m -> keysearch(eval(index), m.key))
-        //                 {
-        //                     case null:
-        //                         throw new Exception('Unable to key in map');
-        //                     case found:
-        //                         found.data;
-        //                 }
-        //             default:
-        //                 throw new Exception('Can only index on an array or map');
-        //         }
-        //     default:
-        //         throw new Exception('Unsupported expression');
-        // }
+                    case
+                        MAnon(children),
+                        MDynamic(MAnon(children)),
+                        MClass(_, children),
+                        MDynamic(MClass(_, children)):
+                        switch children.find(m -> identity(f, m.key))
+                        {
+                            case null:
+                                throw new Exception('Unable to find "$f" in children');
+                            case found:
+                                found.data;
+                        }
+                    case other:
+                        throw new Exception('Cannot perform field access on ${ other.getName() }');
+                }
+            case EBinop(op, e1, e2):
+                evalBinop(op, eval(e1), eval(e2));
+            case EArray(e, index):
+                switch eval(e)
+                {
+                    case MDynamic(MArray(items)), MArray(items):
+                        switch eval(index)
+                        {
+                            case MInt(i), MDynamic(MInt(i)):
+                                items.at(i);
+                            default:
+                                throw new Exception('Can only index into an array with an integer');
+                        }
+                    case MDynamic(MMap(items)), MMap(items):
+                        switch items.find(m -> keysearch(eval(index), m.key))
+                        {
+                            case null:
+                                throw new Exception('Unable to key in map');
+                            case found:
+                                found.data;
+                        }
+                    default:
+                        throw new Exception('Can only index on an array or map');
+                }
+            default:
+                throw new Exception('Unsupported expression');
+        }
     }
 
     function evalBinop(_op : String, _e1 : ModelData, _e2 : ModelData)
