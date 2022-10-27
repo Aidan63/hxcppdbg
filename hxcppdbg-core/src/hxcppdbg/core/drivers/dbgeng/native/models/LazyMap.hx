@@ -1,11 +1,10 @@
-package hxcppdbg.core.drivers.dbgeng.model;
+package hxcppdbg.core.drivers.dbgeng.native.models;
 
 import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 
-@:keep
 @:unreflective
 @:structAccess
-@:include('models/LazyModels.hpp')
+@:include('models/LazyMap.hpp')
 @:native('hxcppdbg::core::drivers::dbgeng::native::models::LazyMap')
 extern class LazyMap
 {

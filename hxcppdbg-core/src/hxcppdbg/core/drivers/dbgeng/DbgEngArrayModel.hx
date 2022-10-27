@@ -1,11 +1,12 @@
-package hxcppdbg.core.drivers.dbgeng.model;
+package hxcppdbg.core.drivers.dbgeng;
 
-import cpp.Finalizable;
+import cpp.NativeGc;
+import hxcppdbg.core.drivers.dbgeng.native.models.LazyArray;
+import hxcppdbg.core.model.ArrayModel;
 import tink.CoreApi.Lazy;
 import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.model.IArrayModel;
 
-class DbgModelArrayModel extends Finalizable implements IArrayModel
+class DbgEngArrayModel extends ArrayModel
 {
     final model : cpp.Pointer<LazyArray>;
 
@@ -17,15 +18,15 @@ class DbgModelArrayModel extends Finalizable implements IArrayModel
 
     public function new(_model)
     {
-        super();
-
         model          = _model;
         cachedElements = [];
         elementSize    = Lazy.ofFunc(getElementSize);
         elements       = Lazy.ofFunc(getLength);
+
+        NativeGc.addFinalizable(this, false);
     }
 
-    public override function finalize()
+    public function finalize()
     {
         model.destroy();
     }
@@ -40,10 +41,7 @@ class DbgModelArrayModel extends Finalizable implements IArrayModel
         return switch cachedElements[_index]
         {
             case null:
-                final o = model.ptr.at(elements.get(), _index);
-                final c = o.toModelData();
-
-                cachedElements[_index] = c;
+                cachedElements[_index] = model.ptr.at(elements.get(), _index).toModelData();
             case cached:
                 cached;
         }

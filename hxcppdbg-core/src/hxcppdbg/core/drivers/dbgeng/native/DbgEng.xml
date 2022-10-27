@@ -18,7 +18,8 @@
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/NativeModelData.cpp'/>
-        <file name='${DbgEngDir}/models/LazyModels.cpp'/>
+        <file name='${DbgEngDir}/models/LazyArray.cpp'/>
+        <file name='${DbgEngDir}/models/LazyMap.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgExtensionModel.cpp'/>
         <file name='${DbgEngDir}/models/extensions/Utils.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>

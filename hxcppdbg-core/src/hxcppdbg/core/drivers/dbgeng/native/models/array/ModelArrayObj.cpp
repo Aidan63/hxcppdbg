@@ -1,6 +1,6 @@
 #include <hxcpp.h>
 
-#include "models/LazyModels.hpp"
+#include "models/LazyArray.hpp"
 #include "models/array/ModelArrayObj.hpp"
 #include "models/extensions/Utils.hpp"
 #include "fmt/xchar.h"

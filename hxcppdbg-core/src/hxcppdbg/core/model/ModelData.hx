@@ -10,8 +10,8 @@ enum ModelData
     MBool(b : Bool);
     MString(s : String);
 
-    MArray(model : IArrayModel);
-    MMap(model : IMapModel);
+    MArray(model : ArrayModel);
+    MMap(model : MapModel);
     
     MEnum(type : GeneratedType, constructor : String, arguments : Array<ModelData>);
     MDynamic(inner : ModelData);

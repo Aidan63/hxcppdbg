@@ -1,10 +1,9 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
-import cpp.Reference;
-import hxcppdbg.core.drivers.dbgeng.model.LazyMap;
-import hxcppdbg.core.drivers.dbgeng.model.LazyArray;
-import hxcppdbg.core.drivers.dbgeng.model.DbgModelMapModel;
-import hxcppdbg.core.drivers.dbgeng.model.DbgModelArrayModel;
+import hxcppdbg.core.drivers.dbgeng.native.models.LazyMap;
+import hxcppdbg.core.drivers.dbgeng.native.models.LazyArray;
+import hxcppdbg.core.drivers.dbgeng.DbgEngMapModel;
+import hxcppdbg.core.drivers.dbgeng.DbgEngArrayModel;
 import hxcppdbg.core.model.ModelData;
 
 @:include('NativeModelData.hpp')
@@ -38,9 +37,9 @@ class NativeModelDataTools
             case HxString(s):
                 ModelData.MString(s);
             case HxArray(model):
-                ModelData.MArray(new DbgModelArrayModel(model));
+                ModelData.MArray(new DbgEngArrayModel(model));
             case HxMap(model):
-                ModelData.MMap(new DbgModelMapModel(model));
+                ModelData.MMap(new DbgEngMapModel(model));
         }
     }
 }

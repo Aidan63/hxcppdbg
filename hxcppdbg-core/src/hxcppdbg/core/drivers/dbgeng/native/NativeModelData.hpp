@@ -5,12 +5,17 @@
 #endif
 
 #include "DbgModelClientEx.hpp"
-#include "models/LazyModels.hpp"
 
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, NativeModelData)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
+    namespace models
+    {
+        class LazyArray;
+        class LazyMap;
+    }
+
     class NativeModelData_obj : public hx::EnumBase_obj
     {
         typedef NativeModelData_obj OBJ_;

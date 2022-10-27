@@ -1,11 +1,12 @@
-package hxcppdbg.core.drivers.dbgeng.model;
+package hxcppdbg.core.drivers.dbgeng;
 
+import hxcppdbg.core.drivers.dbgeng.native.models.LazyMap;
+import hxcppdbg.core.model.MapModel;
 import haxe.exceptions.NotImplementedException;
 import tink.CoreApi.Lazy;
 import hxcppdbg.core.model.Model;
-import hxcppdbg.core.model.IMapModel;
 
-class DbgModelMapModel implements IMapModel
+class DbgEngMapModel extends MapModel
 {
     final model : cpp.Pointer<LazyMap>;
 

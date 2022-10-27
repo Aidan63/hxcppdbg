@@ -1,6 +1,7 @@
 #include <hxcpp.h>
 #include "NativeModelData.hpp"
-#include "models/LazyModels.hpp"
+#include "models/LazyArray.hpp"
+#include "models/LazyMap.hpp"
 
 using namespace hxcppdbg::core::drivers::dbgeng::native;
 using namespace Debugger::DataModel::ProviderEx;
