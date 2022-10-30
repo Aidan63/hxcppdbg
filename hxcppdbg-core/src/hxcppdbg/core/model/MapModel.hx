@@ -1,10 +1,10 @@
 package hxcppdbg.core.model;
 
-abstract class MapModel<T>
+abstract class MapModel
 {
     public abstract function count() : Int;
 
-    public abstract function key(_index : Int) : ModelData;
+    public abstract function value(_key : ModelData) : ModelData;
 
-    public abstract function value(_key : T) : ModelData;
+    public abstract function key(_index : Int) : ModelData;
 }

@@ -1,12 +1,13 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import haxe.Exception;
 import cpp.NativeGc;
 import tink.CoreApi.Lazy;
 import hxcppdbg.core.drivers.dbgeng.native.models.LazyMap;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.MapModel;
 
-class DbgEngStringMapModel extends MapModel<String>
+class DbgEngStringMapModel extends MapModel
 {
     final model : cpp.Pointer<LazyMap>;
 
@@ -47,14 +48,20 @@ class DbgEngStringMapModel extends MapModel<String>
         }
 	}
 
-	public function value(_key : String)
+	public function value(_key : ModelData)
     {
-        return switch cachedValues[_key]
+        return switch _key
         {
-            case null:
-                cachedValues[_key] = model.ptr.value(_key).toModelData();
-            case cached:
-                cached;
+            case MString(s), MDynamic(MString(s)):
+                switch cachedValues[s]
+                {
+                    case null:
+                        cachedValues[s] = model.ptr.value(s).toModelData();
+                    case cached:
+                        cached;
+                }
+            case _:
+                throw new Exception('Key to a haxe.ds.StringMap should be String');
         }
 	}
 

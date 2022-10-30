@@ -2,12 +2,6 @@ package hxcppdbg.core.model;
 
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
-enum MapType
-{
-    KInt(model : MapModel<Int>);
-    KString(model : MapModel<String>);
-}
-
 enum ModelData
 {
     MNull;
@@ -17,7 +11,7 @@ enum ModelData
     MString(s : String);
 
     MArray(model : ArrayModel);
-    MMap(_type : MapType);
+    MMap(_type : MapModel);
     
     MEnum(type : GeneratedType, constructor : String, arguments : Array<ModelData>);
     MDynamic(inner : ModelData);

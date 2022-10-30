@@ -1,6 +1,5 @@
 package hxcppdbg.core.model;
 
-import hxcppdbg.core.model.ModelData.MapType;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 function printModel(_model : Model)
@@ -24,14 +23,8 @@ function printModelData(_data : ModelData)
             '"$s"';
         case MArray(items):
             '[ ${ items.length() } items ]';
-        case MMap(type):
-            switch type
-            {
-                case KInt(model):
-                    '[ ${ model.count() } keys ]';
-                case KString(model):
-                    '[ ${ model.count() } keys ]';
-            }
+        case MMap(items):
+            '[ ${ items.count() } keys ]';
         case MEnum(_, constructor, arguments):
             '$constructor(${ arguments.map(printModelData).join(', ') })';
         case MDynamic(inner):

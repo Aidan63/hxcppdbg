@@ -41,9 +41,9 @@ class NativeModelDataTools
             case HxArray(model):
                 ModelData.MArray(new DbgEngArrayModel(model));
             case HxIntMap(model):
-                ModelData.MMap(MapType.KInt(new DbgEngIntMapModel(model)));
+                ModelData.MMap(new DbgEngIntMapModel(model));
             case HxStringMap(model):
-                ModelData.MMap(MapType.KString(new DbgEngStringMapModel(model)));
+                ModelData.MMap(new DbgEngStringMapModel(model));
         }
     }
 }

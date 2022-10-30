@@ -66,14 +66,8 @@ class Context
                         MInt(s.length);
                     case MDynamic(MArray(children)), MArray(children) if (f == 'length'):
                         MInt(children.length());
-                    case MMap(type), MDynamic(MMap(type)) if (f == 'count'):
-                        switch type
-                        {
-                            case KInt(model):
-                                MInt(model.count());
-                            case KString(model):
-                                MInt(model.count());
-                        }
+                    case MMap(model), MDynamic(MMap(model)) if (f == 'count'):
+                        MInt(model.count());
                     case
                         MAnon(children),
                         MDynamic(MAnon(children)),
@@ -102,26 +96,8 @@ class Context
                             default:
                                 throw new Exception('Can only index into an array with an integer');
                         }
-                    case MDynamic(MMap(type)), MMap(type):
-                        switch type
-                        {
-                            case KInt(model):
-                                switch eval(index)
-                                {
-                                    case MInt(i):
-                                        model.value(i);
-                                    case _:
-                                        throw new Exception('Key on haxe.ds.Map<Int, T> must be Int');
-                                }
-                            case KString(model):
-                                switch eval(index)
-                                {
-                                    case MString(s):
-                                        model.value(s);
-                                    case _:
-                                        throw new Exception('Key on haxe.ds.Map<Int, T> must be Int');
-                                }
-                        }
+                    case MDynamic(MMap(model)), MMap(model):
+                        model.value(eval(index));
                     default:
                         throw new Exception('Can only index on an array or map');
                 }
