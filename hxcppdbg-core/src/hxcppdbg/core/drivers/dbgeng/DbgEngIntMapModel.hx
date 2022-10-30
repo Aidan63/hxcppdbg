@@ -6,7 +6,7 @@ import hxcppdbg.core.model.MapModel;
 import tink.CoreApi.Lazy;
 import hxcppdbg.core.model.ModelData;
 
-class DbgEngMapModel extends MapModel
+class DbgEngIntMapModel extends MapModel<Int>
 {
     final model : cpp.Pointer<LazyMap>;
 
@@ -31,7 +31,7 @@ class DbgEngMapModel extends MapModel
         model.destroy();
     }
 
-	public function count() : Int
+	public function count()
     {
 		return elements.get();
 	}
@@ -47,12 +47,12 @@ class DbgEngMapModel extends MapModel
         }
 	}
 
-	public function value(_index : Int)
+	public function value(_key : Int)
     {
-        return switch cachedValues[_index]
+        return switch cachedValues[_key]
         {
             case null:
-                cachedValues[_index] = model.ptr.key(_index).toModelData();
+                cachedValues[_key] = model.ptr.value(_key).toModelData();
             case cached:
                 cached;
         }

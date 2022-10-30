@@ -10,5 +10,8 @@ extern class LazyMap
 {
     function count() : Int;
     function key(_index : Int) : NativeModelData;
-    function value(_index : Int) : NativeModelData;
+
+    overload function value(_key : Int) : NativeModelData;
+    overload function value(_key : String) : NativeModelData;
+    overload function value(_key : haxe.Int64) : NativeModelData;
 }

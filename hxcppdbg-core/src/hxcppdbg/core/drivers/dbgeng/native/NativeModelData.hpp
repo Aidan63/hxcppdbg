@@ -24,6 +24,18 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Debugger::DataModel::ProviderEx::TypedInstanceModel<NativeModelData>* factory;
 
     public:
+        enum Type
+        {
+            TNull,
+            TInt,
+            TFloat,
+            TBool,
+            THxString,
+            THxArray,
+            THxIntMap,
+            THxStringMap
+        };
+
         NativeModelData_obj() = default;
 
         HX_DO_ENUM_RTTI;
@@ -47,8 +59,10 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Dynamic HxString_dyn();
         static NativeModelData HxArray(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyArray>);
         static Dynamic HxArray_dyn();
-        static NativeModelData HxMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap>);
-        static Dynamic HxMap_dyn();
+        static NativeModelData HxIntMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap>);
+        static Dynamic HxIntMap_dyn();
+        static NativeModelData HxStringMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap>);
+        static Dynamic HxStringMap_dyn();
     };
 }
 

@@ -20,6 +20,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
 
         int count() const;
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData key(const int) const;
+        
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData value(const int) const;
+        hxcppdbg::core::drivers::dbgeng::native::NativeModelData value(const String) const;
     };
 }

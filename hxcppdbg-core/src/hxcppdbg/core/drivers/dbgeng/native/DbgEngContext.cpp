@@ -11,8 +11,8 @@
 #include "models/dynamic/ModelReferenceDynamic.hpp"
 #include "models/array/ModelArrayObj.hpp"
 #include "models/array/ModelVirtualArrayObj.hpp"
-#include "models/map/ModelHash.hpp"
-#include "models/map/ModelHashElement.hpp"
+#include "models/map/ModelIntHash.hpp"
+#include "models/map/ModelStringHash.hpp"
 #include "models/map/ModelMapObj.hpp"
 #include "models/enums/ModelEnumObj.hpp"
 #include "models/enums/ModelVariant.hpp"
@@ -186,11 +186,8 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createF
 	models->push_back(std::make_unique<models::array::ModelVirtualArrayObj>());
 
 	// map visualisers
-	models->push_back(std::make_unique<models::map::ModelHash>());
-	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TIntElement<*>")));
-	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TInt64Element<*>")));
-	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TStringElement<*>")));
-	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TDynamicElement<*>")));
+	models->push_back(std::make_unique<models::map::ModelIntHash>());
+	models->push_back(std::make_unique<models::map::ModelStringHash>());
 	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Int")));
 	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"String")));
 	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Object")));

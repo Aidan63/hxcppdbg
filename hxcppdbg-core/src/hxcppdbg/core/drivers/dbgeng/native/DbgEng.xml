@@ -26,7 +26,8 @@
         <file name='${DbgEngDir}/models/basic/ModelString.cpp'/>
         <file name='${DbgEngDir}/models/basic/ModelStringData.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelHash.cpp'/>
-        <file name='${DbgEngDir}/models/map/ModelHashElement.cpp'/>
+        <file name='${DbgEngDir}/models/map/ModelIntHash.cpp'/>
+        <file name='${DbgEngDir}/models/map/ModelStringHash.cpp'/>
         <file name='${DbgEngDir}/models/map/ModelMapObj.cpp'/>
         <file name='${DbgEngDir}/models/array/ModelArrayObj.cpp'/>
         <file name='${DbgEngDir}/models/array/ModelVirtualArrayObj.cpp'/>

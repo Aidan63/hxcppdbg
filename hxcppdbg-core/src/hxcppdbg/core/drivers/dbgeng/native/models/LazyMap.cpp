@@ -15,10 +15,15 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::count() const
 
 hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::key(const int _index) const
 {
-    return map.CallMethod(L"Key").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    return map.CallMethod(L"Key", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::value(const int _index) const
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::value(const int _key) const
 {
-    return map.CallMethod(L"Value").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    return map.CallMethod(L"Value", _key).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+}
+
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyMap::value(const String _key) const
+{
+    return map.CallMethod(L"Value", std::wstring(_key.wchar_str())).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 }
