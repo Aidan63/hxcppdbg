@@ -1,7 +1,9 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 import hxcppdbg.core.drivers.dbgeng.native.models.LazyMap;
 import hxcppdbg.core.drivers.dbgeng.native.models.LazyArray;
+import hxcppdbg.core.drivers.dbgeng.native.models.LazyEnumArguments;
 import hxcppdbg.core.drivers.dbgeng.DbgEngIntMapModel;
 import hxcppdbg.core.drivers.dbgeng.DbgEngStringMapModel;
 import hxcppdbg.core.drivers.dbgeng.DbgEngArrayModel;
@@ -20,6 +22,7 @@ extern enum NativeModelData
     HxArray(model : cpp.Pointer<LazyArray>);
     HxIntMap(model : cpp.Pointer<LazyMap>);
     HxStringMap(model : cpp.Pointer<LazyMap>);
+    HxEnum(type : GeneratedType, tag : String, model : cpp.Pointer<LazyEnumArguments>);
 }
 
 class NativeModelDataTools
@@ -44,6 +47,8 @@ class NativeModelDataTools
                 ModelData.MMap(new DbgEngIntMapModel(model));
             case HxStringMap(model):
                 ModelData.MMap(new DbgEngStringMapModel(model));
+            case HxEnum(type, tag, model):
+                ModelData.MEnum(type, tag, new DbgEngEnumArguments(model));
         }
     }
 }

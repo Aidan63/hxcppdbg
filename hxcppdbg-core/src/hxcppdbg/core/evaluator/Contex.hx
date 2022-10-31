@@ -98,6 +98,14 @@ class Context
                         }
                     case MDynamic(MMap(model)), MMap(model):
                         model.value(eval(index));
+                    case MDynamic(MEnum(_, _, arguments)), MEnum(_, _, arguments):
+                        switch eval(index)
+                        {
+                            case MInt(i), MDynamic(MInt(i)):
+                                arguments.at(i);
+                            default:
+                                throw new Exception('Can only index into an enum constructors arguments with an integer');
+                        }
                     default:
                         throw new Exception('Can only index on an array or map');
                 }

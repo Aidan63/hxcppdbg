@@ -26,7 +26,7 @@ function printModelData(_data : ModelData)
         case MMap(items):
             '[ ${ items.count() } keys ]';
         case MEnum(_, constructor, arguments):
-            '$constructor(${ arguments.map(printModelData).join(', ') })';
+            '$constructor( ${ arguments.count() } args )';
         case MDynamic(inner):
             printModelData(inner);
         case MAnon(fields):
