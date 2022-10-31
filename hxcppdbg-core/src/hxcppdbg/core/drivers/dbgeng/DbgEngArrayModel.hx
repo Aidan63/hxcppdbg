@@ -41,7 +41,7 @@ class DbgEngArrayModel extends ArrayModel
         return switch cachedElements[_index]
         {
             case null:
-                cachedElements[_index] = model.ptr.at(elements.get(), _index).toModelData();
+                cachedElements[_index] = model.ptr.at(elementSize.get(), _index).toModelData();
             case cached:
                 cached;
         }
