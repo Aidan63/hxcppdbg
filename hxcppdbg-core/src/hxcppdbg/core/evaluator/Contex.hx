@@ -68,18 +68,8 @@ class Context
                         MInt(children.length());
                     case MMap(model), MDynamic(MMap(model)) if (f == 'count'):
                         MInt(model.count());
-                    case MAnon(children), MDynamic(MAnon(children)):
+                    case MAnon(children), MDynamic(MAnon(children)), MClass(_, children), MDynamic(MClass(_, children)):
                         return children.field(f);
-                    case
-                        MClass(_, children),
-                        MDynamic(MClass(_, children)):
-                        switch children.find(m -> identity(f, m.key))
-                        {
-                            case null:
-                                throw new Exception('Unable to find "$f" in children');
-                            case found:
-                                found.data;
-                        }
                     case other:
                         throw new Exception('Cannot perform field access on ${ other.getName() }');
                 }

@@ -16,6 +16,6 @@ enum ModelData
     MEnum(type : GeneratedType, constructor : String, arguments : EnumArguments);
     MDynamic(inner : ModelData);
     MAnon(model : NamedModel);
-    MClass(type : GeneratedType, fields : Array<Model>);
+    MClass(type : GeneratedType, model : NamedModel);
     MUnknown(type : String);
 }

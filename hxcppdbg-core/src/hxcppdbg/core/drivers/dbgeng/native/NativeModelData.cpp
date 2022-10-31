@@ -70,6 +70,11 @@ NativeModelData NativeModelData_obj::HxAnon(cpp::Pointer<hxcppdbg::core::drivers
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxEnum"), Type::THxAnon, 1)->_hx_init(0, f);
 }
 
+NativeModelData NativeModelData_obj::HxClass(hxcppdbg::core::sourcemap::GeneratedType _type, cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields> _fields)
+{
+    return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxClass"), Type::THxClass, 2)->_hx_init(0, _type)->_hx_init(1, _fields);
+}
+
 bool NativeModelData_obj::__GetStatic(const String &_inName, Dynamic &_outValue, hx::PropertyAccess _propAccess)
 {
     if (_inName == HX_CSTRING("NNull")) { _outValue = NativeModelData_obj::NNull_dyn(); return true; }
@@ -82,6 +87,7 @@ bool NativeModelData_obj::__GetStatic(const String &_inName, Dynamic &_outValue,
     if (_inName == HX_CSTRING("HxIntMap")) { _outValue = NativeModelData_obj::HxStringMap_dyn(); return true; }
     if (_inName == HX_CSTRING("HxEnum")) { _outValue = NativeModelData_obj::HxEnum_dyn(); return true; }
     if (_inName == HX_CSTRING("HxAnon")) { _outValue = NativeModelData_obj::HxAnon_dyn(); return true; }
+    if (_inName == HX_CSTRING("HxClass")) { _outValue = NativeModelData_obj::HxClass_dyn(); return true; }
     return hx::EnumBase_obj::__GetStatic(_inName, _outValue, _propAccess);
 }
 
@@ -97,6 +103,7 @@ hx::Val NativeModelData_obj::__Field(const String &_inName, hx::PropertyAccess _
     if (_inName == HX_CSTRING("HxStringMap")) return NativeModelData_obj::HxStringMap_dyn();
     if (_inName == HX_CSTRING("HxEnum")) return NativeModelData_obj::HxEnum_dyn();
     if (_inName == HX_CSTRING("HxAnon")) return NativeModelData_obj::HxAnon_dyn();
+    if (_inName == HX_CSTRING("HxClass")) return NativeModelData_obj::HxClass_dyn();
     return hx::EnumBase_obj::__Field(_inName, _propAccess);
 }
 
@@ -112,6 +119,7 @@ int NativeModelData_obj::__FindIndex(::String _inName)
     if (_inName == HX_CSTRING("HxStringMap")) { return Type::THxStringMap; }
     if (_inName == HX_CSTRING("HxEnum")) { return Type::THxEnum; }
     if (_inName == HX_CSTRING("HxAnon")) { return Type::THxAnon; }
+    if (_inName == HX_CSTRING("HxClass")) { return Type::THxClass; }
     return hx::EnumBase_obj::__FindIndex(_inName);
 }
 
@@ -127,6 +135,7 @@ int NativeModelData_obj::__FindArgCount(::String _inName)
     if (_inName == HX_CSTRING("HxStringMap")) { return 1; }
     if (_inName == HX_CSTRING("HxEnum")) { return 3; }
     if (_inName == HX_CSTRING("HxAnon")) { return 1; }
+    if (_inName == HX_CSTRING("HxClass")) { return 2; }
     return hx::EnumBase_obj::__FindArgCount(_inName);
 }
 
@@ -151,5 +160,7 @@ STATIC_HX_DEFINE_DYNAMIC_FUNC1(NativeModelData_obj, HxStringMap, return)
 STATIC_HX_DEFINE_DYNAMIC_FUNC3(NativeModelData_obj, HxEnum, return)
 
 STATIC_HX_DEFINE_DYNAMIC_FUNC1(NativeModelData_obj, HxAnon, return)
+
+STATIC_HX_DEFINE_DYNAMIC_FUNC2(NativeModelData_obj, HxClass, return)
 
 hx::Class NativeModelData_obj::__mClass;

@@ -32,7 +32,7 @@ function printModelData(_data : ModelData)
         case MAnon(fields):
             '{ ${ fields.count() } fields }';
         case MClass(_, fields):
-            '{ ${ fields.map(printModel).join(', ') } }';
+            '{ }';
         case MUnknown(type):
             'unknown ($type)';
     }

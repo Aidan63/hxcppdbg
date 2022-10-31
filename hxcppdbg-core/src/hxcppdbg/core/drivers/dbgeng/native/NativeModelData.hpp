@@ -17,6 +17,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         class LazyMap;
         class LazyEnumArguments;
         class LazyAnonFields;
+        class LazyClassFields;
     }
 
     class NativeModelData_obj : public hx::EnumBase_obj
@@ -38,7 +39,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
             THxIntMap,
             THxStringMap,
             THxEnum,
-            THxAnon
+            THxAnon,
+            THxClass
         };
 
         NativeModelData_obj() = default;
@@ -72,6 +74,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Dynamic HxEnum_dyn();
         static NativeModelData HxAnon(cpp::Pointer<models::LazyAnonFields>);
         static Dynamic HxAnon_dyn();
+        static NativeModelData HxClass(hxcppdbg::core::sourcemap::GeneratedType, cpp::Pointer<models::LazyClassFields>);
+        static Dynamic HxClass_dyn();
     };
 }
 

@@ -18,6 +18,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::classes
     public:
         ModelClassObj(hxcppdbg::core::sourcemap::GeneratedType);
 
-        Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
+        Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object&);
+        Debugger::DataModel::ClientEx::Object count(const Debugger::DataModel::ClientEx::Object&);
+        Debugger::DataModel::ClientEx::Object field(const Debugger::DataModel::ClientEx::Object&, const std::wstring);
     };
 }
