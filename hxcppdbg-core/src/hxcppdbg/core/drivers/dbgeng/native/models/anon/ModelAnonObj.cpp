@@ -1,46 +1,68 @@
 #include <hxcpp.h>
 
 #include "models/anon/ModelAnonObj.hpp"
+#include "models/LazyAnonFields.hpp"
+#include "NativeModelData.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::ModelAnonObj()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"hx::Anon_obj"))
 {
-    //
+    AddMethod(L"Count", this, &ModelAnonObj::count);
+    AddMethod(L"Field", this, &ModelAnonObj::field);
 }
 
-Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& _object)
 {
-    return Debugger::DataModel::ClientEx::Object();
+    return NativeModelData_obj::HxAnon(new LazyAnonFields(_object));
+}
 
-    // auto output = Array<hxcppdbg::core::model::Model>(0, 0);
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::count(const Debugger::DataModel::ClientEx::Object& _object)
+{
+    auto fixedCount = _object.FieldValue(L"mFixedFields").As<int>();
+    auto dynFields  = _object.FieldValue(L"mFields").FieldValue(L"mPtr");
 
-    // // Fields present when anon object was created.
-    // auto pointer     = object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, object, L"(hx::Anon_obj::VariantKey *)(self + 1)");
-    // auto fixedFields = object.FieldValue(L"mFixedFields").As<int>();
-    // for (auto i = 0; i < fixedFields; i++)
-    // {
-    //     output.Add(pointer.Dereference().GetValue().KeyValue(L"HxcppdbgModel").As<hxcppdbg::core::model::Model>());
+    if (dynFields.As<uint64_t>() != NULL)
+    {
+        auto hash =
+            dynFields
+                .Dereference()
+                .GetValue()
+                .TryCastToRuntimeType();
 
-    //     pointer++;
-    // }
+        return fixedCount + hash.CallMethod(L"Count").As<int>();
+    }
+    else
+    {
+        return fixedCount;
+    }
+}
 
-    // // Fields which were added after creation.
-    // auto ptr = object.FieldValue(L"mFields").FieldValue(L"mPtr");
-    // if (ptr.As<ULONG64>() != NULL)
-    // {
-    //     auto hash =
-    //         ptr
-    //             .Dereference()
-    //             .GetValue()
-    //             .TryCastToRuntimeType();
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::field(const Debugger::DataModel::ClientEx::Object& _object, const std::wstring _field)
+{
+    auto variants   = _object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, _object, L"(hx::Anon_obj::VariantKey *)(self + 1)");
+    auto fixedCount = _object.FieldValue(L"mFixedFields").As<int>();
 
-    //     auto type = hash.Type().Name();
+    for (auto i = 0; i < fixedCount; i++)
+    {
+        if (variants[i].GetValue().KeyValue(L"Key").KeyValue(L"String").As<std::wstring>() == _field)
+        {
+            return variants[i].GetValue().KeyValue(L"HxcppdbgModelData");
+        }
+    }
 
-    //     for (auto&& element : hash)
-    //     {
-    //         output.Add(element.As<hxcppdbg::core::model::Model>());
-    //     }
-    // }
+    auto dynFields = _object.FieldValue(L"mFields").FieldValue(L"mPtr");
 
-    // return hxcppdbg::core::model::ModelData_obj::MAnon(output);
+    if (dynFields.As<uint64_t>() != NULL)
+    {
+        return
+            dynFields
+                .Dereference()
+                .GetValue()
+                .TryCastToRuntimeType()
+                .CallMethod(L"Value", _field);
+    }
+    else
+    {
+        return NativeModelData_obj::NNull();
+    }
 }

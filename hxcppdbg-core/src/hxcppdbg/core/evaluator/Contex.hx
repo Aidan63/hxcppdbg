@@ -68,9 +68,9 @@ class Context
                         MInt(children.length());
                     case MMap(model), MDynamic(MMap(model)) if (f == 'count'):
                         MInt(model.count());
+                    case MAnon(children), MDynamic(MAnon(children)):
+                        return children.field(f);
                     case
-                        MAnon(children),
-                        MDynamic(MAnon(children)),
                         MClass(_, children),
                         MDynamic(MClass(_, children)):
                         switch children.find(m -> identity(f, m.key))
