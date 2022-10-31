@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import cpp.NativeGc;
 import hxcppdbg.core.drivers.dbgeng.native.models.LazyEnumArguments;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.EnumArguments;
@@ -14,7 +15,14 @@ class DbgEngEnumArguments extends EnumArguments
 	{
 		model      = _model;
 		cachedArgs = [];
-	}
+		
+        NativeGc.addFinalizable(this, false);
+    }
+
+    public function finalize()
+    {
+        model.destroy();
+    }
 
 	public function count()
     {
