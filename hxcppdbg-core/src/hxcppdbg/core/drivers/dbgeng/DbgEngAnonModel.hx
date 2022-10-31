@@ -4,9 +4,9 @@ import cpp.NativeGc;
 import tink.CoreApi.Lazy;
 import hxcppdbg.core.drivers.dbgeng.native.models.LazyAnonFields;
 import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.model.AnonModel;
+import hxcppdbg.core.model.NamedModel;
 
-class DbgEngAnonModel extends AnonModel
+class DbgEngAnonModel extends NamedModel
 {
     final model : cpp.Pointer<LazyAnonFields>;
 

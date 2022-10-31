@@ -1,6 +1,5 @@
 package hxcppdbg.core.model;
 
-import hxcppdbg.core.model.EnumArguments;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 enum ModelData
@@ -16,7 +15,7 @@ enum ModelData
     
     MEnum(type : GeneratedType, constructor : String, arguments : EnumArguments);
     MDynamic(inner : ModelData);
-    MAnon(model : AnonModel);
+    MAnon(model : NamedModel);
     MClass(type : GeneratedType, fields : Array<Model>);
     MUnknown(type : String);
 }

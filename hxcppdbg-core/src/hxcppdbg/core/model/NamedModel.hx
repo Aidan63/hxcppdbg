@@ -1,6 +1,6 @@
 package hxcppdbg.core.model;
 
-abstract class AnonModel
+abstract class NamedModel
 {
     public abstract function count() : Int;
 
