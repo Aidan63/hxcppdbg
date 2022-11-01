@@ -5,14 +5,14 @@ import hscript.Expr;
 import hscript.Parser;
 import hscript.Printer;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.model.Model;
 import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.locals.LocalStore;
 
 using Lambda;
 
 class Context
 {
-    final locals : Array<Model>;
+    final locals : LocalStore;
 
     final parser : Parser;
 
@@ -52,12 +52,12 @@ class Context
                         ModelData.MString(s);
                 }
             case EIdent(v):
-                return switch locals.find(m -> identity(v, m.key))
+                switch locals.getLocal(v)
                 {
-                    case null:
-                        throw new Exception('no variable with the name "$v"');
-                    case found:
-                        found.data;
+                    case Success(data):
+                        data;
+                    case Error(exn):
+                        throw exn;
                 }
             case EField(e, f):
                 switch eval(e)

@@ -7,7 +7,6 @@ import haxe.Exception;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Model;
 import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
-import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 
 using hxcppdbg.core.utils.ResultUtils;
 
@@ -26,29 +25,24 @@ class DbgEngLocals implements ILocals
         dbgThread = _dbgThread;
     }
 
-	public function getVariables(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void)
+	public function getVariables(_threadIndex : Int, _frameIndex : Int, _callback : Result<ILocalStore, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r =
-                driver
-                    .ptr
-                    .getVariables(_thread, _frame)
-                    .map(toModel);
+            final result = try
+            {
+                Result.Success((new DbgEngLocalStore(driver.ptr.getVariables(_threadIndex, _frameIndex)) : ILocalStore));
+            }
+            catch (exn)
+            {
+                Result.Error(exn);
+            }
 
-            cbThread.events.run(() -> _callback(r.asExceptionResult()));
+            cbThread.events.run(() -> _callback(result));
         });
     }
 
 	public function getArguments(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void)
     {
         _callback(Result.Error(new NotImplementedException()));
-    }
-
-    function toModel(_local : { name : String, data : NativeModelData }) : Model
-    {
-        return
-            new Model(
-                ModelData.MString(_local.name),
-                NativeModelDataTools.toModelData(_local.data));
     }
 }

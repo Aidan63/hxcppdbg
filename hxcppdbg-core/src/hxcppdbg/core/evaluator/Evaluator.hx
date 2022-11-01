@@ -1,34 +1,34 @@
 package hxcppdbg.core.evaluator;
 
 import haxe.Exception;
-import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.Stack;
+import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.locals.Locals;
 import hxcppdbg.core.evaluator.Contex;
 import hxcppdbg.core.sourcemap.Sourcemap;
-import hxcppdbg.core.drivers.ILocals;
 
 using Lambda;
 using hxcppdbg.core.utils.ResultUtils;
 
 class Evaluator
 {
-    final driver : ILocals;
+    final locals : Locals;
 
     final stack : Stack;
 
     final sourcemap : Sourcemap;
 
-    public function new(_sourcemap, _driver, _stack)
+    public function new(_sourcemap, _locals, _stack)
     {
         sourcemap = _sourcemap;
-        driver    = _driver;
+        locals    = _locals;
         stack     = _stack;
     }
 
     public function evaluate(_expr : String, _thread, _index, _callback : Result<ModelData, Exception>->Void)
     {
-        driver.getVariables(_thread, _index, _result -> {
+        locals.getLocals(_thread, _index, _result -> {
             switch _result
             {
                 case Success(locals):

@@ -1,13 +1,14 @@
 package hxcppdbg.core.locals;
 
 import haxe.Exception;
-import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.model.Model;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.stack.StackFrame;
+import hxcppdbg.core.ds.FrameUID;
 import hxcppdbg.core.stack.Stack;
-import hxcppdbg.core.sourcemap.Sourcemap;
+import hxcppdbg.core.stack.StackFrame;
+import hxcppdbg.core.model.Model;
+import hxcppdbg.core.cache.LocalCache;
 import hxcppdbg.core.drivers.ILocals;
+import hxcppdbg.core.sourcemap.Sourcemap;
 
 using Lambda;
 using hxcppdbg.core.utils.ResultUtils;
@@ -20,32 +21,49 @@ class Locals
 
     final sourcemap : Sourcemap;
 
-    public function new(_sourcemap, _driver, _stack)
+    final cache : LocalCache;
+
+    public function new(_sourcemap, _driver, _stack, _cache)
     {
         sourcemap = _sourcemap;
         driver    = _driver;
         stack     = _stack;
+        cache     = _cache;
     }
 
-    public function getLocals(_thread, _index, _callback : Result<Array<LocalVariable>, Exception>->Void)
+    public function getLocals(_threadIndex, _frameIndex, _callback : Result<LocalStore, Exception>->Void)
     {
-        stack.getFrame(_thread, _index, result -> {
-            switch result
-            {
-                case Success(frame):
-                    driver.getVariables(_thread, _index, result -> {
-                        switch result
-                        {
-                            case Success(locals):
-                                _callback(Result.Success(locals.map(mapNativeLocal.bind(frame))));
-                            case Error(e):
-                                _callback(Result.Error(e));
-                        }
-                    });
-                case Error(e):
-                    _callback(Result.Error(e));
-            }
-        });
+        final uid = new FrameUID(_threadIndex, _frameIndex);
+
+        switch cache[uid]
+        {
+            case null:
+                stack.getFrame(_threadIndex, _frameIndex, result -> {
+                    switch result
+                    {
+                        case Success(frame):
+                            switch frame
+                            {
+                                case Haxe(haxe, _):
+                                    driver.getVariables(_threadIndex, _frameIndex, result -> {
+                                        switch result
+                                        {
+                                            case Success(store):
+                                                _callback(Result.Success(cache[uid] = new LocalStore(haxe.func.variables, store)));
+                                            case Error(exn):
+                                                _callback(Result.Error(exn));
+                                        }
+                                    });
+                                case Native(_):
+                                    _callback(Result.Error(new Exception('Cannot get locals for native frame')));
+                            }
+                        case Error(exn):
+                            _callback(Result.Error(exn));
+                    }
+                });
+            case store:
+                _callback(Result.Success(store));
+        }
     }
 
     public function getArguments(_thread, _frame, _callback : Result<Array<LocalVariable>, Exception>->Void)
@@ -67,23 +85,6 @@ class Locals
                     _callback(Result.Error(e));
             }
         });
-    }
-
-    function mapNativeLocal(_frame : StackFrame, _native : Model)
-    {
-        return switch _frame
-        {
-            case Haxe(haxe, _):
-                switch haxe.func.variables.find(v -> isLocalVar(v.cpp, _native))
-                {
-                    case null:
-                        LocalVariable.Native(_native);
-                    case _:
-                        LocalVariable.Haxe(_native);
-                }
-            case Native(_):
-                LocalVariable.Native(_native);
-        }
     }
 
     function mapNativeArgument(_frame : StackFrame, _native : Model)

@@ -23,6 +23,7 @@
         <file name='${DbgEngDir}/models/LazyEnumArguments.cpp'/>
         <file name='${DbgEngDir}/models/LazyAnonFields.cpp'/>
         <file name='${DbgEngDir}/models/LazyClassFields.cpp'/>
+        <file name='${DbgEngDir}/models/LazyLocalStore.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgExtensionModel.cpp'/>
         <file name='${DbgEngDir}/models/extensions/Utils.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>

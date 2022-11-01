@@ -5,6 +5,7 @@ import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
+import hxcppdbg.core.drivers.dbgeng.native.models.LazyLocalStore;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 @:keep
@@ -30,7 +31,7 @@ extern class DbgEngContext
 
     function getFrame(_thread : Int, _index : Int) : Result<NativeFrameReturn, HResultException>;
 
-    function getVariables(_thread : Int, _frame : Int) : Result<Array<{ name : String, data : NativeModelData }>, HResultException>;
+    function getVariables(_thread : Int, _frame : Int) : cpp.Pointer<LazyLocalStore>;
 
     function getArguments(_thread : Int, _frame : Int) : Result<Array<NativeLocal>, HResultException>;
 

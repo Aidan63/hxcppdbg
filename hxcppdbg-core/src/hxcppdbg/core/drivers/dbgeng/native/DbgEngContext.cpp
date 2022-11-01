@@ -468,13 +468,13 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContex
 	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getVariables(int _threadIndex, int _frameIndex)
+cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getVariables(int _threadIndex, int _frameIndex)
 {
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
 	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get thread ID from index"), result));
+		hx::Throw(HX_CSTRING("Failed to get thread ID from index"));
 	}
 
 	try
@@ -484,53 +484,11 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContex
 		auto findFrame  = [_frameIndex](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object frame) { return ULONG{ frame.KeyValue(L"Attributes").KeyValue(L"FrameNumber") } == _frameIndex; };
 		auto frame      = thread.KeyValue(L"Stack").KeyValue(L"Frames").CallMethod(L"First", findFrame);
 
-		try
-		{
-			auto locals = frame.KeyValue(L"LocalVariables");
-			auto output = Array<hx::Anon>(0, 0);
-
-			for (auto&& local : locals.Keys())
-			{
-				auto object = std::get<1>(local).GetValue();
-				auto anon = hx::Anon_obj::Create(2);
-				auto type   = object.Type();
-
-				anon->setFixed(0, HX_CSTRING("name"), String::create(std::get<0>(local).c_str()));
-
-				try
-				{
-					// We can't seem to create custom model extensions for these intrinsic types, so we just have to check them manually.
-					if (type.IsIntrinsic())
-					{
-						anon->setFixed(1, HX_CSTRING("data"), hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object));
-					}
-					else
-					{
-						anon->setFixed(1, HX_CSTRING("data"), object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>());
-					}
-				}
-				catch (const std::exception& exn)
-				{
-					// If its not a supported intrinsic and it doesn't have the HxcppdbgModelData property then its not something we really know about, so report it as unknown.
-
-					anon->setFixed(1, HX_CSTRING("data"), hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull());
-				}
-
-				output->Add(anon);
-			}
-
-			return hxcppdbg::core::ds::Result_obj::Success(output);
-		}
-		catch (const std::exception& exn)
-		{
-			// If getting the local variables throws then there are no locals in this frame.
-
-			return hxcppdbg::core::ds::Result_obj::Success(Array<hx::Anon>(0, 0));
-		}
+		return new hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore(frame.KeyValue(L"LocalVariables").Keys());
 	}
 	catch (const std::exception& exn)
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(exn.what()), 0));
+		hx::Throw(String::create(exn.what()));
 	}
 }
 
