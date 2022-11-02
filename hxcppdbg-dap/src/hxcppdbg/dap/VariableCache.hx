@@ -1,5 +1,9 @@
 package hxcppdbg.dap;
 
+import haxe.Exception;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.locals.LocalStore;
+import tink.CoreApi.Lazy;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 import haxe.ds.Option;
 import hxcppdbg.core.model.Model;
@@ -11,123 +15,182 @@ using Lambda;
 
 class VariableCache
 {
-    final cache : Map<Int, Array<Model>>;
+    final scopes : Map<Int, LocalStore>;
+
+    final models : Map<Int, ModelData>;
 
     var index : Int;
 
     public function new()
     {
-        cache = [];
-        index = 1;
+        scopes = [];
+        models = [];
+        index  = 1;
     }
 
-    public function insert(_locals : Array<LocalVariable>)
-    {
-        return addModels(_locals.map(localToModel));
-    }
-
-    public function get(_id : Int) : Option<Array<Variable>>
-    {
-        return switch cache[_id]
-        {
-            case null:
-                Option.None;
-            case models:
-                Option.Some(models.map(modelToVariable));
-        }
-    }
-
-    function process(_data : ModelData)
-    {
-        return switch _data
-        {
-            case
-                MNull,
-                MInt(_),
-                MFloat(_),
-                MBool(_),
-                MString(_),
-                MArray([]),
-                MMap([]),
-                MEnum(_, _, []),
-                MUnknown(_):
-                Option.None;
-            case MArray(items):
-                Option.Some(addModelDatas(items));
-            case MMap(items):
-                Option.Some(addModels(items));
-            case MEnum(_, _, arguments):
-                Option.Some(addModelDatas(arguments));
-            case MDynamic(inner):
-                process(inner);
-            case MAnon(fields):
-                Option.Some(addModels(fields));
-            case MClass(_, fields):
-                Option.Some(addModels(fields));
-        }
-    }
-
-    function addModels(_models : Array<Model>)
+    public function createScope(_locals : LocalStore)
     {
         final id = index++;
 
-        cache[id] = _models;
+        scopes[id] = _locals;
 
         return id;
     }
 
-    function addModelDatas(_data : Array<ModelData>)
+    public function fetch(_id : Int, _start : Null<Int>, _count : Null<Int>) : Result<Array<Variable>, Exception>
     {
-        return addModels(_data.mapi((i, d) -> new Model(MInt(i), d)));
-    }
-
-    static function localToModel(_local : LocalVariable)
-    {
-        return switch _local
+        return switch scopes[_id]
         {
-            case Native(_model):
-                _model;
-            case Haxe(_model):
-                _model;
+            case null:
+                switch models[_id]
+                {
+                    case null:
+                        Result.Error(new Exception('Failed to find model in storage'));
+                    case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_), MDynamic(_):
+                        Result.Error(new Exception('Model does not have children'));
+                    case MArray(model):
+                        final start  = if (_start == null) 0 else _start;
+                        final count  = if (_count == null) model.length() else _count;
+                        final output = new Array<Variable>();
+
+                        if (start >= model.length() || start + count > model.length())
+                        {
+                            return Result.Error(new Exception('request out of range of child count'));
+                        }
+
+                        for (idx => model in [ for (i in start...(start + count)) model.at(i) ])
+                        {
+                            output.push({
+                                variablesReference: addModel(model),
+                                name  : Std.string(start + idx),
+                                type  : dataType(model),
+                                value : dataValue(model)
+                            });
+
+                            switch model
+                            {
+                                case MArray(model):
+                                    output[idx].indexedVariables = model.length();
+                                case MMap(model):
+                                    output[idx].namedVariables = model.count();
+                                case MEnum(_, _, arguments):
+                                    output[idx].indexedVariables = arguments.count();
+                                case MAnon(model):
+                                    output[idx].namedVariables = model.count();
+                                case MClass(type, model):
+                                    output[idx].namedVariables = model.count();
+                                case _:
+                            }
+                        }
+                        
+                        Result.Success(output);
+                    case MMap(model):
+                        Result.Success([]);
+                    case MEnum(_, _, arguments):
+                        final start  = if (_start == null) 0 else _start;
+                        final count  = if (_count == null) arguments.count() else _count;
+                        final output = new Array<Variable>();
+
+                        if (start >= arguments.count() || start + count > arguments.count())
+                        {
+                            return Result.Error(new Exception('request out of range of child count'));
+                        }
+
+                        for (idx => model in [ for (i in start...(start + count)) arguments.at(i) ])
+                        {
+                            output.push({
+                                variablesReference: addModel(model),
+                                name  : Std.string(start + idx),
+                                type  : dataType(model),
+                                value : dataValue(model)
+                            });
+
+                            switch model
+                            {
+                                case MArray(model):
+                                    output[idx].indexedVariables = model.length();
+                                case MMap(model):
+                                    output[idx].namedVariables = model.count();
+                                case MEnum(_, _, arguments):
+                                    output[idx].indexedVariables = arguments.count();
+                                case MAnon(model):
+                                    output[idx].namedVariables = model.count();
+                                case MClass(type, model):
+                                    output[idx].namedVariables = model.count();
+                                case _:
+                            }
+                        }
+                        
+                        Result.Success(output);
+                    case MAnon(model):
+                        Result.Success([]);
+                    case MClass(type, model):
+                        Result.Success([]);
+                }
+            case store:
+                final output = new Array<Variable>();
+                final names  = store.getLocals();
+                final start  = if (_start == null) 0 else _start;
+                final count  = if (_count == null) names.length else _count;
+
+                if (start > names.length || start + count > names.length)
+                {
+                    return Result.Error(new Exception('request out of range of child count'));
+                }
+
+                for (idx => name in names.slice(start, start + count))
+                {
+                    switch store.getLocal(name)
+                    {
+                        case Success(model):
+                            output[idx] = {
+                                name  : name,
+                                type  : dataType(model),
+                                value : dataValue(model),
+                                variablesReference: addModel(model)
+                            };
+
+                            switch model
+                            {
+                                case MArray(model):
+                                    output[idx].indexedVariables = model.length();
+                                case MMap(model):
+                                    output[idx].namedVariables = model.count();
+                                case MEnum(_, _, arguments):
+                                    output[idx].indexedVariables = arguments.count();
+                                case MAnon(model):
+                                    output[idx].namedVariables = model.count();
+                                case MClass(type, model):
+                                    output[idx].namedVariables = model.count();
+                                case _:
+                            }
+                        case Error(exn):
+                            continue;
+                    }
+                }
+
+                Result.Success(output);
         }
     }
 
-    function modelToVariable(_model : Model) : Variable
+    public function addModel(_model : ModelData)
     {
-        final children = switch process(_model.data)
+        return switch _model
         {
-            case Some(id):
-                id;
-            case None:
+            case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_):
                 0;
-        }
+            case MDynamic(inner):
+                addModel(inner);
+            case MArray(_), MMap(_), MEnum(_, _, _), MAnon(_), MClass(_, _):
+                final id = index++;
 
-        return {
-            name               : keyAsName(_model.key),
-            variablesReference : children,
-            value              : dataAsValue(_model.data),
-            type               : dataType(_model.data)
-        }
-    }
-
-    static function keyAsName(_data : ModelData)
-    {
-        return switch _data
-        {
-            case MInt(v):
-                Std.string(v);
-            case MFloat(v):
-                Std.string(v);
-            case MBool(v):
-                Std.string(v);
-            case MString(s):
-                s;
-            case _:
-                'invalid_key';
+                models[id] = _model;
+        
+                id;
         }
     }
 
-    static function dataAsValue(_data : ModelData)
+    static function dataValue(_data : ModelData)
     {
         return switch _data
         {
@@ -141,12 +204,14 @@ class VariableCache
                 Std.string(v);
             case MString(s):
                 s;
-            case MArray(_), MMap(_):
-                '[]';
+            case MArray(model):
+                '[ ${ model.length() } items ]';
+            case MMap(model):
+                '[ ${ model.count() } keys ]';
             case MEnum(type, constructor, arguments):
                 '${ printType(type) }.$constructor';
             case MDynamic(inner):
-                dataAsValue(inner);
+                dataValue(inner);
             case MAnon(fields):
                 '{}';
             case MClass(type, fields):

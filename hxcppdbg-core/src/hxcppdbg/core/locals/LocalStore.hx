@@ -34,7 +34,7 @@ class LocalStore
                     case null:
                         Result.Error(new Exception('Failed to find mapping for local variable $_name'));
                     case found:
-                        Result.Success(cache[found.cpp] = driver.local(found.cpp));
+                        Result.Success(cache[found.haxe] = driver.local(found.cpp));
                 }
             case cached:
                 Result.Success(cached);

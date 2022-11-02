@@ -11,7 +11,7 @@ import tink.CoreApi.Noise;
 import tink.CoreApi.Future;
 import tink.CoreApi.Outcome;
 import tink.CoreApi.Surprise;
-import hxcppdbg.dap.FrameId;
+import hxcppdbg.core.ds.FrameUID;
 import hxcppdbg.dap.protocol.Event;
 import hxcppdbg.dap.protocol.Request;
 import hxcppdbg.dap.protocol.ProtocolMessage;
@@ -84,7 +84,7 @@ class DapSession
 
     function write(_content : String, _callback : Option<Code>->Void)
     {
-        Sys.println('OUT : $_content');
+        // Sys.println('OUT : $_content');
 
         final str  = 'Content-Length: ${ _content.length }\r\n\r\n$_content';
         final data = Bytes.ofString(str);
@@ -147,7 +147,7 @@ class DapSession
             return respond(_request, _outcome);
         }
 
-        Sys.println('MSG : ${ _request }');
+        // Sys.println('MSG : ${ _request }');
 
         return switch _request.command
         {
@@ -444,7 +444,7 @@ class DapSession
     {
         function toProtocolFrame(_idx : Int, _frame : hxcppdbg.core.stack.StackFrame) : StackFrame
         {
-            final id = new FrameId(_request.arguments.threadId, _idx);
+            final id = new FrameUID(_request.arguments.threadId, _idx);
 
             return switch _frame
             {
@@ -638,34 +638,45 @@ class DapSession
                     switch session
                     {
                         case Some(s):
-                            final frameId = (cast _request.arguments.frameId : FrameId);
+                            final frameId = (cast _request.arguments.frameId : FrameUID);
 
-                            final getArguments = Future.irreversible((_resolve : Scope->Void) -> {
-                                s.locals.getArguments(frameId.thread, frameId.number, result -> {
-                                    switch result
-                                    {
-                                        case Success(args):
-                                            _resolve({ name : 'arguments', variablesReference : variables.insert(args), expensive : false });
-                                        case Error(_):
-                                            _resolve({ name : 'arguments', variablesReference : 0, expensive : false });
-                                    }
-                                });
-                            });
+                            // final getArguments = Future.irreversible((_resolve : Scope->Void) -> {
+                            //     s.locals.getArguments(frameId.thread, frameId.number, result -> {
+                            //         switch result
+                            //         {
+                            //             case Success(args):
+                            //                 _resolve({ name : 'arguments', variablesReference : variables.insert(args), expensive : false });
+                            //             case Error(_):
+                            //                 _resolve({ name : 'arguments', variablesReference : 0, expensive : false });
+                            //         }
+                            //     });
+                            // });
 
                             final getLocals = Future.irreversible((_resolve : Scope->Void) -> {
                                 s.locals.getLocals(frameId.thread, frameId.number, result -> {
                                     switch result
                                     {
                                         case Success(locals):
-                                            _resolve({ name : 'locals', variablesReference : variables.insert(locals), expensive : false });
+                                            _resolve({
+                                                name               : 'Locals',
+                                                variablesReference : variables.createScope(locals),
+                                                namedVariables     : locals.getLocals().length,
+                                                expensive          : false,
+                                                presentationHint   : 'locals'
+                                            });
                                         case Error(_):
-                                            _resolve({ name : 'locals', variablesReference : 0, expensive : false });
+                                            _resolve({
+                                                name               : 'Locals',
+                                                variablesReference : 0,
+                                                expensive          : false,
+                                                presentationHint   : 'locals'
+                                            });
                                     }
                                 });
                             });
 
                             Future
-                                .inSequence([ getArguments, getLocals ])
+                                .inSequence([ getLocals ])
                                 .flatMap(scopes -> Outcome.Success(({ scopes : scopes } : ScopesResponse)))
                                 .handle(_resolve);
                         case None:
@@ -679,12 +690,12 @@ class DapSession
         return
             DapPromise
                 .irreversible((_resolve : Outcome<VariablesResponse, Exception>->Void) -> {
-                    switch variables.get(_request.arguments.variablesReference)
+                    switch variables.fetch(_request.arguments.variablesReference, _request.arguments.start, _request.arguments.count)
                     {
-                        case Some(vs):
+                        case Success(vs):
                             _resolve(Outcome.Success({ variables : vs }));
-                        case None:
-                            _resolve(Outcome.Failure(new Exception('no variables for reference ${ _request.arguments.variablesReference }')));
+                        case Error(exn):
+                            _resolve(Outcome.Failure(exn));
                     }
                 });
     }
@@ -709,7 +720,7 @@ class DapSession
                                                 final reference = switch data
                                                 {
                                                     case MEnum(_, _, _), MArray(_), MMap(_), MDynamic(_), MAnon(_), MClass(_, _):
-                                                        variables.insert([ LocalVariable.Haxe(new Model(ModelData.MString('children'), data)) ]);
+                                                        variables.addModel(data);
                                                     case _:
                                                         0;
                                                 }
