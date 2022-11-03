@@ -15,8 +15,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::array
 
         Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object&);
         
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const Debugger::DataModel::ClientEx::Object&, const int, const int);
-        int length(const Debugger::DataModel::ClientEx::Object&);
-        int elementSize(const Debugger::DataModel::ClientEx::Object&);
+        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const Debugger::DataModel::ClientEx::Object&, const int);
+        int count(const Debugger::DataModel::ClientEx::Object&);
     };
 }

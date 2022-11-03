@@ -33,7 +33,7 @@ class Locals
                         switch result
                         {
                             case Success(vars):
-                                _resolve(vars.getLocals());
+                                _resolve([]);
                             case Error(exn):
                                 _reject(new Error('Error : ${ exn.message }'));
                         }

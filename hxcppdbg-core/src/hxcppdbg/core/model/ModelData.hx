@@ -1,7 +1,10 @@
 package hxcppdbg.core.model;
 
+import hxcppdbg.core.model.Keyable;
+import hxcppdbg.core.model.Indexable;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
+@:using(hxcppdbg.core.model.Printer)
 enum ModelData
 {
     MNull;
@@ -10,12 +13,12 @@ enum ModelData
     MBool(b : Bool);
     MString(s : String);
 
-    MArray(model : ArrayModel);
-    MMap(_type : MapModel);
+    MArray(model : Indexable);
+    MMap(_type : Keyable<ModelData>);
     
-    MEnum(type : GeneratedType, constructor : String, arguments : EnumArguments);
+    MEnum(type : GeneratedType, constructor : String, arguments : Indexable);
     MDynamic(inner : ModelData);
-    MAnon(model : NamedModel);
-    MClass(type : GeneratedType, model : NamedModel);
+    MAnon(model : Keyable<String>);
+    MClass(type : GeneratedType, model : Keyable<String>);
     MUnknown(type : String);
 }

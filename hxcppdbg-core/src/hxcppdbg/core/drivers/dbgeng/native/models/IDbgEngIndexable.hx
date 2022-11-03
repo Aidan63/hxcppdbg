@@ -1,11 +1,10 @@
 package hxcppdbg.core.drivers.dbgeng.native.models;
 
-
 @:unreflective
 @:structAccess
-@:include('models/LazyEnumArguments.hpp')
-@:native('hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments')
-extern class LazyEnumArguments
+@:include('models/IDbgEngIndexable.hpp')
+@:native('hxcppdbg::core::drivers::dbgeng::native::models::IDbgEngIndexable')
+extern class IDbgEngIndexable
 {
     function count() : Int;
     function at(_index : Int) : NativeModelData;

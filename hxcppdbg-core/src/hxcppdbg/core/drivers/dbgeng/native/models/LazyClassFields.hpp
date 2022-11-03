@@ -4,13 +4,11 @@
 #include <hxcpp.h>
 #endif
 
-#include "DbgModelClientEx.hpp"
-
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, NativeModelData)
+#include "models/IDbgEngKeyable.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class LazyClassFields
+    class LazyClassFields : public IDbgEngKeyable<String>
     {
     private:
         Debugger::DataModel::ClientEx::Object cls;
@@ -19,6 +17,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         LazyClassFields(const Debugger::DataModel::ClientEx::Object&);
 
         int count();
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData field(const String);
+        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int);
+        hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const String);
     };
 }

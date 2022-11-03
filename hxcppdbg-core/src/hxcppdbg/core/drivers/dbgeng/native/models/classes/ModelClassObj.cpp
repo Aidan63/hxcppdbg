@@ -12,33 +12,53 @@ hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::ModelCl
     : type(_type), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_type->cpp.wc_str())
 {
     AddMethod(L"Count", this, &ModelClassObj::count);
-    AddMethod(L"Field", this, &ModelClassObj::field);
+    AddMethod(L"At", this, &ModelClassObj::at);
+    AddMethod(L"Get", this, &ModelClassObj::get);
 }
 
 Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& _object)
 {
-    return
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::HxClass(type, new hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields(_object));
+    return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::HxClass(type, new hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields(_object));
 }
 
 Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::count(const Debugger::DataModel::ClientEx::Object& _object)
 {
-    return 0;
+    auto count = 0;
+    for (auto&& field : _object.Fields())
+    {
+        count++;
+    }
+
+    return count;
 }
 
-Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::field(const Debugger::DataModel::ClientEx::Object& _object, std::wstring _field)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::at(const Debugger::DataModel::ClientEx::Object& _object, const int _index)
 {
-    try
+    auto count = 0;
+    for (auto&& field : _object.Fields())
     {
-        auto value = _object.FieldValue(_field);
+        if (count == _index)
+        {
+            auto object = std::get<1>(field).GetValue();
 
-        return
-            value.Type().IsIntrinsic()
-                ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(value)
-                : value.KeyValue(L"HxcppdbgModelData");
+            return
+                object.Type().IsIntrinsic()
+                    ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)
+                    : object.KeyValue(L"HxcppdbgModelData");
+        }
+
+        count++;
     }
-    catch (const std::exception& exn)
-    {
-        return NativeModelData_obj::NNull();
-    }
+
+    throw std::runtime_error("Failed to find field");
+}
+
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::get(const Debugger::DataModel::ClientEx::Object& _object, const std::wstring _field)
+{
+    auto value = _object.FieldValue(_field);
+
+    return
+        value.Type().IsIntrinsic()
+            ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(value)
+            : value.KeyValue(L"HxcppdbgModelData");
 }

@@ -1,59 +1,34 @@
 package hxcppdbg.core.drivers.dbgeng;
 
 import cpp.NativeGc;
-import hxcppdbg.core.drivers.dbgeng.native.models.LazyArray;
-import hxcppdbg.core.model.ArrayModel;
+import haxe.Exception;
 import tink.CoreApi.Lazy;
-import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngIndexable;
 
-class DbgEngArrayModel extends ArrayModel
+class DbgEngArrayModel implements IIndexable
 {
-    final model : cpp.Pointer<LazyArray>;
-
-    final cachedElements : Map<Int, ModelData>;
-
-    final elementSize : Lazy<Int>;
-
-    final elements : Lazy<Int>;
+    final model : cpp.Pointer<IDbgEngIndexable>;
 
     public function new(_model)
     {
-        model          = _model;
-        cachedElements = [];
-        elementSize    = Lazy.ofFunc(getElementSize);
-        elements       = Lazy.ofFunc(getLength);
+        model = _model;
 
         NativeGc.addFinalizable(this, false);
     }
 
+	public function count()
+    {
+		return try Result.Success(model.ptr.count()) catch (exn) Result.Error(exn);
+	}
+
+	public function at(_index : Int)
+    {
+        return try Result.Success(model.ptr.at(_index).toModelData()) catch (exn) Result.Error(exn);
+	}
+
     public function finalize()
     {
         model.destroy();
-    }
-
-	public function length() : Int
-    {
-		return elements.get();
-	}
-
-	public function at(_index : Int) : ModelData
-    {
-        return switch cachedElements[_index]
-        {
-            case null:
-                cachedElements[_index] = model.ptr.at(elementSize.get(), _index).toModelData();
-            case cached:
-                cached;
-        }
-	}
-
-    function getElementSize()
-    {
-        return model.ptr.elementSize();
-    }
-
-    function getLength()
-    {
-        return model.ptr.length();
     }
 }

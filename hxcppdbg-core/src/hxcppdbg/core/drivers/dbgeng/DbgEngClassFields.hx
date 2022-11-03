@@ -1,20 +1,17 @@
 package hxcppdbg.core.drivers.dbgeng;
 
 import cpp.NativeGc;
-import hxcppdbg.core.model.NamedModel;
-import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.drivers.dbgeng.native.models.LazyClassFields;
+import haxe.Exception;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
-class DbgEngClassFields extends NamedModel
+class DbgEngClassFields implements IKeyable<String>
 {
-    final model : cpp.Pointer<LazyClassFields>;
-
-    final cachedFields : Map<String, ModelData>;
+    final model : cpp.Pointer<IDbgEngKeyable<String>>;
 
     public function new(_model)
     {
-        model        = _model;
-        cachedFields = [];
+        model = _model;
         
         NativeGc.addFinalizable(this, false);
     }
@@ -26,17 +23,16 @@ class DbgEngClassFields extends NamedModel
 
 	public function count()
     {
-		return model.ptr.count();
+		return try Result.Success(model.ptr.count()) catch (exn) Result.Error(exn);
 	}
 
-	public function field(_name : String)
+	public function get(_key : String)
     {
-		return switch cachedFields[_name]
-        {
-            case null:
-                cachedFields[_name] = model.ptr.field(_name).toModelData();
-            case cached:
-                cached;
-        }
+		return try Result.Success(model.ptr.get(_key).toModelData()) catch (exn) Result.Error(exn);
+	}
+
+	public function at(_index : Int)
+    {
+		return try Result.Success(model.ptr.at(_index).toModelData()) catch (exn) Result.Error(exn);
 	}
 }

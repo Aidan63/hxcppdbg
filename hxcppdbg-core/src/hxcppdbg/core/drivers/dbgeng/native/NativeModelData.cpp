@@ -50,12 +50,12 @@ NativeModelData NativeModelData_obj::HxArray(cpp::Pointer<hxcppdbg::core::driver
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxArray"), Type::THxArray, 1)->_hx_init(0, a);
 }
 
-NativeModelData NativeModelData_obj::HxIntMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap> m)
+NativeModelData NativeModelData_obj::HxIntMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap<int>> m)
 {
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxIntMap"), Type::THxIntMap, 1)->_hx_init(0, m);
 }
 
-NativeModelData NativeModelData_obj::HxStringMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap> m)
+NativeModelData NativeModelData_obj::HxStringMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap<String>> m)
 {
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxStringMap"), Type::THxStringMap, 1)->_hx_init(0, m);
 }

@@ -4,22 +4,16 @@
 #include <hxcpp.h>
 #endif
 
-#include "DbgModelClientEx.hpp"
+#include "models/LazyMap.hpp"
+#include "models/LazyArray.hpp"
+#include "models/LazyAnonFields.hpp"
+#include "models/LazyClassFields.hpp"
+#include "models/LazyEnumArguments.hpp"
 
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, NativeModelData)
 HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
-    namespace models
-    {
-        class LazyArray;
-        class LazyMap;
-        class LazyEnumArguments;
-        class LazyAnonFields;
-        class LazyClassFields;
-    }
-
     class NativeModelData_obj : public hx::EnumBase_obj
     {
         typedef NativeModelData_obj OBJ_;
@@ -66,9 +60,9 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Dynamic HxString_dyn();
         static NativeModelData HxArray(cpp::Pointer<models::LazyArray>);
         static Dynamic HxArray_dyn();
-        static NativeModelData HxIntMap(cpp::Pointer<models::LazyMap>);
+        static NativeModelData HxIntMap(cpp::Pointer<models::LazyMap<int>>);
         static Dynamic HxIntMap_dyn();
-        static NativeModelData HxStringMap(cpp::Pointer<models::LazyMap>);
+        static NativeModelData HxStringMap(cpp::Pointer<models::LazyMap<String>>);
         static Dynamic HxStringMap_dyn();
         static NativeModelData HxEnum(hxcppdbg::core::sourcemap::GeneratedType, String, cpp::Pointer<models::LazyEnumArguments>);
         static Dynamic HxEnum_dyn();

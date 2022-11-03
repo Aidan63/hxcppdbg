@@ -19,7 +19,6 @@
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/NativeModelData.cpp'/>
         <file name='${DbgEngDir}/models/LazyArray.cpp'/>
-        <file name='${DbgEngDir}/models/LazyMap.cpp'/>
         <file name='${DbgEngDir}/models/LazyEnumArguments.cpp'/>
         <file name='${DbgEngDir}/models/LazyAnonFields.cpp'/>
         <file name='${DbgEngDir}/models/LazyClassFields.cpp'/>

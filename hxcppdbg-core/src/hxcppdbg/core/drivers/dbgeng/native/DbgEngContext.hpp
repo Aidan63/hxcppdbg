@@ -17,6 +17,7 @@
 #include <atomic>
 #include "DbgModelClientEx.hpp"
 #include "DebugEventCallbacks.hpp"
+#include "models/IDbgEngKeyable.hpp"
 #include "models/LazyLocalStore.hpp"
 
 HX_DECLARE_CLASS2(haxe, ds, Option)
@@ -59,7 +60,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         hxcppdbg::core::ds::Result getCallStack(int _threadID);
         hxcppdbg::core::ds::Result getFrame(int _thread, int _index);
 
-        cpp::Pointer<models::LazyLocalStore> getVariables(int _thread, int _frame);
+        cpp::Pointer<models::IDbgEngKeyable<String>> getVariables(int _thread, int _frame);
         hxcppdbg::core::ds::Result getArguments(int _thread, int _frame);
 
         haxe::ds::Option go();

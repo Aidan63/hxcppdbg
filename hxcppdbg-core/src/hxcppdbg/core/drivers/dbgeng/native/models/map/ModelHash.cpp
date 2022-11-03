@@ -9,8 +9,8 @@ hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ModelHash(std::
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(fmt::to_wstring(fmt::format(L"hx::Hash<{0}>", _element)))
 {
     AddMethod(L"Count", this, &ModelHash::count);
-    AddMethod(L"Key", this, &ModelHash::key);
-    AddMethod(L"Value", this, &ModelHash::value);
+    AddMethod(L"At", this, &ModelHash::at);
+    AddMethod(L"Get", this, &ModelHash::get);
 }
 
 Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::count(const Debugger::DataModel::ClientEx::Object& _object)
@@ -18,7 +18,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
     return _object.FieldValue(L"size");
 }
 
-Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::key(const Debugger::DataModel::ClientEx::Object& _object, const int _index)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::at(const Debugger::DataModel::ClientEx::Object& _object, const int _index)
 {
     auto bucketCount = _object.FieldValue(L"bucketCount").As<int>();
     auto buckets     = _object.FieldValue(L"bucket");
@@ -48,7 +48,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
     return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
 }
 
-Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::value(const Debugger::DataModel::ClientEx::Object& _object, const Debugger::DataModel::ClientEx::Object _inKey)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::get(const Debugger::DataModel::ClientEx::Object& _object, const Debugger::DataModel::ClientEx::Object _inKey)
 {
     auto buckets = _object.FieldValue(L"bucket");
 

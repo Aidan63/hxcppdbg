@@ -1,4 +1,5 @@
 #include <hxcpp.h>
+#include <iterator>
 #include "LazyLocalStore.hpp"
 #include "NativeModelData.hpp"
 #include "models/extensions/Utils.hpp"
@@ -10,7 +11,47 @@ hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::LazyLocalStore(
     //
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::local(String _name)
+int hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::count()
+{
+    auto count = 0;
+
+    for (auto&& _ : fields)
+    {
+        count++;
+    }
+
+    return count;
+}
+
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::at(const int _index)
+{
+    try
+    {
+        auto count = 0;
+
+        for (auto&& field : fields)
+        {
+            if (count == _index)
+            {
+                auto object = std::get<1>(field).GetValue();
+                auto type   = object.Type();
+
+                return
+                    type.IsIntrinsic()
+                        ? extensions::intrinsicObjectToHxcppdbgModelData(object)
+                        : object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            }
+        }
+
+        throw std::runtime_error("Failed to find object for index");
+    }
+    catch (const std::exception& exn)
+    {
+        hx::Throw(String::create(exn.what()));
+    }
+}
+
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::get(const String _name)
 {
     try
     {
@@ -21,25 +62,6 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
             type.IsIntrinsic()
                 ? extensions::intrinsicObjectToHxcppdbgModelData(object)
                 : object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
-    }
-    catch (const std::exception& exn)
-    {
-        hx::Throw(String::create(exn.what()));
-    }
-}
-
-Array<String> hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::locals()
-{
-    try
-    {
-        auto names = Array<String>(0, 0);
-
-        for (auto&& t : fields)
-        {
-            names->push(String::create(std::get<0>(t).c_str()));
-        }
-
-        return names;
     }
     catch (const std::exception& exn)
     {

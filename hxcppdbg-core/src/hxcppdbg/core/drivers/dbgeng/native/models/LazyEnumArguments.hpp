@@ -4,13 +4,11 @@
 #include <hxcpp.h>
 #endif
 
-#include "DbgModelClientEx.hpp"
-
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, NativeModelData)
+#include "models/IDbgEngIndexable.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class LazyEnumArguments
+    class LazyEnumArguments : public IDbgEngIndexable
     {
     private:
         Debugger::DataModel::ClientEx::Object object;
@@ -18,7 +16,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     public:
         LazyEnumArguments(const Debugger::DataModel::ClientEx::Object&);
 
-        int count() const;
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int) const;
+        int count();
+        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int);
     };
 }

@@ -4,13 +4,11 @@
 #include <hxcpp.h>
 #endif
 
-#include "DbgModelClientEx.hpp"
-
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, NativeModelData)
+#include "models/IDbgEngIndexable.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class LazyArray
+    class LazyArray : public IDbgEngIndexable
     {
     private:
         Debugger::DataModel::ClientEx::Object array;
@@ -18,8 +16,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     public:
         LazyArray(const Debugger::DataModel::ClientEx::Object&);
 
-        int length() const;
-        int elementSize() const;
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int, const int) const;
+        int count();
+        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int);
     };
 }

@@ -9,12 +9,12 @@ hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::LazyEnumArgu
     //
 }
 
-int hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::count() const
+int hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::count()
 {
     return object.FieldValue(L"mFixedFields").As<int>();
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::at(const int _index) const
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::at(const int _index)
 {
     return
         object

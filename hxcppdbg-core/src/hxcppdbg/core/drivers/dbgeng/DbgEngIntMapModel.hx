@@ -1,72 +1,45 @@
 package hxcppdbg.core.drivers.dbgeng;
 
-import haxe.Exception;
 import cpp.NativeGc;
-import hxcppdbg.core.drivers.dbgeng.native.models.LazyMap;
-import hxcppdbg.core.model.MapModel;
-import tink.CoreApi.Lazy;
+import haxe.Exception;
+import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
-class DbgEngIntMapModel extends MapModel
+class DbgEngIntMapModel implements IKeyable<ModelData>
 {
-    final model : cpp.Pointer<LazyMap>;
-
-    final elements : Lazy<Int>;
-
-    final cachedKeys : Map<Int, ModelData>;
-
-    final cachedValues : Map<Int, ModelData>;
+    final model : cpp.Pointer<IDbgEngKeyable<Int>>;
 
     public function new(_model)
     {
-        model        = _model;
-        elements     = Lazy.ofFunc(getElements);
-        cachedKeys   = [];
-        cachedValues = [];
+        model = _model;
 
         NativeGc.addFinalizable(this, false);
     }
 
-    public function finalize()
-    {
-        model.destroy();
-    }
-
 	public function count()
     {
-		return elements.get();
+		return try Result.Success(model.ptr.count()) catch (exn) Result.Error(exn);
 	}
 
-	public function key(_index : Int)
-    {
-        return switch cachedKeys[_index]
-        {
-            case null:
-                cachedKeys[_index] = model.ptr.key(_index).toModelData();
-            case cached:
-                cached;
-        }
-	}
-
-	public function value(_key : ModelData)
+	public function get(_key : ModelData)
     {
         return switch _key
         {
             case MInt(i), MDynamic(MInt(i)):
-                switch cachedValues[i]
-                {
-                    case null:
-                        cachedValues[i] = model.ptr.value(i).toModelData();
-                    case cached:
-                        cached;
-                }
+                try Result.Success(model.ptr.get(i).toModelData()) catch (exn) Result.Error(exn);
             case other:
-                throw new Exception('Key to a haxe.ds.IntMap should be Int');
+                Result.Error(new Exception('Cannot key into a haxe.ds.IntMap with $other'));
         }
-    }
+	}
 
-    function getElements()
+	public function at(_index : Int)
     {
-        return model.ptr.count();
+		return try Result.Success(model.ptr.at(_index).toModelData()) catch (exn) Result.Error(exn);
+	}
+
+    public function finalize()
+    {
+        model.destroy();
     }
 }

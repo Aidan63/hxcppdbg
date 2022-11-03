@@ -5,14 +5,14 @@ import hscript.Expr;
 import hscript.Parser;
 import hscript.Printer;
 import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.locals.LocalStore;
 
 using Lambda;
 
 class Context
 {
-    final locals : LocalStore;
+    final locals : Keyable<String>;
 
     final parser : Parser;
 
@@ -52,7 +52,7 @@ class Context
                         ModelData.MString(s);
                 }
             case EIdent(v):
-                switch locals.getLocal(v)
+                switch locals.get(v)
                 {
                     case Success(data):
                         data;
@@ -65,11 +65,29 @@ class Context
                     case MDynamic(MString(s)), MString(s) if (f == 'length'):
                         MInt(s.length);
                     case MDynamic(MArray(children)), MArray(children) if (f == 'length'):
-                        MInt(children.length());
+                        switch children.count()
+                        {
+                            case Success(v):
+                                MInt(v);
+                            case Error(exn):
+                                throw exn;
+                        }
                     case MMap(model), MDynamic(MMap(model)) if (f == 'count'):
-                        MInt(model.count());
+                        switch model.count()
+                        {
+                            case Success(v):
+                                MInt(v);
+                            case Error(exn):
+                                throw exn;
+                        }
                     case MAnon(children), MDynamic(MAnon(children)), MClass(_, children), MDynamic(MClass(_, children)):
-                        return children.field(f);
+                        switch children.get(f)
+                        {
+                            case Success(v):
+                                v;
+                            case Error(exn):
+                                throw exn;
+                        }
                     case other:
                         throw new Exception('Cannot perform field access on ${ other.getName() }');
                 }
@@ -82,17 +100,35 @@ class Context
                         switch eval(index)
                         {
                             case MInt(i), MDynamic(MInt(i)):
-                                items.at(i);
+                                switch items.at(i)
+                                {
+                                    case Success(v):
+                                        v;
+                                    case Error(exn):
+                                        throw exn;
+                                }
                             default:
                                 throw new Exception('Can only index into an array with an integer');
                         }
                     case MDynamic(MMap(model)), MMap(model):
-                        model.value(eval(index));
+                        switch model.get(eval(index))
+                        {
+                            case Success(v):
+                                v;
+                            case Error(exn):
+                                throw exn;
+                        }
                     case MDynamic(MEnum(_, _, arguments)), MEnum(_, _, arguments):
                         switch eval(index)
                         {
                             case MInt(i), MDynamic(MInt(i)):
-                                arguments.at(i);
+                                switch arguments.at(i)
+                                {
+                                    case Success(v):
+                                        v;
+                                    case Error(exn):
+                                        throw exn;
+                                }
                             default:
                                 throw new Exception('Can only index into an enum constructors arguments with an integer');
                         }

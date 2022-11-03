@@ -1,11 +1,11 @@
 package hxcppdbg.core.locals;
 
 import haxe.Exception;
+import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.ds.FrameUID;
 import hxcppdbg.core.stack.Stack;
-import hxcppdbg.core.stack.StackFrame;
-import hxcppdbg.core.model.Model;
+import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.cache.LocalCache;
 import hxcppdbg.core.drivers.ILocals;
 import hxcppdbg.core.sourcemap.Sourcemap;
@@ -31,7 +31,7 @@ class Locals
         cache     = _cache;
     }
 
-    public function getLocals(_threadIndex, _frameIndex, _callback : Result<LocalStore, Exception>->Void)
+    public function getLocals(_threadIndex, _frameIndex, _callback : Result<Keyable<String>, Exception>->Void)
     {
         final uid = new FrameUID(_threadIndex, _frameIndex);
 
@@ -49,7 +49,7 @@ class Locals
                                         switch result
                                         {
                                             case Success(store):
-                                                _callback(Result.Success(cache[uid] = new LocalStore(haxe.func.variables, store)));
+                                                _callback(Result.Success(cache[uid] = new LocalStore(store, haxe.func.variables)));
                                             case Error(exn):
                                                 _callback(Result.Error(exn));
                                         }
@@ -66,52 +66,26 @@ class Locals
         }
     }
 
-    public function getArguments(_thread, _frame, _callback : Result<Array<LocalVariable>, Exception>->Void)
+    public function getArguments(_thread, _frame, _callback : Result<Keyable<String>, Exception>->Void)
     {
-        stack.getFrame(_thread, _frame, result -> {
-            switch result
-            {
-                case Success(frame):
-                    driver.getArguments(_thread, _frame, result -> {
-                        switch result
-                        {
-                            case Success(locals):
-                                _callback(Result.Success(locals.map(mapNativeArgument.bind(frame))));
-                            case Error(e):
-                                _callback(Result.Error(e));
-                        }
-                    });
-                case Error(e):
-                    _callback(Result.Error(e));
-            }
-        });
-    }
+        _callback(Result.Error(new NotImplementedException()));
 
-    function mapNativeArgument(_frame : StackFrame, _native : Model)
-    {
-        return switch _frame
-        {
-            case Haxe(haxe, _):
-                switch haxe.func.arguments.find(v -> isLocalVar(v.cpp, _native))
-                {
-                    case null:
-                        LocalVariable.Native(_native);
-                    case _:
-                        LocalVariable.Haxe(_native);
-                }
-            case Native(_):
-                LocalVariable.Native(_native);
-        }
-    }
-
-    function isLocalVar(_variable : String, _native : Model)
-    {
-        return switch _native.key
-        {
-            case MString(s):
-                s == _variable;
-            case _:
-                false;
-        }
+        // stack.getFrame(_thread, _frame, result -> {
+        //     switch result
+        //     {
+        //         case Success(frame):
+        //             driver.getArguments(_thread, _frame, result -> {
+        //                 switch result
+        //                 {
+        //                     case Success(locals):
+        //                         _callback(Result.Success(locals.map(mapNativeArgument.bind(frame))));
+        //                     case Error(e):
+        //                         _callback(Result.Error(e));
+        //                 }
+        //             });
+        //         case Error(e):
+        //             _callback(Result.Error(e));
+        //     }
+        // });
     }
 }

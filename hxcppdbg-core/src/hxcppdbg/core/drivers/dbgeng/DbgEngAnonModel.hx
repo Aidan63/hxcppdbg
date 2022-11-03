@@ -1,24 +1,16 @@
 package hxcppdbg.core.drivers.dbgeng;
 
 import cpp.NativeGc;
-import tink.CoreApi.Lazy;
-import hxcppdbg.core.drivers.dbgeng.native.models.LazyAnonFields;
-import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.model.NamedModel;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
-class DbgEngAnonModel extends NamedModel
+class DbgEngAnonModel implements IKeyable<String>
 {
-    final model : cpp.Pointer<LazyAnonFields>;
-
-    final cachedCount : Lazy<Int>;
-
-    final cachedFields : Map<String, ModelData>;
+    final model : cpp.Pointer<IDbgEngKeyable<String>>;
 
     public function new(_model)
     {
-        model        = _model;
-        cachedCount  = Lazy.ofFunc(getCount);
-        cachedFields = [];
+        model = _model;
 
         NativeGc.addFinalizable(this, false);
     }
@@ -30,22 +22,16 @@ class DbgEngAnonModel extends NamedModel
 
 	public function count()
     {
-		return cachedCount.get();
+		return try Result.Success(model.ptr.count()) catch (exn) Result.Error(exn);
 	}
 
-	public function field(_name : String)
+	public function get(_name : String)
     {
-		return switch cachedFields[_name]
-        {
-            case null:
-                cachedFields[_name] = model.ptr.field(_name).toModelData();
-            case cached:
-                cached;
-        }
+		return try Result.Success(model.ptr.get(_name).toModelData()) catch (exn) Result.Error(exn);
 	}
 
-    function getCount()
+    public function at(_index : Int)
     {
-        return model.ptr.count();
+        return try Result.Success(model.ptr.at(_index).toModelData()) catch (exn) Result.Error(exn);
     }
 }

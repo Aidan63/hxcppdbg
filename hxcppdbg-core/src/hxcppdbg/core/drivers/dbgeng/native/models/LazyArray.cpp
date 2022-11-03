@@ -8,17 +8,12 @@ hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::LazyArray(const Debu
     //
 }
 
-int hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::length() const
+int hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::count()
 {
-    return array.CallMethod(L"Length").As<int>();
+    return array.CallMethod(L"Count").As<int>();
 }
 
-int hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::elementSize() const
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::at(const int _index)
 {
-    return array.CallMethod(L"ElementSize").As<int>();
-}
-
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::at(const int _elementSize, const int _index) const
-{
-    return array.CallMethod(L"At", _elementSize, _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    return array.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 }

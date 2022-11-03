@@ -14,7 +14,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
 {
     return
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::HxIntMap(
-            new hxcppdbg::core::drivers::dbgeng::native::models::LazyMap(_object));
+            new hxcppdbg::core::drivers::dbgeng::native::models::LazyMap<int>(_object));
 }
 
 bool hxcppdbg::core::drivers::dbgeng::native::models::map::ModelIntHash::check(const Debugger::DataModel::ClientEx::Object&, const int _currentKey, const int _targetKey) const

@@ -14,7 +14,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
 {
     return
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::HxStringMap(
-            new hxcppdbg::core::drivers::dbgeng::native::models::LazyMap(_object));
+            new hxcppdbg::core::drivers::dbgeng::native::models::LazyMap<String>(_object));
 }
 
 bool hxcppdbg::core::drivers::dbgeng::native::models::map::ModelStringHash::check(const Debugger::DataModel::ClientEx::Object&, const Debugger::DataModel::ClientEx::Object _currentKey, const std::wstring _targetKey) const
