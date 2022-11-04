@@ -97,6 +97,8 @@ class Session
             switch result
             {
                 case Success(run):
+                    cache.clear();
+
                     _callback(Result.Success(makeRunCallback(run)));
                 case Error(exn):
                     _callback(Result.Error(exn));
@@ -110,6 +112,8 @@ class Session
             switch result
             {
                 case Success(run):
+                    cache.clear();
+
                     _callback(Result.Success(makeRunCallback(run)));
                 case Error(exn):
                     _callback(Result.Error(exn));
