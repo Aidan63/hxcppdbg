@@ -41,6 +41,8 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
                         ? extensions::intrinsicObjectToHxcppdbgModelData(object)
                         : object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
             }
+
+            count++;
         }
 
         throw std::runtime_error("Failed to find object for index");

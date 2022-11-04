@@ -1,6 +1,6 @@
 package hxcppdbg.core.cache;
 
-import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.ds.FrameUID;
+import hxcppdbg.core.locals.LocalStore;
 
-typedef LocalCache = Map<FrameUID, Keyable<String>>;
+typedef LocalCache = Map<FrameUID, LocalStore>;

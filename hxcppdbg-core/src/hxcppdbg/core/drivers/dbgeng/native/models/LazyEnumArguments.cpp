@@ -11,16 +11,30 @@ hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::LazyEnumArgu
 
 int hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::count()
 {
-    return object.FieldValue(L"mFixedFields").As<int>();
+    try
+    {
+        return object.FieldValue(L"mFixedFields").As<int>();
+    }
+    catch (const std::exception& exn)
+    {
+        hx::Throw(String::create(exn.what()));
+    }
 }
 
 hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::at(const int _index)
 {
-    return
-        object
-            .FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, object, fmt::to_wstring(fmt::format(L"(cpp::Variant *)(self + 1 + {0})", _index)))
-            .Dereference()
-            .GetValue()
-            .KeyValue(L"HxcppdbgModelData")
-            .As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    try
+    {
+        return
+            object
+                .FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, object, fmt::to_wstring(fmt::format(L"(cpp::Variant *)(self + 1 + {0})", _index)))
+                .Dereference()
+                .GetValue()
+                .KeyValue(L"HxcppdbgModelData")
+                .As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    }
+    catch (const std::exception& exn)
+    {
+        hx::Throw(String::create(exn.what()));
+    }
 }

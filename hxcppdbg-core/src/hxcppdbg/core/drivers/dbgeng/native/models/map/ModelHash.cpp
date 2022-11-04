@@ -22,7 +22,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
 {
     auto bucketCount = _object.FieldValue(L"bucketCount").As<int>();
     auto buckets     = _object.FieldValue(L"bucket");
-    auto accumulated = 0;
+    auto count       = 0;
 
     for (auto i = 0; i < bucketCount; i++)
     {
@@ -35,14 +35,30 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
             continue;
         }
 
-        auto element      = pointer.Dereference().GetValue();
-        auto elementCount = element.CallMethod(L"Count").As<int>();
-        if (_index >= accumulated && _index < accumulated + elementCount)
-        {
-            return element.CallMethod(L"Key", _index - accumulated).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
-        }
+        auto current = pointer.Dereference().GetValue();
 
-        accumulated += elementCount;
+        while (true)
+        {
+            if (count == _index)
+            {
+                auto v = current.FieldValue(L"value");
+
+                return
+                    v.Type().IsIntrinsic()
+                        ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(v)
+                        : v.KeyValue(L"HxcppdbgModelData");
+            }
+
+            count++;
+
+            auto next = current.FieldValue(L"next");
+            if (next.As<ULONG64>() == NULL)
+            {
+                break;
+            }
+
+            current = next.Dereference().GetValue();
+        }
     }
 
     return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();

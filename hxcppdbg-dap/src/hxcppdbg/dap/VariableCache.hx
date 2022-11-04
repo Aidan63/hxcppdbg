@@ -1,15 +1,12 @@
 package hxcppdbg.dap;
 
 import haxe.Exception;
-import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.locals.LocalStore;
-import tink.CoreApi.Lazy;
-import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
-import haxe.ds.Option;
-import hxcppdbg.core.model.Model;
-import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.locals.LocalVariable;
 import hxcppdbg.dap.protocol.data.Variable;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.Keyable;
+import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.locals.LocalStore;
+import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 using Lambda;
 
@@ -48,128 +45,255 @@ class VariableCache
                         Result.Error(new Exception('Failed to find model in storage'));
                     case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_), MDynamic(_):
                         Result.Error(new Exception('Model does not have children'));
-                    case MArray(model):
-                        final start  = if (_start == null) 0 else _start;
-                        final count  = if (_count == null) model.length() else _count;
-                        final output = new Array<Variable>();
-
-                        if (start >= model.length() || start + count > model.length())
+                    case MArray(store), MEnum(_, _, store):
+                        switch store.count()
                         {
-                            return Result.Error(new Exception('request out of range of child count'));
-                        }
+                            case Success(length):
+                                final start  = if (_start == null) 0 else _start;
+                                final count  = if (_count == null) length else _count;
+                                final output = new Array<Variable>();
+        
+                                if (start >= length || start + count > length)
+                                {
+                                    return Result.Error(new Exception('request out of range of child count'));
+                                }
 
-                        for (idx => model in [ for (i in start...(start + count)) model.at(i) ])
+                                for (i in start...(start + count))
+                                {
+                                    switch store.at(i)
+                                    {
+                                        case Success(model):
+                                            output.push({
+                                                variablesReference: addModel(model),
+                                                name  : Std.string(i),
+                                                type  : model.printType(),
+                                                value : model.printModelData()
+                                            });
+                
+                                            switch model
+                                            {
+                                                case MArray(model), MEnum(_, _, model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MMap(model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case MAnon(model), MClass(_, model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case _:
+                                                    //
+                                            }
+                                        case Error(exn):
+                                            //
+                                    }
+                                }
+                                
+                                Result.Success(output);
+                            case Error(exn):
+                                Result.Error(exn);
+                        }
+                    case MMap(store):
+                        switch store.count()
                         {
-                            output.push({
-                                variablesReference: addModel(model),
-                                name  : Std.string(start + idx),
-                                type  : dataType(model),
-                                value : dataValue(model)
-                            });
+                            case Success(length):
+                                final start  = if (_start == null) 0 else _start;
+                                final count  = if (_count == null) length else _count;
+                                final output = new Array<Variable>();
 
-                            switch model
-                            {
-                                case MArray(model):
-                                    output[idx].indexedVariables = model.length();
-                                case MMap(model):
-                                    output[idx].namedVariables = model.count();
-                                case MEnum(_, _, arguments):
-                                    output[idx].indexedVariables = arguments.count();
-                                case MAnon(model):
-                                    output[idx].namedVariables = model.count();
-                                case MClass(type, model):
-                                    output[idx].namedVariables = model.count();
-                                case _:
-                            }
+                                if (start >= length || start + count > length)
+                                {
+                                    return Result.Error(new Exception('request out of range of child count'));
+                                }
+
+                                for (i in start...(start + count))
+                                {
+                                    switch store.at(i)
+                                    {
+                                        case Success(model):
+                                            output.push({
+                                                variablesReference: addModel(model),
+                                                name  : Std.string(i),
+                                                type  : model.printType(),
+                                                value : model.printModelData()
+                                            });
+                
+                                            switch model
+                                            {
+                                                case MArray(model), MEnum(_, _, model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MMap(model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case MAnon(model), MClass(_, model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case _:
+                                                    //
+                                            }
+                                        case Error(exn):
+                                            //
+                                    }
+                                }
+
+                                Result.Success(output);
+                            case Error(exn):
+                                Result.Error(exn);
                         }
-                        
-                        Result.Success(output);
-                    case MMap(model):
-                        Result.Success([]);
-                    case MEnum(_, _, arguments):
-                        final start  = if (_start == null) 0 else _start;
-                        final count  = if (_count == null) arguments.count() else _count;
-                        final output = new Array<Variable>();
-
-                        if (start >= arguments.count() || start + count > arguments.count())
+                    case MAnon(store), MClass(_, store):
+                        switch store.count()
                         {
-                            return Result.Error(new Exception('request out of range of child count'));
-                        }
+                            case Success(length):
+                                final start  = if (_start == null) 0 else _start;
+                                final count  = if (_count == null) length else _count;
+                                final output = new Array<Variable>();
 
-                        for (idx => model in [ for (i in start...(start + count)) arguments.at(i) ])
-                        {
-                            output.push({
-                                variablesReference: addModel(model),
-                                name  : Std.string(start + idx),
-                                type  : dataType(model),
-                                value : dataValue(model)
-                            });
+                                if (start >= length || start + count > length)
+                                {
+                                    return Result.Error(new Exception('request out of range of child count'));
+                                }
 
-                            switch model
-                            {
-                                case MArray(model):
-                                    output[idx].indexedVariables = model.length();
-                                case MMap(model):
-                                    output[idx].namedVariables = model.count();
-                                case MEnum(_, _, arguments):
-                                    output[idx].indexedVariables = arguments.count();
-                                case MAnon(model):
-                                    output[idx].namedVariables = model.count();
-                                case MClass(type, model):
-                                    output[idx].namedVariables = model.count();
-                                case _:
-                            }
+                                for (i in start...(start + count))
+                                {
+                                    switch store.at(i)
+                                    {
+                                        case Success(model):
+                                            output.push({
+                                                variablesReference: addModel(model),
+                                                name  : Std.string(i),
+                                                type  : model.printType(),
+                                                value : model.printModelData()
+                                            });
+                
+                                            switch model
+                                            {
+                                                case MArray(model), MEnum(_, _, model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MMap(model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case MAnon(model), MClass(_, model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case _:
+                                                    //
+                                            }
+                                        case Error(exn):
+                                            //
+                                    }
+                                }
+
+                                Result.Success(output);
+                            case Error(exn):
+                                Result.Error(exn);
                         }
-                        
-                        Result.Success(output);
-                    case MAnon(model):
-                        Result.Success([]);
-                    case MClass(type, model):
-                        Result.Success([]);
                 }
             case store:
-                final output = new Array<Variable>();
-                final names  = store.getLocals();
-                final start  = if (_start == null) 0 else _start;
-                final count  = if (_count == null) names.length else _count;
-
-                if (start > names.length || start + count > names.length)
+                switch store.count()
                 {
-                    return Result.Error(new Exception('request out of range of child count'));
-                }
+                    case Success(length):
+                        final output = new Array<Variable>();
+                        final start  = if (_start == null) 0 else _start;
+                        final count  = if (_count == null) length else _count;
 
-                for (idx => name in names.slice(start, start + count))
-                {
-                    switch store.getLocal(name)
-                    {
-                        case Success(model):
-                            output[idx] = {
-                                name  : name,
-                                type  : dataType(model),
-                                value : dataValue(model),
-                                variablesReference: addModel(model)
-                            };
+                        if (start > length || start + count > length)
+                        {
+                            return Result.Error(new Exception('request out of range of child count'));
+                        }
 
-                            switch model
+                        for (i in start...(start + count))
+                        {
+                            switch store.at(i)
                             {
-                                case MArray(model):
-                                    output[idx].indexedVariables = model.length();
-                                case MMap(model):
-                                    output[idx].namedVariables = model.count();
-                                case MEnum(_, _, arguments):
-                                    output[idx].indexedVariables = arguments.count();
-                                case MAnon(model):
-                                    output[idx].namedVariables = model.count();
-                                case MClass(type, model):
-                                    output[idx].namedVariables = model.count();
-                                case _:
+                                case Success(model):
+                                    output.push({
+                                        variablesReference: addModel(model),
+                                        name  : Std.string(i),
+                                        type  : model.printType(),
+                                        value : model.printModelData()
+                                    });
+        
+                                    switch model
+                                    {
+                                        case MArray(model), MEnum(_, _, model):
+                                            output[output.length - 1].indexedVariables = switch model.count() {
+                                                case Success(v):
+                                                    v;
+                                                case Error(_):
+                                                    0;
+                                            };
+                                        case MMap(model):
+                                            output[output.length - 1].namedVariables = switch model.count()
+                                            {
+                                                case Success(v):
+                                                    v;
+                                                case Error(_):
+                                                    0;
+                                            }
+                                        case MAnon(model), MClass(_, model):
+                                            output[output.length - 1].namedVariables = switch model.count()
+                                            {
+                                                case Success(v):
+                                                    v;
+                                                case Error(_):
+                                                    0;
+                                            }
+                                        case _:
+                                            //
+                                    }
+                                case Error(exn):
+                                    //
                             }
-                        case Error(exn):
-                            continue;
-                    }
-                }
+                        }
 
-                Result.Success(output);
+                        Result.Success(output);
+                    case Error(exn):
+                        Result.Error(exn);
+                }
         }
     }
 
@@ -187,68 +311,6 @@ class VariableCache
                 models[id] = _model;
         
                 id;
-        }
-    }
-
-    static function dataValue(_data : ModelData)
-    {
-        return switch _data
-        {
-            case MNull:
-                'null';
-            case MInt(v):
-                Std.string(v);
-            case MFloat(v):
-                Std.string(v);
-            case MBool(v):
-                Std.string(v);
-            case MString(s):
-                s;
-            case MArray(model):
-                '[ ${ model.length() } items ]';
-            case MMap(model):
-                '[ ${ model.count() } keys ]';
-            case MEnum(type, constructor, arguments):
-                '${ printType(type) }.$constructor';
-            case MDynamic(inner):
-                dataValue(inner);
-            case MAnon(fields):
-                '{}';
-            case MClass(type, fields):
-                printType(type);
-            case MUnknown(type):
-                'unknown';
-        }
-    }
-
-    static function dataType(_data : ModelData)
-    {
-        return switch _data
-        {
-            case MNull:
-                'Null';
-            case MInt(_):
-                'Int';
-            case MFloat(_):
-                'Float';
-            case MBool(_):
-                'Bool';
-            case MString(_):
-                'String';
-            case MArray(_):
-                'Array<?>';
-            case MMap(_):
-                'Map<?, ?>';
-            case MEnum(type, _, _):
-                printType(type);
-            case MDynamic(inner):
-                'Dynamic';
-            case MAnon(fields):
-                '{}';
-            case MClass(type, _):
-                printType(type);
-            case MUnknown(type):
-                type;
         }
     }
 

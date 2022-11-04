@@ -10,15 +10,36 @@ hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::LazyClassField
 
 int hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::count()
 {
-    return cls.CallMethod(L"Count").As<int>();
+    try
+    {
+        return cls.CallMethod(L"Count").As<int>();
+    }
+    catch (const std::exception& exn)
+    {
+        hx::Throw(String::create(exn.what()));
+    }
 }
 
 hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::at(const int _index)
 {
-    return cls.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    try
+    {
+        return cls.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    }
+    catch (const std::exception& exn)
+    {
+        hx::Throw(String::create(exn.what()));
+    }
 }
 
 hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::get(const String _field)
 {
-    return cls.CallMethod(L"Get", std::wstring(_field.wchar_str())).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    try
+    {
+        return cls.CallMethod(L"Get", std::wstring(_field.wchar_str())).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    }
+    catch (const std::exception& exn)
+    {
+        hx::Throw(String::create(exn.what()));
+    }
 }

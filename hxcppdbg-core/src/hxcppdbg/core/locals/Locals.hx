@@ -31,7 +31,7 @@ class Locals
         cache     = _cache;
     }
 
-    public function getLocals(_threadIndex, _frameIndex, _callback : Result<Keyable<String>, Exception>->Void)
+    public function getLocals(_threadIndex, _frameIndex, _callback : Result<LocalStore, Exception>->Void)
     {
         final uid = new FrameUID(_threadIndex, _frameIndex);
 

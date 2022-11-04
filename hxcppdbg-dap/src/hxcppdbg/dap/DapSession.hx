@@ -37,9 +37,7 @@ import hxcppdbg.core.StepType;
 import hxcppdbg.core.StopReason;
 import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.model.Model;
 import hxcppdbg.core.model.Printer;
-import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.thread.NativeThread;
 
 using Lambda;
@@ -84,7 +82,7 @@ class DapSession
 
     function write(_content : String, _callback : Option<Code>->Void)
     {
-        // Sys.println('OUT : $_content');
+        Sys.println('OUT : $_content');
 
         final str  = 'Content-Length: ${ _content.length }\r\n\r\n$_content';
         final data = Bytes.ofString(str);
@@ -147,7 +145,7 @@ class DapSession
             return respond(_request, _outcome);
         }
 
-        // Sys.println('MSG : ${ _request }');
+        Sys.println('MSG : ${ _request }');
 
         return switch _request.command
         {
@@ -660,7 +658,11 @@ class DapSession
                                             _resolve({
                                                 name               : 'Locals',
                                                 variablesReference : variables.createScope(locals),
-                                                namedVariables     : locals.getLocals().length,
+                                                namedVariables     : switch locals.count()
+                                                {
+                                                    case Success(v): v;
+                                                    case Error(_): 0;
+                                                },
                                                 expensive          : false,
                                                 presentationHint   : 'locals'
                                             });
@@ -725,17 +727,10 @@ class DapSession
                                                         0;
                                                 }
 
-                                                final type = switch data {
-                                                    case MEnum(type, _, _), MClass(type, _):
-                                                        printType(type);
-                                                    case _:
-                                                        null;
-                                                }
-
                                                 _resolve(Outcome.Success({
-                                                    result             : printModelData(data),
+                                                    result             : data.printModelData(),
                                                     variablesReference : reference,
-                                                    type               : type
+                                                    type               : Printer.printType(data)
                                                 }));
                                             case Error(exn):
                                                 _resolve(Outcome.Failure(exn));

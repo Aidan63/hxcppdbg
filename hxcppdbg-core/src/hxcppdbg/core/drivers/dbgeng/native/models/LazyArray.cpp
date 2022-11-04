@@ -10,10 +10,24 @@ hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::LazyArray(const Debu
 
 int hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::count()
 {
-    return array.CallMethod(L"Count").As<int>();
+    try
+    {
+        return array.CallMethod(L"Count").As<int>();
+    }
+    catch (const std::exception& exn)
+    {
+        hx::Throw(String::create(exn.what()));
+    }
 }
 
 hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::at(const int _index)
 {
-    return array.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    try
+    {
+        return array.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+    }
+    catch (const std::exception& exn)
+    {
+        hx::Throw(String::create(exn.what()));
+    }
 }

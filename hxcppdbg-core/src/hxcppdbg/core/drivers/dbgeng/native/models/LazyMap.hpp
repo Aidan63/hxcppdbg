@@ -23,17 +23,38 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
 
         int count()
         {
-            return map.CallMethod(L"Count").As<int>();
+            try
+            {
+                return map.CallMethod(L"Count").As<int>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
         }
 
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int _index)
         {
-            return map.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            try
+            {
+                return map.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
         }
 
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const TKey _key)
         {
-            return map.CallMethod(L"Get", _key).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            try
+            {
+                return map.CallMethod(L"Get", _key).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
         }
     };
 
@@ -52,17 +73,38 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
 
         int count()
         {
-            return map.CallMethod(L"Count").As<int>();
+            try
+            {
+                return map.CallMethod(L"Count").As<int>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
         }
 
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int _index)
         {
-            return map.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            try
+            {
+                return map.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
         }
 
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const String _key)
         {
-            return map.CallMethod(L"Get", std::wstring(_key.wchar_str())).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            try
+            {
+                return map.CallMethod(L"Get", std::wstring(_key.wchar_str())).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
         }
     };
 }
