@@ -10,6 +10,8 @@ hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::ModelArra
 {
     AddMethod(L"At", this, &hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::at);
     AddMethod(L"Count", this, &hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::count);
+    AddReadOnlyProperty(L"ParamName", &ModelArrayObj::getParamName);
+    AddReadOnlyProperty(L"ParamSize", &ModelArrayObj::getParamSize);
 }
 
 Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& _object)
@@ -19,11 +21,9 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
             new hxcppdbg::core::drivers::dbgeng::native::models::LazyArray(_object));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::at(const Debugger::DataModel::ClientEx::Object& _object, const int _index)
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::at(const Debugger::DataModel::ClientEx::Object& _object, const int _index, const std::wstring _paramName, const int _paramSize)
 {
-    auto paramName = _object.Type().GenericArguments()[0].Name();
-    auto paramSize = _object.FromExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, fmt::to_wstring(fmt::format(L"sizeof({0})", paramName))).As<int>();
-    auto expr      = fmt::to_wstring(fmt::format(L"({0}*)(mBase + {1})", paramName, _index * paramSize));
+    auto expr      = fmt::to_wstring(fmt::format(L"({0}*)(mBase + {1})", _paramName, _index * _paramSize));
     auto element   = _object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, _object, expr).Dereference().GetValue();
 
     return
@@ -35,4 +35,17 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 int hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::count(const Debugger::DataModel::ClientEx::Object& _object)
 {
     return _object.FieldValue(L"length").As<int>();
+}
+
+int hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::getParamSize(const Debugger::DataModel::ClientEx::Object& _object)
+{
+    auto paramName = _object.KeyValue(L"ParamName").As<std::wstring>();
+    auto paramSize = _object.FromExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, fmt::to_wstring(fmt::format(L"sizeof({0})", paramName))).As<int>();
+
+    return paramSize;
+}
+
+std::wstring hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::getParamName(const Debugger::DataModel::ClientEx::Object& _object)
+{
+    return std::wstring(_object.Type().GenericArguments()[0].Name());
 }
