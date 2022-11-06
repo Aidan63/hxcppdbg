@@ -14,7 +14,7 @@ enum ModelData
     MString(s : String);
 
     MArray(model : Indexable<ModelData>);
-    MMap(_type : Keyable<ModelData, KeyValuePair>);
+    MMap(type : Keyable<ModelData, KeyValuePair>);
     
     MEnum(type : GeneratedType, constructor : String, arguments : Indexable<ModelData>);
     MDynamic(inner : ModelData);
