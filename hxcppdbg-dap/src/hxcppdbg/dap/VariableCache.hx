@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.core.model.KeyValuePair;
 import haxe.Exception;
 import hxcppdbg.dap.protocol.data.Variable;
 import hxcppdbg.core.ds.Result;
@@ -16,13 +17,16 @@ class VariableCache
 
     final models : Map<Int, ModelData>;
 
+    final mapRoots : Map<Int, KeyValuePair>;
+
     var index : Int;
 
     public function new()
     {
-        scopes = [];
-        models = [];
-        index  = 1;
+        scopes   = [];
+        models   = [];
+        mapRoots = [];
+        index    = 1;
     }
 
     public function createScope(_locals : LocalStore)
@@ -42,7 +46,29 @@ class VariableCache
                 switch models[_id]
                 {
                     case null:
-                        Result.Error(new Exception('Failed to find model in storage'));
+                        switch mapRoots[_id]
+                        {
+                            case null:
+                                Result.Error(new Exception('Failed to find model in storage'));
+                            case root:
+                                final output = new Array<Variable>();
+
+                                output.push({
+                                    variablesReference: addModel(root.key),
+                                    name  : 'Key',
+                                    type  : root.key.printType(),
+                                    value : root.key.printModelData()
+                                });
+
+                                output.push({
+                                    variablesReference: addModel(root.value),
+                                    name  : 'Value',
+                                    type  : root.value.printType(),
+                                    value : root.value.printModelData()
+                                });
+
+                                Result.Success(output);
+                        }
                     case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_), MDynamic(_):
                         Result.Error(new Exception('Model does not have children'));
                     case MArray(store), MEnum(_, _, store):
@@ -126,42 +152,13 @@ class VariableCache
                                     {
                                         case Success(model):
                                             output.push({
-                                                variablesReference: addModel(model),
-                                                name  : Std.string(i),
-                                                type  : model.printType(),
-                                                value : model.printModelData()
+                                                variablesReference : addKeyValuePair(model),
+                                                name               : Std.string(i),
+                                                value              : 'key value pair',
+                                                namedVariables     : 2
                                             });
-                
-                                            switch model
-                                            {
-                                                case MArray(model), MEnum(_, _, model):
-                                                    output[output.length - 1].indexedVariables = switch model.count() {
-                                                        case Success(v):
-                                                            v;
-                                                        case Error(_):
-                                                            0;
-                                                    };
-                                                case MMap(model):
-                                                    output[output.length - 1].namedVariables = switch model.count()
-                                                    {
-                                                        case Success(v):
-                                                            v;
-                                                        case Error(_):
-                                                            0;
-                                                    }
-                                                case MAnon(model), MClass(_, model):
-                                                    output[output.length - 1].namedVariables = switch model.count()
-                                                    {
-                                                        case Success(v):
-                                                            v;
-                                                        case Error(_):
-                                                            0;
-                                                    }
-                                                case _:
-                                                    //
-                                            }
                                         case Error(exn):
-                                            //
+                                            trace('failed at');
                                     }
                                 }
 
@@ -186,15 +183,15 @@ class VariableCache
                                 {
                                     switch store.at(i)
                                     {
-                                        case Success(model):
+                                        case Success(field):
                                             output.push({
-                                                variablesReference: addModel(model),
-                                                name  : Std.string(i),
-                                                type  : model.printType(),
-                                                value : model.printModelData()
+                                                variablesReference: addModel(field.data),
+                                                name  : field.name,
+                                                type  : field.data.printType(),
+                                                value : field.data.printModelData()
                                             });
                 
-                                            switch model
+                                            switch field.data
                                             {
                                                 case MArray(model), MEnum(_, _, model):
                                                     output[output.length - 1].indexedVariables = switch model.count() {
@@ -249,15 +246,15 @@ class VariableCache
                         {
                             switch store.at(i)
                             {
-                                case Success(model):
+                                case Success(field):
                                     output.push({
-                                        variablesReference: addModel(model),
-                                        name  : Std.string(i),
-                                        type  : model.printType(),
-                                        value : model.printModelData()
+                                        variablesReference: addModel(field.data),
+                                        name  : field.name,
+                                        type  : field.data.printType(),
+                                        value : field.data.printModelData()
                                     });
         
-                                    switch model
+                                    switch field.data
                                     {
                                         case MArray(model), MEnum(_, _, model):
                                             output[output.length - 1].indexedVariables = switch model.count() {
@@ -312,6 +309,15 @@ class VariableCache
         
                 id;
         }
+    }
+
+    function addKeyValuePair(_pair : KeyValuePair)
+    {
+        final id = index++;
+
+        mapRoots[id] = _pair;
+
+        return id;
     }
 
     static function printType(_type : GeneratedType)

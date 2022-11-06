@@ -23,8 +23,8 @@ extern enum NativeModelData
 
     HxString(s : String);
     HxArray(model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
-    HxIntMap(model : cpp.Pointer<IDbgEngKeyable<Int, { key : NativeModelData, value : NativeModelData }>>);
-    HxStringMap(model : cpp.Pointer<IDbgEngKeyable<String, { key : NativeModelData, value : NativeModelData }>>);
+    HxIntMap(model : cpp.Pointer<IDbgEngKeyable<Int, { name : NativeModelData, data : NativeModelData }>>);
+    HxStringMap(model : cpp.Pointer<IDbgEngKeyable<String, { name : NativeModelData, data : NativeModelData }>>);
 
     HxEnum(type : GeneratedType, tag : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
     HxAnon(model : cpp.Pointer<IDbgEngKeyable<String, { name : String, data : NativeModelData }>>);

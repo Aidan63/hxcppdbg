@@ -13,3 +13,13 @@ Debugger::DataModel::ProviderEx::TypedInstanceModel<hx::Anon>& hxcppdbg::core::d
 
     return *factory;
 }
+
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::extensions::AnonBoxer::Box(const hx::Anon& _object)
+{
+    return AnonBoxer::getFactory().CreateInstance(_object);
+}
+
+hx::Anon hxcppdbg::core::drivers::dbgeng::native::models::extensions::AnonBoxer::Unbox(const Debugger::DataModel::ClientEx::Object& _object)
+{
+    return AnonBoxer::getFactory().GetStoredInstance(_object);
+}

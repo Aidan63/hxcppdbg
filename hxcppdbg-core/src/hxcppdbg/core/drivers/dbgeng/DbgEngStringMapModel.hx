@@ -10,7 +10,7 @@ import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
 class DbgEngStringMapModel implements IKeyable<ModelData, KeyValuePair>
 {
-    final model : cpp.Pointer<IDbgEngKeyable<String, { key : NativeModelData, value : NativeModelData }>>;
+    final model : cpp.Pointer<IDbgEngKeyable<String, { name : NativeModelData, data : NativeModelData }>>;
 
     public function new(_model)
     {
@@ -45,8 +45,8 @@ class DbgEngStringMapModel implements IKeyable<ModelData, KeyValuePair>
 		return try Result.Success(toKeyValuePair(model.ptr.at(_index))) catch (exn) Result.Error(exn);
 	}
 
-    function toKeyValuePair(_result : { key : NativeModelData, value : NativeModelData })
+    function toKeyValuePair(_result : { name : NativeModelData, data : NativeModelData })
     {
-        return new KeyValuePair(_result.key.toModelData(), _result.value.toModelData());
+        return new KeyValuePair(_result.name.toModelData(), _result.data.toModelData());
     }
 }

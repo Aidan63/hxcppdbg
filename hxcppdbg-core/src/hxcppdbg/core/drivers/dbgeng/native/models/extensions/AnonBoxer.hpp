@@ -16,14 +16,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::extensions
         static Debugger::DataModel::ProviderEx::TypedInstanceModel<hx::Anon>& getFactory();
 
     public:
-        static Debugger::DataModel::ClientEx::Object Box(const hx::Anon& _object)
-        {
-            return AnonBoxer::getFactory().CreateInstance(_object);
-        }
-
-        static hx::Anon Unbox(const Debugger::DataModel::ClientEx::Object& _object)
-        {
-            return AnonBoxer::getFactory().GetStoredInstance(_object);
-        }
+        static Debugger::DataModel::ClientEx::Object Box(const hx::Anon& _object);
+        static hx::Anon Unbox(const Debugger::DataModel::ClientEx::Object& _object);
     };
 }

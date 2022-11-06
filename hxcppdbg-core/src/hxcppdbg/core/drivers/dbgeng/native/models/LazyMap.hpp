@@ -6,6 +6,7 @@
 
 #include "models/IDbgEngKeyable.hpp"
 #include "DbgModelClientEx.hpp"
+#include "extensions/AnonBoxer.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
@@ -88,7 +89,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             try
             {
-                return map.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+                return extensions::AnonBoxer::Unbox(map.CallMethod(L"At", _index));
             }
             catch (const std::exception& exn)
             {
