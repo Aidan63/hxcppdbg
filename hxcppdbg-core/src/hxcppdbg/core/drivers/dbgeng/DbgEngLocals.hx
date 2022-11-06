@@ -1,5 +1,7 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import hxcppdbg.core.model.NamedModelData;
+import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 import cpp.Pointer;
 import sys.thread.Thread;
 import haxe.Exception;
@@ -24,12 +26,14 @@ class DbgEngLocals implements ILocals
         dbgThread = _dbgThread;
     }
 
-	public function getVariables(_threadIndex : Int, _frameIndex : Int, _callback : Result<IKeyable<String>, Exception>->Void)
+	public function getVariables(_threadIndex : Int, _frameIndex : Int, _callback : Result<IKeyable<String, NamedModelData>, Exception>->Void)
     {
         dbgThread.events.run(() -> {
             final result = try
             {
-                Result.Success((new DbgEngLocalStore(driver.ptr.getVariables(_threadIndex, _frameIndex)) : IKeyable<String>));
+                Result.Success(
+                    (new DbgEngLocalStore(driver.ptr.getVariables(_threadIndex, _frameIndex)) : IKeyable<String, NamedModelData>)
+                );
             }
             catch (exn)
             {
@@ -39,8 +43,8 @@ class DbgEngLocals implements ILocals
             cbThread.events.run(() -> _callback(result));
         });
     }
-
-	public function getArguments(_thread : Int, _frame : Int, _callback : Result<IKeyable<String>, Exception>->Void)
+ 
+	public function getArguments(_thread : Int, _frame : Int, _callback : Result<IKeyable<String, NamedModelData>, Exception>->Void)
     {
         _callback(Result.Error(new NotImplementedException()));
     }

@@ -2,19 +2,14 @@ package hxcppdbg.core.model;
 
 import tink.CoreApi.Lazy;
 import haxe.Exception;
-import haxe.ds.Vector;
-import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.drivers.IIndexable;
 
-/**
- * Storage of `ModelData` objects which can be index into.
- */
-class Indexable
+class Indexable<TValue>
 {
-    final indexModel : IIndexable;
+    final indexModel : IIndexable<TValue>;
     
-    final indexCache : Map<Int, Result<ModelData, Exception>>;
+    final indexCache : Map<Int, Result<TValue, Exception>>;
 
     final lazyCount : Lazy<Result<Int, Exception>>;
 
@@ -22,23 +17,15 @@ class Indexable
     {
         indexModel = _model;
         indexCache = [];
-        lazyCount  = Lazy.ofFunc(getCount);
+        lazyCount  = Lazy.ofFunc(indexModel.count);
     }
 
-    /**
-     * Get the number of items in the store.
-     */
     public function count() : Result<Int, Exception>
     {
         return lazyCount.get();
     }
 
-    /**
-     * Return the `ModelData` at the given index.
-     * @param _index 
-     * @return Result<ModelData, Exception>
-     */
-    public function at(_index : Int) : Result<ModelData, Exception>
+    public function at(_index : Int) : Result<TValue, Exception>
     {
         return switch indexCache[_index]
         {
@@ -47,10 +34,5 @@ class Indexable
             case cached:
                 cached;
         }
-    }
-
-    function getCount()
-    {
-        return indexModel.count();
     }
 }

@@ -468,7 +468,7 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContex
 	}
 }
 
-cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::IDbgEngKeyable<String>> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getVariables(int _threadIndex, int _frameIndex)
+cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::IDbgEngKeyable<String, Dynamic>> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getVariables(int _threadIndex, int _frameIndex)
 {
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };

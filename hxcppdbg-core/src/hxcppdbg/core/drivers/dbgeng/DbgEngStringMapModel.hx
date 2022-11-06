@@ -4,11 +4,13 @@ import cpp.NativeGc;
 import haxe.Exception;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.model.KeyValuePair;
+import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
-class DbgEngStringMapModel implements IKeyable<ModelData>
+class DbgEngStringMapModel implements IKeyable<ModelData, KeyValuePair>
 {
-    final model : cpp.Pointer<IDbgEngKeyable<String>>;
+    final model : cpp.Pointer<IDbgEngKeyable<String, { key : NativeModelData, value : NativeModelData }>>;
 
     public function new(_model)
     {
@@ -40,6 +42,11 @@ class DbgEngStringMapModel implements IKeyable<ModelData>
 
 	public function at(_index : Int)
     {
-		return try Result.Success(model.ptr.at(_index).toModelData()) catch (exn) Result.Error(exn);
+		return try Result.Success(toKeyValuePair(model.ptr.at(_index))) catch (exn) Result.Error(exn);
 	}
+
+    function toKeyValuePair(_result : { key : NativeModelData, value : NativeModelData })
+    {
+        return new KeyValuePair(_result.key.toModelData(), _result.value.toModelData());
+    }
 }

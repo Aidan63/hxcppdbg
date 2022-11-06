@@ -5,10 +5,11 @@
 #endif
 
 #include "models/IDbgEngKeyable.hpp"
+#include "DbgModelClientEx.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class LazyLocalStore : public IDbgEngKeyable<String>
+    class LazyLocalStore : public IDbgEngKeyable<String, Dynamic>
     {
     private:
         Debugger::DataModel::ClientEx::Details::ObjectKeysRef<Debugger::DataModel::ClientEx::Object, Debugger::DataModel::ClientEx::Metadata> fields;
@@ -17,7 +18,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         LazyLocalStore(Debugger::DataModel::ClientEx::Details::ObjectKeysRef<Debugger::DataModel::ClientEx::Object, Debugger::DataModel::ClientEx::Metadata>);
 
         int count();
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int);
+        Dynamic at(const int);
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const String);
     };
 }

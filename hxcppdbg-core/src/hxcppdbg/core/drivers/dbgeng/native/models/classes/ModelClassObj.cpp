@@ -3,6 +3,7 @@
 #include "models/classes/ModelClassObj.hpp"
 #include "models/extensions/Utils.hpp"
 #include "models/LazyClassFields.hpp"
+#include "../extensions/AnonBoxer.hpp"
 
 #ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
 #include <hxcppdbg/core/sourcemap/GeneratedType.h>
@@ -39,12 +40,18 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
     {
         if (count == _index)
         {
+            auto name   = String::create(std::get<0>(field).c_str());
             auto object = std::get<1>(field).GetValue();
+            auto data   = object.Type().IsIntrinsic()
+                ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)
+                : object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 
-            return
-                object.Type().IsIntrinsic()
-                    ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)
-                    : object.KeyValue(L"HxcppdbgModelData");
+            auto anon = hx::Anon(2);
+
+            anon->setFixed(0, HX_CSTRING("name"), name);
+            anon->setFixed(1, HX_CSTRING("data"), data);
+
+            return hxcppdbg::core::drivers::dbgeng::native::models::extensions::AnonBoxer::Box(anon);
         }
 
         count++;

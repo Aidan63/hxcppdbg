@@ -3,11 +3,13 @@ package hxcppdbg.core.drivers.dbgeng;
 import cpp.NativeGc;
 import haxe.Exception;
 import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.NamedModelData;
+import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
-class DbgEngClassFields implements IKeyable<String>
+class DbgEngClassFields implements IKeyable<String, NamedModelData>
 {
-    final model : cpp.Pointer<IDbgEngKeyable<String>>;
+    final model : cpp.Pointer<IDbgEngKeyable<String, { name : String, data : NativeModelData }>>;
 
     public function new(_model)
     {
@@ -33,6 +35,11 @@ class DbgEngClassFields implements IKeyable<String>
 
 	public function at(_index : Int)
     {
-		return try Result.Success(model.ptr.at(_index).toModelData()) catch (exn) Result.Error(exn);
+		return try Result.Success(toNamedModelData(model.ptr.at(_index))) catch (exn) Result.Error(exn);
 	}
+
+    function toNamedModelData(_result : { name : String, data : NativeModelData })
+    {
+        return new NamedModelData(_result.name, _result.data.toModelData());
+    }
 }

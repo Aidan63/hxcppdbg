@@ -82,7 +82,7 @@ class DapSession
 
     function write(_content : String, _callback : Option<Code>->Void)
     {
-        Sys.println('OUT : $_content');
+        // Sys.println('OUT : $_content');
 
         final str  = 'Content-Length: ${ _content.length }\r\n\r\n$_content';
         final data = Bytes.ofString(str);

@@ -4,6 +4,7 @@
 #include "models/LazyMap.hpp"
 #include "models/extensions/Utils.hpp"
 #include "fmt/xchar.h"
+#include "../extensions/AnonBoxer.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::map::ModelHash::ModelHash(std::wstring _element)
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(fmt::to_wstring(fmt::format(L"hx::Hash<{0}>", _element)))
@@ -41,12 +42,22 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
         {
             if (count == _index)
             {
-                auto v = current.FieldValue(L"value");
+                auto nameObj = current.FieldValue(L"key");
+                auto name    = nameObj.Type().IsIntrinsic()
+                    ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(nameObj)
+                    : nameObj.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 
-                return
-                    v.Type().IsIntrinsic()
-                        ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(v)
-                        : v.KeyValue(L"HxcppdbgModelData");
+                auto dataObj = current.FieldValue(L"value");
+                auto data    = dataObj.Type().IsIntrinsic()
+                    ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(dataObj)
+                    : dataObj.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+
+                auto anon = hx::Anon(2);
+
+                anon->setFixed(0, HX_CSTRING("name"), name);
+                anon->setFixed(1, HX_CSTRING("data"), data);
+
+                return hxcppdbg::core::drivers::dbgeng::native::models::extensions::AnonBoxer::Box(anon);
             }
 
             count++;

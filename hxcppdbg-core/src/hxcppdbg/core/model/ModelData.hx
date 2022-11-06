@@ -13,12 +13,12 @@ enum ModelData
     MBool(b : Bool);
     MString(s : String);
 
-    MArray(model : Indexable);
-    MMap(_type : Keyable<ModelData>);
+    MArray(model : Indexable<ModelData>);
+    MMap(_type : Keyable<ModelData, KeyValuePair>);
     
-    MEnum(type : GeneratedType, constructor : String, arguments : Indexable);
+    MEnum(type : GeneratedType, constructor : String, arguments : Indexable<ModelData>);
     MDynamic(inner : ModelData);
-    MAnon(model : Keyable<String>);
-    MClass(type : GeneratedType, model : Keyable<String>);
+    MAnon(model : Keyable<String, NamedModelData>);
+    MClass(type : GeneratedType, model : Keyable<String, NamedModelData>);
     MUnknown(type : String);
 }

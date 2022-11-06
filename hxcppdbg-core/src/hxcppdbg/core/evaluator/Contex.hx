@@ -7,12 +7,13 @@ import hscript.Printer;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.model.NamedModelData;
 
 using Lambda;
 
 class Context
 {
-    final locals : Keyable<String>;
+    final locals : Keyable<String, NamedModelData>;
 
     final parser : Parser;
 

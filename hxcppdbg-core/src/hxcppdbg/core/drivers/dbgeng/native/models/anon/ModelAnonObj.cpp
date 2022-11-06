@@ -3,6 +3,7 @@
 #include "models/anon/ModelAnonObj.hpp"
 #include "models/LazyAnonFields.hpp"
 #include "NativeModelData.hpp"
+#include "../extensions/AnonBoxer.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::anon::ModelAnonObj::ModelAnonObj()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"hx::Anon_obj"))
@@ -45,9 +46,9 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
 
     for (auto i = 0; i < fixedCount; i++)
     {
-        if (variants[i].GetValue().KeyValue(L"Key").KeyValue(L"String").As<std::wstring>() == _field)
+        if (variants[i].GetValue().KeyValue(L"Key").As<std::wstring>() == _field)
         {
-            return variants[i].GetValue().KeyValue(L"HxcppdbgModelData");
+            return variants[i].GetValue().KeyValue(L"Value");
         }
     }
 
@@ -74,8 +75,16 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
     if (_index < fixedCount)
     {
         auto variants = _object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, _object, L"(hx::Anon_obj::VariantKey *)(self + 1)");
+        auto object   = variants[_index].GetValue();
 
-        return variants[_index].GetValue().KeyValue(L"HxcppdbgModelData");
+        auto anon = hx::Anon(2);
+        auto name = String::create(object.KeyValue(L"Key").As<std::wstring>().c_str());
+        auto data = object.KeyValue(L"Value").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+
+        anon->setFixed(0, HX_CSTRING("name"), name);
+        anon->setFixed(1, HX_CSTRING("data"), data);
+
+        return hxcppdbg::core::drivers::dbgeng::native::models::extensions::AnonBoxer::Box(anon);
     }
 
     auto dynFields = _object.FieldValue(L"mFields").FieldValue(L"mPtr");

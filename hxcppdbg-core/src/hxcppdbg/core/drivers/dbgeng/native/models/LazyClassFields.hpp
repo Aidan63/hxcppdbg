@@ -5,10 +5,11 @@
 #endif
 
 #include "models/IDbgEngKeyable.hpp"
+#include "DbgModelClientEx.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class LazyClassFields : public IDbgEngKeyable<String>
+    class LazyClassFields : public IDbgEngKeyable<String, Dynamic>
     {
     private:
         Debugger::DataModel::ClientEx::Object cls;
@@ -17,7 +18,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         LazyClassFields(const Debugger::DataModel::ClientEx::Object&);
 
         int count();
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int);
+        Dynamic at(const int);
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const String);
     };
 }

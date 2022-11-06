@@ -3,6 +3,7 @@
 #include "LazyLocalStore.hpp"
 #include "NativeModelData.hpp"
 #include "models/extensions/Utils.hpp"
+#include "extensions/AnonBoxer.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::LazyLocalStore(
     Debugger::DataModel::ClientEx::Details::ObjectKeysRef<Debugger::DataModel::ClientEx::Object, Debugger::DataModel::ClientEx::Metadata> _fields)
@@ -23,7 +24,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::count()
     return count;
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::at(const int _index)
+Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::at(const int _index)
 {
     try
     {
@@ -33,13 +34,19 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
         {
             if (count == _index)
             {
-                auto object = std::get<1>(field).GetValue();
-                auto type   = object.Type();
+                auto name    = String::create(std::get<0>(field).c_str());
+                auto dataObj = std::get<1>(field).GetValue();
+                auto type    = dataObj.Type();
+                auto data    = type.IsIntrinsic()
+                    ? extensions::intrinsicObjectToHxcppdbgModelData(dataObj)
+                    : dataObj.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 
-                return
-                    type.IsIntrinsic()
-                        ? extensions::intrinsicObjectToHxcppdbgModelData(object)
-                        : object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+                auto anon = hx::Anon(2);
+
+                anon->setFixed(0, HX_CSTRING("name"), name);
+                anon->setFixed(1, HX_CSTRING("data"), data);
+
+                return anon;
             }
 
             count++;

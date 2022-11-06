@@ -5,11 +5,12 @@
 #endif
 
 #include "models/IDbgEngKeyable.hpp"
+#include "DbgModelClientEx.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
     template <class TKey>
-    class LazyMap : public IDbgEngKeyable<TKey>
+    class LazyMap : public IDbgEngKeyable<TKey, Dynamic>
     {
     private:
         Debugger::DataModel::ClientEx::Object map;
@@ -33,7 +34,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
             }
         }
 
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int _index)
+        Dynamic at(const int _index)
         {
             try
             {
@@ -59,7 +60,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     };
 
     template<>
-    class LazyMap<String> : public IDbgEngKeyable<String>
+    class LazyMap<String> : public IDbgEngKeyable<String, Dynamic>
     {
     private:
         Debugger::DataModel::ClientEx::Object map;
@@ -83,7 +84,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
             }
         }
 
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int _index)
+        Dynamic at(const int _index)
         {
             try
             {

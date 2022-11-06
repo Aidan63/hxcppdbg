@@ -24,6 +24,7 @@
         <file name='${DbgEngDir}/models/LazyClassFields.cpp'/>
         <file name='${DbgEngDir}/models/LazyLocalStore.cpp'/>
         <file name='${DbgEngDir}/models/extensions/HxcppdbgExtensionModel.cpp'/>
+        <file name='${DbgEngDir}/models/extensions/AnonBoxer.cpp'/>
         <file name='${DbgEngDir}/models/extensions/Utils.cpp'/>
         <file name='${DbgEngDir}/models/ModelObjectPtr.cpp'/>
         <file name='${DbgEngDir}/models/basic/ModelString.cpp'/>

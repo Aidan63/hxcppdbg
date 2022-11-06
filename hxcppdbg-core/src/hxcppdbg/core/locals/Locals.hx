@@ -66,7 +66,7 @@ class Locals
         }
     }
 
-    public function getArguments(_thread, _frame, _callback : Result<Keyable<String>, Exception>->Void)
+    public function getArguments(_thread, _frame, _callback : Result<LocalStore, Exception>->Void)
     {
         _callback(Result.Error(new NotImplementedException()));
 

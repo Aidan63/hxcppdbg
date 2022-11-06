@@ -1,5 +1,7 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import hxcppdbg.core.model.NamedModelData;
+import hxcppdbg.core.model.KeyValuePair;
 import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.Indexable;
@@ -20,13 +22,13 @@ extern enum NativeModelData
     NBool(b : Bool);
 
     HxString(s : String);
-    HxArray(model : cpp.Pointer<IDbgEngIndexable>);
-    HxIntMap(model : cpp.Pointer<IDbgEngKeyable<Int>>);
-    HxStringMap(model : cpp.Pointer<IDbgEngKeyable<String>>);
+    HxArray(model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
+    HxIntMap(model : cpp.Pointer<IDbgEngKeyable<Int, { key : NativeModelData, value : NativeModelData }>>);
+    HxStringMap(model : cpp.Pointer<IDbgEngKeyable<String, { key : NativeModelData, value : NativeModelData }>>);
 
-    HxEnum(type : GeneratedType, tag : String, model : cpp.Pointer<IDbgEngIndexable>);
-    HxAnon(model : cpp.Pointer<IDbgEngKeyable<String>>);
-    HxClass(type : GeneratedType, model : cpp.Pointer<IDbgEngKeyable<String>>);
+    HxEnum(type : GeneratedType, tag : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
+    HxAnon(model : cpp.Pointer<IDbgEngKeyable<String, { name : String, data : NativeModelData }>>);
+    HxClass(type : GeneratedType, model : cpp.Pointer<IDbgEngKeyable<String, { name : String, data : NativeModelData }>>);
 }
 
 class NativeModelDataTools
@@ -48,15 +50,15 @@ class NativeModelDataTools
             case HxArray(model):
                 ModelData.MArray(new Indexable(new DbgEngArrayModel(model)));
             case HxIntMap(model):
-                ModelData.MMap(new Keyable<ModelData>(new DbgEngIntMapModel(model)));
+                ModelData.MMap(new Keyable<ModelData, KeyValuePair>(new DbgEngIntMapModel(model)));
             case HxStringMap(model):
-                ModelData.MMap(new Keyable<ModelData>(new DbgEngStringMapModel(model)));
+                ModelData.MMap(new Keyable<ModelData, KeyValuePair>(new DbgEngStringMapModel(model)));
             case HxEnum(type, tag, model):
-                ModelData.MEnum(type, tag, new Indexable(new DbgEngEnumArguments(model)));
+                ModelData.MEnum(type, tag, new Indexable<ModelData>(new DbgEngEnumArguments(model)));
             case HxAnon(model):
-                ModelData.MAnon(new Keyable<String>(new DbgEngAnonModel(model)));
+                ModelData.MAnon(new Keyable<String, NamedModelData>(new DbgEngAnonModel(model)));
             case HxClass(type, model):
-                ModelData.MClass(type, new Keyable<String>(new DbgEngClassFields(model)));
+                ModelData.MClass(type, new Keyable<String, NamedModelData>(new DbgEngClassFields(model)));
         }
     }
 }

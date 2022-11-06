@@ -5,11 +5,12 @@ import haxe.ds.ReadOnlyArray;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.model.NamedModelData;
 import hxcppdbg.core.sourcemap.Sourcemap;
 
 using Lambda;
 
-class LocalStore extends Keyable<String>
+class LocalStore extends Keyable<String, NamedModelData>
 {
     final sourcemap : ReadOnlyArray<NameMap>;
 

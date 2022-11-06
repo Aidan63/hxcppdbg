@@ -1,6 +1,7 @@
 #include <hxcpp.h>
 #include "LazyClassFields.hpp"
 #include "NativeModelData.hpp"
+#include "extensions/AnonBoxer.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::LazyClassFields(const Debugger::DataModel::ClientEx::Object& _cls)
     : cls(Debugger::DataModel::ClientEx::Object(_cls))
@@ -20,11 +21,11 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::count()
     }
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::at(const int _index)
+Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::at(const int _index)
 {
     try
     {
-        return cls.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+        return extensions::AnonBoxer::Unbox(cls.CallMethod(L"At", _index));
     }
     catch (const std::exception& exn)
     {
