@@ -77,7 +77,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
         auto variants = _object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, _object, L"(hx::Anon_obj::VariantKey *)(self + 1)");
         auto object   = variants[_index].GetValue();
 
-        auto anon = hx::Anon(2);
+        auto anon = hx::Anon_obj::Create(2);
         auto name = String::create(object.KeyValue(L"Key").As<std::wstring>().c_str());
         auto data = object.KeyValue(L"Value").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 

@@ -52,7 +52,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
                     ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(dataObj)
                     : dataObj.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 
-                auto anon = hx::Anon(2);
+                auto anon = hx::Anon_obj::Create(2);
 
                 anon->setFixed(0, HX_CSTRING("name"), name);
                 anon->setFixed(1, HX_CSTRING("data"), data);
