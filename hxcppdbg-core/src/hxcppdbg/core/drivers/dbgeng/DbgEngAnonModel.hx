@@ -8,7 +8,7 @@ import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
 class DbgEngAnonModel implements IKeyable<String, NamedModelData>
 {
-    final model : cpp.Pointer<IDbgEngKeyable<String, { name : String, data : NativeModelData }>>;
+    final model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>;
 
     public function new(_model)
     {
@@ -37,7 +37,7 @@ class DbgEngAnonModel implements IKeyable<String, NamedModelData>
         return try Result.Success(toNamedModelData(model.ptr.at(_index))) catch (exn) Result.Error(exn);
     }
 
-    function toNamedModelData(_result : { name : String, data : NativeModelData })
+    function toNamedModelData(_result : NamedNativeModelData)
     {
         return new NamedModelData(_result.name, _result.data.toModelData());
     }

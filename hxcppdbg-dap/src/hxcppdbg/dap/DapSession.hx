@@ -400,6 +400,8 @@ class DapSession
                                 switch result
                                 {
                                     case Success(run):
+                                        variables.clear();
+
                                         run(onRunCallback);
 
                                         _resolve(Outcome.Success(null));
@@ -425,6 +427,8 @@ class DapSession
                                 switch result
                                 {
                                     case Success(opt):
+                                        variables.clear();
+
                                         respond(_request, Outcome.Success(null))
                                             .flatMap(_ -> interruptOptionToEvent(opt, 'step', _request.arguments.threadId))
                                             .handle(_resolve);

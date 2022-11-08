@@ -8,8 +8,8 @@
 hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::ModelArrayObj()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"Array_obj<*>"))
 {
-    AddMethod(L"At", this, &hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::at);
-    AddMethod(L"Count", this, &hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::count);
+    AddMethod(L"At", this, &ModelArrayObj::at);
+    AddMethod(L"Count", this, &ModelArrayObj::count);
     AddReadOnlyProperty(L"ParamName", &ModelArrayObj::getParamName);
     AddReadOnlyProperty(L"ParamSize", &ModelArrayObj::getParamSize);
 }

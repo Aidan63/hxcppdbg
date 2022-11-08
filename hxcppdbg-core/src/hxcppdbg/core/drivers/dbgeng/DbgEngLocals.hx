@@ -1,12 +1,11 @@
 package hxcppdbg.core.drivers.dbgeng;
 
-import hxcppdbg.core.model.NamedModelData;
-import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 import cpp.Pointer;
 import sys.thread.Thread;
 import haxe.Exception;
 import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.NamedModelData;
 import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 
 using hxcppdbg.core.utils.ResultUtils;

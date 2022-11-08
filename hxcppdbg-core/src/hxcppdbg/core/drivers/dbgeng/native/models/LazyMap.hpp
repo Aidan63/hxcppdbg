@@ -15,10 +15,34 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     {
     private:
         Debugger::DataModel::ClientEx::Object map;
+        std::optional<int> keySize;
+        std::optional<std::wstring> keyName;
+
+        int getKeySize()
+        {
+            if (!keySize.has_value())
+            {
+                keySize.emplace(map.KeyValue(L"KeySize").As<int>());
+            }
+
+            return keySize.value();
+        }
+
+        std::wstring getKeyName()
+        {
+            if (!keyName.has_value())
+            {
+                keyName.emplace(map.KeyValue(L"KeyName").As<std::wstring>());
+            }
+
+            return keyName.value();
+        }
 
     public:
         LazyMap(const Debugger::DataModel::ClientEx::Object& _object)
             : map(Debugger::DataModel::ClientEx::Object(_object))
+            , keyName(std::nullopt)
+            , keySize(std::nullopt)
         {
             //
         }
@@ -39,7 +63,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             try
             {
-                return map.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+                return extensions::AnonBoxer::Unbox(map.CallMethod(L"At", _index, getKeyName(), getKeySize()));
             }
             catch (const std::exception& exn)
             {
@@ -65,10 +89,22 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     {
     private:
         Debugger::DataModel::ClientEx::Object map;
+        std::optional<int> keySize;
+
+        int getKeySize()
+        {
+            if (!keySize.has_value())
+            {
+                keySize.emplace(map.KeyValue(L"KeySize").As<int>());
+            }
+
+            return keySize.value();
+        }
 
     public:
         LazyMap(const Debugger::DataModel::ClientEx::Object& _object)
             : map(Debugger::DataModel::ClientEx::Object(_object))
+            , keySize(std::nullopt)
         {
             //
         }
@@ -89,7 +125,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             try
             {
-                return extensions::AnonBoxer::Unbox(map.CallMethod(L"At", _index));
+                return extensions::AnonBoxer::Unbox(map.CallMethod(L"At", _index, std::wstring(L"String"), getKeySize()));
             }
             catch (const std::exception& exn)
             {
@@ -108,5 +144,11 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
                 hx::Throw(String::create(exn.what()));
             }
         }
+    };
+
+    template<>
+    class LazyMap<Location> : public IDbgEngKeyable<Location, Dynamic>
+    {
+        //
     };
 }

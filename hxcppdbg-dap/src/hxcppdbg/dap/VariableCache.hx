@@ -1,11 +1,11 @@
 package hxcppdbg.dap;
 
-import hxcppdbg.core.model.KeyValuePair;
 import haxe.Exception;
 import hxcppdbg.dap.protocol.data.Variable;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.model.KeyValuePair;
 import hxcppdbg.core.locals.LocalStore;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
@@ -58,6 +58,14 @@ class VariableCache
         index    = 1;
     }
 
+    public function clear()
+    {
+        scopes.clear();
+        models.clear();
+        mapRoots.clear();
+        index = 1;
+    }
+
     public function createScope(_locals : LocalStore)
     {
         final id = index++;
@@ -86,7 +94,7 @@ class VariableCache
         
                                 if (start > length || start + count > length)
                                 {
-                                    Result.Error(new Exception('request out of range of child count'));
+                                    return Result.Error(new Exception('Request out of range'));
                                 }
                                 
                                 for (i in start...(start + count))
@@ -111,13 +119,12 @@ class VariableCache
                                                             0;
                                                     };
                                                 case MMap(model):
-                                                    output[output.length - 1].namedVariables = switch model.count()
-                                                    {
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
                                                         case Success(v):
                                                             v;
                                                         case Error(_):
                                                             0;
-                                                    }
+                                                    };
                                                 case MAnon(model), MClass(_, model):
                                                     output[output.length - 1].namedVariables = switch model.count()
                                                     {
@@ -130,7 +137,7 @@ class VariableCache
                                                     //
                                             }
                                         case Error(exn):
-                                            //
+                                            // return Result.Error(new Exception('Failed to get variable $i', exn));
                                     }
                                 }
                                 
@@ -181,13 +188,12 @@ class VariableCache
                                                             0;
                                                     };
                                                 case MMap(model):
-                                                    output[output.length - 1].namedVariables = switch model.count()
-                                                    {
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
                                                         case Success(v):
                                                             v;
                                                         case Error(_):
                                                             0;
-                                                    }
+                                                    };
                                                 case MAnon(model), MClass(_, model):
                                                     output[output.length - 1].namedVariables = switch model.count()
                                                     {
@@ -200,7 +206,7 @@ class VariableCache
                                                     //
                                             }
                                         case Error(exn):
-                                            //
+                                            // return Result.Error(new Exception('Failed to get child at index $i', exn));
                                     }
                                 }
                                 
@@ -233,7 +239,7 @@ class VariableCache
                                                 namedVariables     : 2
                                             });
                                         case Error(exn):
-                                            trace('failed at');
+                                            // return Result.Error(new Exception('Failed to get child at index $i', exn));
                                     }
                                 }
 
@@ -276,13 +282,12 @@ class VariableCache
                                                             0;
                                                     };
                                                 case MMap(model):
-                                                    output[output.length - 1].namedVariables = switch model.count()
-                                                    {
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
                                                         case Success(v):
                                                             v;
                                                         case Error(_):
                                                             0;
-                                                    }
+                                                    };
                                                 case MAnon(model), MClass(_, model):
                                                     output[output.length - 1].namedVariables = switch model.count()
                                                     {
@@ -295,7 +300,7 @@ class VariableCache
                                                     //
                                             }
                                         case Error(exn):
-                                            //
+                                            // return Result.Error(new Exception('Failed to get child at index $i', exn));
                                     }
                                 }
 
@@ -352,17 +357,5 @@ class VariableCache
         mapRoots[id] = _pair;
 
         return new VariableReference(ReferenceType.KeyValue, id);
-    }
-
-    static function printType(_type : GeneratedType)
-    {
-        return if (_type.module != _type.name)
-        {
-            '${ _type.pack.join('.') }.${ _type.module }.${ _type.name }';
-        }
-        else
-        {
-            '${ _type.pack.join('.') }.${ _type.name }';
-        }
     }
 }
