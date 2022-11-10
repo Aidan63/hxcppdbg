@@ -5,15 +5,12 @@
 #endif
 
 #include "models/IDbgEngKeyable.hpp"
-#include "DbgModelClientEx.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
     class LazyAnonFields : public IDbgEngKeyable<String, Dynamic>
     {
     private:
-        Debugger::DataModel::ClientEx::Object anon;
-
     public:
         LazyAnonFields(const Debugger::DataModel::ClientEx::Object&);
 

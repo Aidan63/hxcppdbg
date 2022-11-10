@@ -4,7 +4,7 @@
 #include "extensions/AnonBoxer.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::LazyClassFields(const Debugger::DataModel::ClientEx::Object& _cls)
-    : cls(Debugger::DataModel::ClientEx::Object(_cls))
+    : IDbgEngKeyable<String, Dynamic>(_cls)
 {
     //
 }
@@ -13,7 +13,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::count()
 {
     try
     {
-        return cls.CallMethod(L"Count").As<int>();
+        return object.CallMethod(L"Count").As<int>();
     }
     catch (const std::exception& exn)
     {
@@ -25,7 +25,7 @@ Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields::at(con
 {
     try
     {
-        return extensions::AnonBoxer::Unbox(cls.CallMethod(L"At", _index));
+        return extensions::AnonBoxer::Unbox(object.CallMethod(L"At", _index));
     }
     catch (const std::exception& exn)
     {
@@ -37,7 +37,7 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 {
     try
     {
-        return cls.CallMethod(L"Get", std::wstring(_field.wchar_str())).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+        return object.CallMethod(L"Get", std::wstring(_field.wchar_str())).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
     }
     catch (const std::exception& exn)
     {

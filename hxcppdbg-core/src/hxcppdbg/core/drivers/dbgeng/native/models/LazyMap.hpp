@@ -14,7 +14,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     class LazyMap : public IDbgEngKeyable<TKey, Dynamic>
     {
     private:
-        Debugger::DataModel::ClientEx::Object map;
         std::optional<int> keySize;
         std::optional<std::wstring> keyName;
 
@@ -22,7 +21,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             if (!keySize.has_value())
             {
-                keySize.emplace(map.KeyValue(L"KeySize").As<int>());
+                keySize.emplace(object.KeyValue(L"KeySize").As<int>());
             }
 
             return keySize.value();
@@ -32,7 +31,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             if (!keyName.has_value())
             {
-                keyName.emplace(map.KeyValue(L"KeyName").As<std::wstring>());
+                keyName.emplace(object.KeyValue(L"KeyName").As<std::wstring>());
             }
 
             return keyName.value();
@@ -40,7 +39,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
 
     public:
         LazyMap(const Debugger::DataModel::ClientEx::Object& _object)
-            : map(Debugger::DataModel::ClientEx::Object(_object))
+            : IDbgEngKeyable<TKey, Dynamic>(_object)
             , keyName(std::nullopt)
             , keySize(std::nullopt)
         {
@@ -51,7 +50,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             try
             {
-                return map.CallMethod(L"Count").As<int>();
+                return object.CallMethod(L"Count").As<int>();
             }
             catch (const std::exception& exn)
             {
@@ -63,7 +62,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             try
             {
-                return extensions::AnonBoxer::Unbox(map.CallMethod(L"At", _index, getKeyName(), getKeySize()));
+                return extensions::AnonBoxer::Unbox(object.CallMethod(L"At", _index, getKeyName(), getKeySize()));
             }
             catch (const std::exception& exn)
             {
@@ -71,73 +70,23 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
             }
         }
 
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const TKey _key)
-        {
-            try
-            {
-                return map.CallMethod(L"Get", _key).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
-            }
-            catch (const std::exception& exn)
-            {
-                hx::Throw(String::create(exn.what()));
-            }
-        }
+        virtual hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const TKey _key) = 0;
     };
 
-    template<>
-    class LazyMap<String> : public IDbgEngKeyable<String, Dynamic>
+    class LazyIntMap : public LazyMap<int>
     {
-    private:
-        Debugger::DataModel::ClientEx::Object map;
-        std::optional<int> keySize;
-
-        int getKeySize()
-        {
-            if (!keySize.has_value())
-            {
-                keySize.emplace(map.KeyValue(L"KeySize").As<int>());
-            }
-
-            return keySize.value();
-        }
-
     public:
-        LazyMap(const Debugger::DataModel::ClientEx::Object& _object)
-            : map(Debugger::DataModel::ClientEx::Object(_object))
-            , keySize(std::nullopt)
+        LazyIntMap(const Debugger::DataModel::ClientEx::Object& _object)
+            : LazyMap<int>(_object)
         {
             //
         }
 
-        int count()
+        NativeModelData get(const int _key)
         {
             try
             {
-                return map.CallMethod(L"Count").As<int>();
-            }
-            catch (const std::exception& exn)
-            {
-                hx::Throw(String::create(exn.what()));
-            }
-        }
-
-        Dynamic at(const int _index)
-        {
-            try
-            {
-                return extensions::AnonBoxer::Unbox(map.CallMethod(L"At", _index, std::wstring(L"String"), getKeySize()));
-            }
-            catch (const std::exception& exn)
-            {
-                hx::Throw(String::create(exn.what()));
-            }
-        }
-
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const String _key)
-        {
-            try
-            {
-                return map.CallMethod(L"Get", std::wstring(_key.wchar_str())).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+                return object.CallMethod(L"Get", _key).As<NativeModelData>();
             }
             catch (const std::exception& exn)
             {
@@ -146,9 +95,70 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         }
     };
 
-    template<>
-    class LazyMap<Location> : public IDbgEngKeyable<Location, Dynamic>
+    class LazyInt64Map : public LazyMap<cpp::Int64>
     {
-        //
+    public:
+        LazyInt64Map(const Debugger::DataModel::ClientEx::Object& _object)
+            : LazyMap<cpp::Int64>(_object)
+        {
+            //
+        }
+
+        NativeModelData get(const cpp::Int64 _key)
+        {
+            try
+            {
+                return object.CallMethod(L"Get", _key).As<NativeModelData>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
+        }
     };
+
+    class LazyStringMap : public LazyMap<String>
+    {
+    public:
+        LazyStringMap(const Debugger::DataModel::ClientEx::Object& _object)
+            : LazyMap<String>(_object)
+        {
+            //
+        }
+
+        NativeModelData get(const String _key)
+        {
+            try
+            {
+                return object.CallMethod(L"Get", std::wstring(_key.wchar_str())).As<NativeModelData>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
+        }
+    };
+
+    // template<class TAny>
+    // class LazyObjectMap : public LazyMap<cpp::Pointer<IDbgEngIndexable<TAny>>>
+    // {
+    // public:
+    //     LazyObjectMap(const Debugger::DataModel::ClientEx::Object& _object)
+    //         : LazyMap<cpp::Pointer<IDbgEngIndexable<TAny>>>(_object)
+    //     {
+    //         //
+    //     }
+
+    //     NativeModelData get(const cpp::Pointer<IDbgEngIndexable<TAny>> _key)
+    //     {
+    //         try
+    //         {
+    //             return object.CallMethod(L"Get", _key.ptr->object.FieldValue(L"cachedHash")).As<NativeModelData>();
+    //         }
+    //         catch (const std::exception& exn)
+    //         {
+    //             hx::Throw(String::create(exn.what()));
+    //         }
+    //     }
+    // };
 }

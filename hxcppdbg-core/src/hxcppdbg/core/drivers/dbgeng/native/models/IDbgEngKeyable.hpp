@@ -14,6 +14,12 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     class IDbgEngKeyable : public IDbgEngIndexable<TValue>
     {
     public:
+        IDbgEngKeyable(const Debugger::DataModel::ClientEx::Object& _object)
+            : IDbgEngIndexable(_object)
+        {
+            //
+        }
+
         virtual hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const TKey) = 0;
     };
 }

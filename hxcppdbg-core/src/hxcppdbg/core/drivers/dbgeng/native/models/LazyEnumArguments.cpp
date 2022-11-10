@@ -4,7 +4,7 @@
 #include "fmt/xchar.h"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::LazyEnumArguments(const Debugger::DataModel::ClientEx::Object& _object)
-    : object(Debugger::DataModel::ClientEx::Object(_object))
+    : IDbgEngIndexable<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>(_object)
 {
     //
 }

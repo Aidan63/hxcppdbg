@@ -5,9 +5,8 @@
 #include "models/extensions/Utils.hpp"
 #include "extensions/AnonBoxer.hpp"
 
-hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::LazyLocalStore(
-    Debugger::DataModel::ClientEx::Details::ObjectKeysRef<Debugger::DataModel::ClientEx::Object, Debugger::DataModel::ClientEx::Metadata> _fields)
-        : fields(_fields)
+hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::LazyLocalStore(const Debugger::DataModel::ClientEx::Object& _object)
+    : IDbgEngKeyable<String, Dynamic>(_object)
 {
     //
 }
@@ -16,7 +15,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::count()
 {
     auto count = 0;
 
-    for (auto&& _ : fields)
+    for (auto&& _ : object.Keys())
     {
         count++;
     }
@@ -30,7 +29,7 @@ Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::at(cons
     {
         auto count = 0;
 
-        for (auto&& field : fields)
+        for (auto&& field : object.Keys())
         {
             if (count == _index)
             {
@@ -64,13 +63,13 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 {
     try
     {
-        auto object = fields[_name.wchar_str()].GetValue();
-        auto type   = object.Type();
+        auto field = object.KeyValue(_name.wchar_str());
+        auto type  = field.Type();
 
         return
             type.IsIntrinsic()
-                ? extensions::intrinsicObjectToHxcppdbgModelData(object)
-                : object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+                ? extensions::intrinsicObjectToHxcppdbgModelData(field)
+                : field.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
     }
     catch (const std::exception& exn)
     {

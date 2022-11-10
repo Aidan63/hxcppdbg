@@ -484,7 +484,7 @@ cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::IDbgEngKeyable<Str
 		auto findFrame  = [_frameIndex](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object frame) { return ULONG{ frame.KeyValue(L"Attributes").KeyValue(L"FrameNumber") } == _frameIndex; };
 		auto frame      = thread.KeyValue(L"Stack").KeyValue(L"Frames").CallMethod(L"First", findFrame);
 
-		return new hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore(frame.KeyValue(L"LocalVariables").Keys());
+		return new hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore(frame.KeyValue(L"LocalVariables"));
 	}
 	catch (const std::exception& exn)
 	{

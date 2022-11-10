@@ -3,7 +3,7 @@
 #include "NativeModelData.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::LazyArray(const Debugger::DataModel::ClientEx::Object& _object)
-    : array(Debugger::DataModel::ClientEx::Object(_object))
+    : IDbgEngIndexable<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>(_object)
     , paramSize(std::nullopt)
     , paramName(std::nullopt)
 {
@@ -14,7 +14,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::getParamSize()
 {
     if (!paramSize.has_value())
     {
-        paramSize.emplace(array.KeyValue(L"ParamSize").As<int>());
+        paramSize.emplace(object.KeyValue(L"ParamSize").As<int>());
     }
 
     return paramSize.value();
@@ -24,7 +24,7 @@ std::wstring hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::getPara
 {
     if (!paramName.has_value())
     {
-        paramName.emplace(array.KeyValue(L"ParamName").As<std::wstring>());
+        paramName.emplace(object.KeyValue(L"ParamName").As<std::wstring>());
     }
 
     return paramName.value();
@@ -34,7 +34,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyArray::count()
 {
     try
     {
-        return array.CallMethod(L"Count").As<int>();
+        return object.CallMethod(L"Count").As<int>();
     }
     catch (const std::exception& exn)
     {
@@ -46,7 +46,7 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 {
     try
     {
-        return array.CallMethod(L"At", _index, getParamName(), getParamSize()).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+        return object.CallMethod(L"At", _index, getParamName(), getParamSize()).As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
     }
     catch (const std::exception& exn)
     {
