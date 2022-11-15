@@ -19,15 +19,39 @@ class Printer
             case MString(s):
                 '"$s"';
             case MArray(items):
-                '[ ${ items.count() } items ]';
+                switch items.count()
+                {
+                    case Success(v):
+                        '[ $v items ]';
+                    case Error(exn):
+                        exn.message;
+                }
             case MMap(items):
-                '[ ${ items.count() } keys ]';
+                switch items.count()
+                {
+                    case Success(v):
+                        '[ $v keys ]';
+                    case Error(exn):
+                        exn.message;
+                }
             case MEnum(_, constructor, arguments):
-                '$constructor( ${ arguments.count() } args )';
+                switch arguments.count()
+                {
+                    case Success(v):
+                        '$constructor( $v args )';
+                    case Error(exn):
+                        exn.message;
+                }
             case MDynamic(inner):
                 printModelData(inner);
             case MAnon(fields):
-                '{ ${ fields.count() } fields }';
+                switch fields.count()
+                {
+                    case Success(v):
+                        '{ $v fields }';
+                    case Error(exn):
+                        exn.message;
+                }
             case MClass(_, fields):
                 '{ }';
             case MUnknown(type):
