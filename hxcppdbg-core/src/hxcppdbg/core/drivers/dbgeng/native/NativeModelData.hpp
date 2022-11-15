@@ -32,6 +32,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
             THxArray,
             THxIntMap,
             THxStringMap,
+            THxDynamicMap,
             THxEnum,
             THxAnon,
             THxClass
@@ -60,10 +61,12 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Dynamic HxString_dyn();
         static NativeModelData HxArray(cpp::Pointer<models::LazyArray>);
         static Dynamic HxArray_dyn();
-        static NativeModelData HxIntMap(cpp::Pointer<models::LazyMap<int>>);
+        static NativeModelData HxIntMap(cpp::Pointer<models::LazyIntMap>);
         static Dynamic HxIntMap_dyn();
-        static NativeModelData HxStringMap(cpp::Pointer<models::LazyMap<String>>);
+        static NativeModelData HxStringMap(cpp::Pointer<models::LazyStringMap>);
         static Dynamic HxStringMap_dyn();
+        static NativeModelData HxDynamicMap(cpp::Pointer<models::LazyDynamicMap>);
+        static Dynamic HxDynamicMap_dyn();
         static NativeModelData HxEnum(hxcppdbg::core::sourcemap::GeneratedType, String, cpp::Pointer<models::LazyEnumArguments>);
         static Dynamic HxEnum_dyn();
         static NativeModelData HxAnon(cpp::Pointer<models::LazyAnonFields>);

@@ -8,9 +8,9 @@ hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelDynamic::ModelDyn
     //
 }
 
-Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelDynamic::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelDynamic::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& _object)
 {
-    auto ptr = object.FieldValue(L"mPtr");
+    auto ptr = _object.FieldValue(L"mPtr");
     if (ptr.As<ULONG64>() == NULL)
     {
         return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();

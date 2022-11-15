@@ -15,6 +15,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::extensions
         HxcppdbgExtensionModel(std::wstring signature);
         HxcppdbgExtensionModel(const char16_t* signature);
 
-        virtual Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object) = 0;
+        virtual Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object&) = 0;
     };
 }

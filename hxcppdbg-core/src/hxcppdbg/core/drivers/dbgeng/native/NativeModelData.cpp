@@ -50,14 +50,19 @@ NativeModelData NativeModelData_obj::HxArray(cpp::Pointer<hxcppdbg::core::driver
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxArray"), Type::THxArray, 1)->_hx_init(0, a);
 }
 
-NativeModelData NativeModelData_obj::HxIntMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap<int>> m)
+NativeModelData NativeModelData_obj::HxIntMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyIntMap> m)
 {
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxIntMap"), Type::THxIntMap, 1)->_hx_init(0, m);
 }
 
-NativeModelData NativeModelData_obj::HxStringMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyMap<String>> m)
+NativeModelData NativeModelData_obj::HxStringMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyStringMap> m)
 {
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxStringMap"), Type::THxStringMap, 1)->_hx_init(0, m);
+}
+
+NativeModelData NativeModelData_obj::HxDynamicMap(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyDynamicMap> m)
+{
+    return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxDynamicMap"), Type::THxDynamicMap, 1)->_hx_init(0, m);
 }
 
 NativeModelData NativeModelData_obj::HxEnum(hxcppdbg::core::sourcemap::GeneratedType _type, String _tag, cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments> _args)
@@ -84,7 +89,8 @@ bool NativeModelData_obj::__GetStatic(const String &_inName, Dynamic &_outValue,
     if (_inName == HX_CSTRING("HxString")) { _outValue = NativeModelData_obj::HxString_dyn(); return true; }
     if (_inName == HX_CSTRING("HxArray")) { _outValue = NativeModelData_obj::HxArray_dyn(); return true; }
     if (_inName == HX_CSTRING("HxIntMap")) { _outValue = NativeModelData_obj::HxIntMap_dyn(); return true; }
-    if (_inName == HX_CSTRING("HxIntMap")) { _outValue = NativeModelData_obj::HxStringMap_dyn(); return true; }
+    if (_inName == HX_CSTRING("HxStringMap")) { _outValue = NativeModelData_obj::HxStringMap_dyn(); return true; }
+    if (_inName == HX_CSTRING("HxDynamicMap")) { _outValue = NativeModelData_obj::HxDynamicMap_dyn(); return true; }
     if (_inName == HX_CSTRING("HxEnum")) { _outValue = NativeModelData_obj::HxEnum_dyn(); return true; }
     if (_inName == HX_CSTRING("HxAnon")) { _outValue = NativeModelData_obj::HxAnon_dyn(); return true; }
     if (_inName == HX_CSTRING("HxClass")) { _outValue = NativeModelData_obj::HxClass_dyn(); return true; }
@@ -101,6 +107,7 @@ hx::Val NativeModelData_obj::__Field(const String &_inName, hx::PropertyAccess _
     if (_inName == HX_CSTRING("HxArray")) return NativeModelData_obj::HxArray_dyn();
     if (_inName == HX_CSTRING("HxIntMap")) return NativeModelData_obj::HxIntMap_dyn();
     if (_inName == HX_CSTRING("HxStringMap")) return NativeModelData_obj::HxStringMap_dyn();
+    if (_inName == HX_CSTRING("HxDynamicMap")) return NativeModelData_obj::HxDynamicMap_dyn();
     if (_inName == HX_CSTRING("HxEnum")) return NativeModelData_obj::HxEnum_dyn();
     if (_inName == HX_CSTRING("HxAnon")) return NativeModelData_obj::HxAnon_dyn();
     if (_inName == HX_CSTRING("HxClass")) return NativeModelData_obj::HxClass_dyn();
@@ -117,6 +124,7 @@ int NativeModelData_obj::__FindIndex(::String _inName)
     if (_inName == HX_CSTRING("HxArray")) { return Type::THxArray; }
     if (_inName == HX_CSTRING("HxIntMap")) { return Type::THxIntMap; }
     if (_inName == HX_CSTRING("HxStringMap")) { return Type::THxStringMap; }
+    if (_inName == HX_CSTRING("HxDynamicMap")) { return Type::THxDynamicMap; }
     if (_inName == HX_CSTRING("HxEnum")) { return Type::THxEnum; }
     if (_inName == HX_CSTRING("HxAnon")) { return Type::THxAnon; }
     if (_inName == HX_CSTRING("HxClass")) { return Type::THxClass; }
@@ -133,6 +141,7 @@ int NativeModelData_obj::__FindArgCount(::String _inName)
     if (_inName == HX_CSTRING("HxArray")) { return 1; }
     if (_inName == HX_CSTRING("HxIntMap")) { return 1; }
     if (_inName == HX_CSTRING("HxStringMap")) { return 1; }
+    if (_inName == HX_CSTRING("HxDynamicMap")) { return 1; }
     if (_inName == HX_CSTRING("HxEnum")) { return 3; }
     if (_inName == HX_CSTRING("HxAnon")) { return 1; }
     if (_inName == HX_CSTRING("HxClass")) { return 2; }
@@ -156,6 +165,8 @@ STATIC_HX_DEFINE_DYNAMIC_FUNC1(NativeModelData_obj, HxArray, return)
 STATIC_HX_DEFINE_DYNAMIC_FUNC1(NativeModelData_obj, HxIntMap, return)
 
 STATIC_HX_DEFINE_DYNAMIC_FUNC1(NativeModelData_obj, HxStringMap, return)
+
+STATIC_HX_DEFINE_DYNAMIC_FUNC1(NativeModelData_obj, HxDynamicMap, return)
 
 STATIC_HX_DEFINE_DYNAMIC_FUNC3(NativeModelData_obj, HxEnum, return)
 

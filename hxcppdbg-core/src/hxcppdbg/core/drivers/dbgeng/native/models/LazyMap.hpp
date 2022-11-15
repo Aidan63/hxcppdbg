@@ -86,7 +86,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             try
             {
-                return object.CallMethod(L"Get", _key).As<NativeModelData>();
+                return object.CallMethod(L"Get", _key, static_cast<unsigned int>(_key)).As<NativeModelData>();
             }
             catch (const std::exception& exn)
             {
@@ -108,7 +108,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             try
             {
-                return object.CallMethod(L"Get", _key).As<NativeModelData>();
+                return object.CallMethod(L"Get", _key, static_cast<unsigned int>((_key >> 32) ^ _key)).As<NativeModelData>();
             }
             catch (const std::exception& exn)
             {
@@ -116,7 +116,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
             }
         }
     };
-
+    
     class LazyStringMap : public LazyMap<String>
     {
     public:
@@ -130,7 +130,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         {
             try
             {
-                return object.CallMethod(L"Get", std::wstring(_key.wchar_str())).As<NativeModelData>();
+                return object.CallMethod(L"Get", std::wstring(_key.wchar_str()), _key.hash()).As<NativeModelData>();
             }
             catch (const std::exception& exn)
             {
@@ -139,26 +139,74 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         }
     };
 
-    // template<class TAny>
-    // class LazyObjectMap : public LazyMap<cpp::Pointer<IDbgEngIndexable<TAny>>>
-    // {
-    // public:
-    //     LazyObjectMap(const Debugger::DataModel::ClientEx::Object& _object)
-    //         : LazyMap<cpp::Pointer<IDbgEngIndexable<TAny>>>(_object)
-    //     {
-    //         //
-    //     }
+    class LazyDynamicMap : public IDbgEngIndexable<Dynamic>
+    {
+    private:
+        std::optional<int> keySize;
+        std::optional<std::wstring> keyName;
 
-    //     NativeModelData get(const cpp::Pointer<IDbgEngIndexable<TAny>> _key)
-    //     {
-    //         try
-    //         {
-    //             return object.CallMethod(L"Get", _key.ptr->object.FieldValue(L"cachedHash")).As<NativeModelData>();
-    //         }
-    //         catch (const std::exception& exn)
-    //         {
-    //             hx::Throw(String::create(exn.what()));
-    //         }
-    //     }
-    // };
+        int getKeySize()
+        {
+            if (!keySize.has_value())
+            {
+                keySize.emplace(object.KeyValue(L"KeySize").As<int>());
+            }
+
+            return keySize.value();
+        }
+
+        std::wstring getKeyName()
+        {
+            if (!keyName.has_value())
+            {
+                keyName.emplace(object.KeyValue(L"KeyName").As<std::wstring>());
+            }
+
+            return keyName.value();
+        }
+
+    public:
+        LazyDynamicMap(const Debugger::DataModel::ClientEx::Object& _object)
+            : IDbgEngIndexable<Dynamic>(_object)
+        {
+            //
+        }
+
+        int count()
+        {
+            try
+            {
+                return object.CallMethod(L"Count").As<int>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
+        }
+
+        Dynamic at(const int _index)
+        {
+            try
+            {
+                return extensions::AnonBoxer::Unbox(object.CallMethod(L"At", _index, getKeyName(), getKeySize()));
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
+        }
+
+        template<class TDontCare>
+        NativeModelData get(const IDbgEngIndexable<TDontCare>& _key)
+        {
+            try
+            {
+                return object.CallMethod(L"Get", _key.object, _key.object.FieldValue(L"__hx_cachedHash")).As<NativeModelData>();
+            }
+            catch (const std::exception& exn)
+            {
+                hx::Throw(String::create(exn.what()));
+            }
+        }
+    };
 }

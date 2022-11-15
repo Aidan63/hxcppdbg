@@ -8,6 +8,7 @@
 hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::ModelArrayObj()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"Array_obj<*>"))
 {
+    AddMethod(L"Index", this, &ModelArrayObj::index);
     AddMethod(L"At", this, &ModelArrayObj::at);
     AddMethod(L"Count", this, &ModelArrayObj::count);
     AddReadOnlyProperty(L"ParamName", &ModelArrayObj::getParamName);
@@ -21,10 +22,17 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
             new hxcppdbg::core::drivers::dbgeng::native::models::LazyArray(_object));
 }
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::at(const Debugger::DataModel::ClientEx::Object& _object, const int _index, const std::wstring _paramName, const int _paramSize)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::index(const Debugger::DataModel::ClientEx::Object& _object, const int _index, const std::wstring _paramName, const int _paramSize)
 {
     auto expr      = fmt::to_wstring(fmt::format(L"({0}*)(mBase + {1})", _paramName, _index * _paramSize));
     auto element   = _object.FromBindingExpressionEvaluation(USE_CURRENT_HOST_CONTEXT, _object, expr).Dereference().GetValue();
+
+    return element;
+}
+
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::array::ModelArrayObj::at(const Debugger::DataModel::ClientEx::Object& _object, const int _index, const std::wstring _paramName, const int _paramSize)
+{
+    auto element = index(_object, _index, _paramName, _paramSize);
 
     return
         element.Type().IsIntrinsic()

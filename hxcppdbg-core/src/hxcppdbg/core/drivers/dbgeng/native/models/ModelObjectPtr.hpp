@@ -11,8 +11,9 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
     class ModelObjectPtr : public extensions::HxcppdbgExtensionModel
     {
     public:
-        ModelObjectPtr(std::wstring signature);
+        ModelObjectPtr(std::wstring);
 
-        Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
+        Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object&);
+        Debugger::DataModel::ClientEx::Object getHash(const Debugger::DataModel::ClientEx::Object&);
     };
 }

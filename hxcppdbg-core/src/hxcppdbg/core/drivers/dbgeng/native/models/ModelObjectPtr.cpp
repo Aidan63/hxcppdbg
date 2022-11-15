@@ -8,13 +8,30 @@ hxcppdbg::core::drivers::dbgeng::native::models::ModelObjectPtr::ModelObjectPtr(
     //
 }
 
-Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::ModelObjectPtr::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::ModelObjectPtr::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& _object)
 {
     return
-        object
+        _object
             .FieldValue(L"mPtr")
             .Dereference()
             .GetValue()
             .TryCastToRuntimeType()
             .KeyValue(L"HxcppdbgModelData");
+}
+
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::ModelObjectPtr::getHash(const Debugger::DataModel::ClientEx::Object& _object)
+{
+    auto ptr = _object.FieldValue(L"mPtr");
+    if (ptr.As<ULONG64>() == NULL)
+    {
+        return 0;
+    }
+    else
+    {
+        return
+            ptr
+                .Dereference()
+                .GetValue()
+                .FieldValue(L"__hx_cachedHash");
+    }
 }

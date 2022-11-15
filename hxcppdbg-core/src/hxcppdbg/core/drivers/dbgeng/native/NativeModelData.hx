@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import hxcppdbg.core.drivers.dbgeng.native.models.LazyDynamicMap;
 import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.Indexable;
@@ -13,6 +14,7 @@ import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngIndexable;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 typedef NamedNativeModelData = { name : String, data : NativeModelData };
+
 typedef NativeModelDataKeyPair = { name : NativeModelData, data : NativeModelData };
 
 @:include('NativeModelData.hpp')
@@ -28,6 +30,7 @@ extern enum NativeModelData
     HxArray(model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
     HxIntMap(model : cpp.Pointer<IDbgEngKeyable<Int, NativeModelDataKeyPair>>);
     HxStringMap(model : cpp.Pointer<IDbgEngKeyable<String, NativeModelDataKeyPair>>);
+    HxDynamicMap(model : cpp.Pointer<LazyDynamicMap>);
 
     HxEnum(type : GeneratedType, tag : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
     HxAnon(model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
@@ -56,6 +59,8 @@ class NativeModelDataTools
                 ModelData.MMap(new Keyable<ModelData, KeyValuePair>(new DbgEngIntMapModel(model)));
             case HxStringMap(model):
                 ModelData.MMap(new Keyable<ModelData, KeyValuePair>(new DbgEngStringMapModel(model)));
+            case HxDynamicMap(model):
+                ModelData.MMap(new Keyable<ModelData, KeyValuePair>(new DbgEngDynamicMapModel(model)));
             case HxEnum(type, tag, model):
                 ModelData.MEnum(type, tag, new Indexable<ModelData>(new DbgEngEnumArguments(model)));
             case HxAnon(model):

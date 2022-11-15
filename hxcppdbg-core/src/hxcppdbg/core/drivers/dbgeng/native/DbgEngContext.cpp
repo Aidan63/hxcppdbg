@@ -11,9 +11,13 @@
 #include "models/dynamic/ModelReferenceDynamic.hpp"
 #include "models/array/ModelArrayObj.hpp"
 #include "models/array/ModelVirtualArrayObj.hpp"
-#include "models/map/ModelIntHash.hpp"
-#include "models/map/ModelStringHash.hpp"
 #include "models/map/ModelMapObj.hpp"
+#include "models/map/hashes/ModelIntHash.hpp"
+#include "models/map/hashes/ModelStringHash.hpp"
+#include "models/map/hashes/ModelDynamicHash.hpp"
+#include "models/map/elements/ModelIntElement.hpp"
+#include "models/map/elements/ModelStringElement.hpp"
+#include "models/map/elements/ModelDynamicElement.hpp"
 #include "models/enums/ModelEnumObj.hpp"
 #include "models/enums/ModelVariant.hpp"
 #include "models/anon/ModelAnonObj.hpp"
@@ -186,11 +190,15 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createF
 	models->push_back(std::make_unique<models::array::ModelVirtualArrayObj>());
 
 	// map visualisers
-	models->push_back(std::make_unique<models::map::ModelIntHash>());
-	models->push_back(std::make_unique<models::map::ModelStringHash>());
-	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Int")));
-	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"String")));
-	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Object")));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(L"Int"));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(L"String"));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(L"Object"));
+	models->push_back(std::make_unique<models::map::hashes::ModelIntHash>());
+	models->push_back(std::make_unique<models::map::hashes::ModelStringHash>());
+	models->push_back(std::make_unique<models::map::hashes::ModelDynamicHash>());
+	models->push_back(std::make_unique<models::map::elements::ModelIntElement>());
+	models->push_back(std::make_unique<models::map::elements::ModelStringElement>());
+	models->push_back(std::make_unique<models::map::elements::ModelDynamicElement>());
 
 	// anon
 	models->push_back(std::make_unique<models::anon::ModelAnonObj>());
