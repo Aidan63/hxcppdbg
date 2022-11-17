@@ -64,7 +64,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
             .Dereference()
             .GetValue()
             .TryCastToRuntimeType()
-            .CallMethod(L"Index", _index, _keyName, _keySize);
+            .CallMethod(L"At", _index, _keyName, _keySize, true);
 
     auto inHash =
         _object
@@ -73,7 +73,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
             .Dereference()
             .GetValue()
             .TryCastToRuntimeType()
-            .CallMethod(L"Index", _index, std::wstring(L"unsigned int"), sizeof(unsigned int))
+            .CallMethod(L"At", _index, std::wstring(L"unsigned int"), sizeof(unsigned int), true)
             .As<unsigned int>();
 
     auto ignore = _object.FieldValue(L"IgnoreHash").As<bool>();

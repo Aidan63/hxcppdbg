@@ -15,8 +15,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::array
 
         Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object&);
         
-        Debugger::DataModel::ClientEx::Object index(const Debugger::DataModel::ClientEx::Object&, const int, const std::wstring, const int);
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const Debugger::DataModel::ClientEx::Object&, const int, const std::wstring, const int);
+        Debugger::DataModel::ClientEx::Object at(const Debugger::DataModel::ClientEx::Object&, const int, const std::wstring, const int, const std::optional<bool>);
         int count(const Debugger::DataModel::ClientEx::Object&);
 
     private:
