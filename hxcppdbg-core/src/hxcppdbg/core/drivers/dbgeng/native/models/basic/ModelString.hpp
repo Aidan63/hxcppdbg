@@ -17,7 +17,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::basic
         bool getIsUtf16(const Debugger::DataModel::ClientEx::Object& _string);
         int getLength(const Debugger::DataModel::ClientEx::Object& _string);
 
-        hxcppdbg::core::model::ModelData getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
+        Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object&);
 
     private:
         template<typename TChar>

@@ -1,11 +1,11 @@
 package hxcppdbg.core.drivers.lldb;
 
+import haxe.exceptions.NotImplementedException;
 import sys.thread.Thread;
 import sys.thread.EventLoop;
 import haxe.Exception;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.model.Model;
-import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.model.NamedModelData;
 import hxcppdbg.core.drivers.lldb.native.LLDBContext;
 
 class LLDBLocals implements ILocals
@@ -23,35 +23,13 @@ class LLDBLocals implements ILocals
         cbThread  = _cbThread;
     }
 
-	public function getVariables(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void) : Void
+	public function getVariables(_thread : Int, _frame : Int, _callback : Result<IKeyable<String, NamedModelData>, Exception>->Void)
     {
-        dbgThread.run(() -> {
-            final result = try
-            {
-                Result.Success(ctx.ptr.getLocals(_thread, _frame).map(l -> new Model(MString(l.name), ModelData.MUnknown(l.type))));
-            }
-            catch (error : String)
-            {
-                Result.Error(new Exception(error));
-            }
-
-            cbThread.run(() -> _callback(result));
-        });
+        cbThread.run(() -> _callback(Result.Error(new NotImplementedException())));
 	}
 
-	public function getArguments(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void) : Void
+	public function getArguments(_thread : Int, _frame : Int, _callback : Result<IKeyable<String, NamedModelData>, Exception>->Void)
     {
-        dbgThread.run(() -> {
-            final result = try
-            {
-                Result.Success(ctx.ptr.getArguments(_thread, _frame).map(l -> new Model(MString(l.name), ModelData.MUnknown(l.type))));
-            }
-            catch (error : String)
-            {
-                Result.Error(new Exception(error));
-            }
-
-            cbThread.run(() -> _callback(result));
-        });
+        cbThread.run(() -> _callback(Result.Error(new NotImplementedException())));
     }
 }

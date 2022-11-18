@@ -1,9 +1,10 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
+import hxcppdbg.core.model.NamedModelData;
+import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 import haxe.Int64;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.model.Model;
 import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.drivers.dbgeng.utils.HResultException;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
@@ -31,7 +32,7 @@ extern class DbgEngContext
 
     function getFrame(_thread : Int, _index : Int) : Result<NativeFrameReturn, HResultException>;
 
-    function getVariables(_thread : Int, _frame : Int) : Result<Array<Model>, HResultException>;
+    function getVariables(_thread : Int, _frame : Int) : cpp.Pointer<IDbgEngKeyable<String, { name : String, data : NativeModelData }>>;
 
     function getArguments(_thread : Int, _frame : Int) : Result<Array<NativeLocal>, HResultException>;
 

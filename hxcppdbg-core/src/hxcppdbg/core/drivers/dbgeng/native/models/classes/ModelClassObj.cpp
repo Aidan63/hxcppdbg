@@ -2,14 +2,8 @@
 
 #include "models/classes/ModelClassObj.hpp"
 #include "models/extensions/Utils.hpp"
-
-#ifndef INCLUDED_hxcppdbg_core_model_ModelData
-#include <hxcppdbg/core/model/ModelData.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_Model
-#include <hxcppdbg/core/model/Model.h>
-#endif
+#include "models/LazyClassFields.hpp"
+#include "../extensions/AnonBoxer.hpp"
 
 #ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
 #include <hxcppdbg/core/sourcemap/GeneratedType.h>
@@ -18,35 +12,60 @@
 hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::ModelClassObj(hxcppdbg::core::sourcemap::GeneratedType _type)
     : type(_type), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_type->cpp.wc_str())
 {
-    //
+    AddMethod(L"Count", this, &ModelClassObj::count);
+    AddMethod(L"At", this, &ModelClassObj::at);
+    AddMethod(L"Get", this, &ModelClassObj::get);
 }
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& _object)
 {
-    auto fields = Array<hxcppdbg::core::model::Model>(0, 0);
+    return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::HxClass(type, new hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields(_object));
+}
 
-    for (auto&& kv : object.Fields())
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::count(const Debugger::DataModel::ClientEx::Object& _object)
+{
+    auto count = 0;
+    for (auto&& field : _object.Fields())
     {
-        auto name  = String::create(kv.first.c_str());
-        auto key   = hxcppdbg::core::model::ModelData_obj::MString(name);
-        auto value = kv.second.GetValue();
-
-        if (value.Type().IsIntrinsic())
-        {
-            fields.Add(hxcppdbg::core::model::Model_obj::__new(key, hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(value)));
-        }
-        else
-        {
-            try
-            {
-                fields.Add(hxcppdbg::core::model::Model_obj::__new(key, value.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>()));
-            }
-            catch(const std::exception& e)
-            {
-                // model = hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(value.Type().Name().c_str()));
-            }   
-        }
+        count++;
     }
 
-    return hxcppdbg::core::model::ModelData_obj::MClass(type, fields);
+    return count;
+}
+
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::at(const Debugger::DataModel::ClientEx::Object& _object, const int _index)
+{
+    auto count = 0;
+    for (auto&& field : _object.Fields())
+    {
+        if (count == _index)
+        {
+            auto name   = String::create(std::get<0>(field).c_str());
+            auto object = std::get<1>(field).GetValue();
+            auto data   = object.Type().IsIntrinsic()
+                ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)
+                : object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+
+            auto anon = hx::Anon_obj::Create(2);
+
+            anon->setFixed(0, HX_CSTRING("name"), name);
+            anon->setFixed(1, HX_CSTRING("data"), data);
+
+            return hxcppdbg::core::drivers::dbgeng::native::models::extensions::AnonBoxer::Box(anon);
+        }
+
+        count++;
+    }
+
+    throw std::runtime_error("Failed to find field");
+}
+
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::get(const Debugger::DataModel::ClientEx::Object& _object, const std::wstring _field)
+{
+    auto value = _object.FieldValue(_field);
+
+    return
+        value.Type().IsIntrinsic()
+            ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(value)
+            : value.KeyValue(L"HxcppdbgModelData");
 }

@@ -1,201 +1,361 @@
 package hxcppdbg.dap;
 
-import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
-import haxe.ds.Option;
-import hxcppdbg.core.model.Model;
-import hxcppdbg.core.model.ModelData;
-import hxcppdbg.core.locals.LocalVariable;
+import haxe.Exception;
 import hxcppdbg.dap.protocol.data.Variable;
+import hxcppdbg.core.ds.Result;
+import hxcppdbg.core.model.Keyable;
+import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.model.KeyValuePair;
+import hxcppdbg.core.locals.LocalStore;
+import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 using Lambda;
 
+private enum abstract ReferenceType(Int) from Int to Int
+{
+    var Scope;
+    var Model;
+    var KeyValue;
+}
+
+private abstract VariableReference(Int) from Int to Int
+{
+    public var type (get, never) : ReferenceType;
+
+    function get_type()
+    {
+        return (this >> 24) & 0xff;
+    }
+
+    public var number (get, never) : Int;
+
+    function get_number()
+    {
+        return this & 0xffffff;
+    }
+
+    public function new(_type : ReferenceType, _number : Int)
+    {
+        this = ((_type & 0xff) << 24) | (_number & 0xffffff);
+    }
+}
+
 class VariableCache
 {
-    final cache : Map<Int, Array<Model>>;
+    final scopes : Map<Int, LocalStore>;
+
+    final models : Map<Int, ModelData>;
+
+    final mapRoots : Map<Int, KeyValuePair>;
 
     var index : Int;
 
     public function new()
     {
-        cache = [];
+        scopes   = [];
+        models   = [];
+        mapRoots = [];
+        index    = 1;
+    }
+
+    public function clear()
+    {
+        scopes.clear();
+        models.clear();
+        mapRoots.clear();
         index = 1;
     }
 
-    public function insert(_locals : Array<LocalVariable>)
-    {
-        return addModels(_locals.map(localToModel));
-    }
-
-    public function get(_id : Int) : Option<Array<Variable>>
-    {
-        return switch cache[_id]
-        {
-            case null:
-                Option.None;
-            case models:
-                Option.Some(models.map(modelToVariable));
-        }
-    }
-
-    function process(_data : ModelData)
-    {
-        return switch _data
-        {
-            case
-                MNull,
-                MInt(_),
-                MFloat(_),
-                MBool(_),
-                MString(_),
-                MArray([]),
-                MMap([]),
-                MEnum(_, _, []),
-                MUnknown(_):
-                Option.None;
-            case MArray(items):
-                Option.Some(addModelDatas(items));
-            case MMap(items):
-                Option.Some(addModels(items));
-            case MEnum(_, _, arguments):
-                Option.Some(addModelDatas(arguments));
-            case MDynamic(inner):
-                process(inner);
-            case MAnon(fields):
-                Option.Some(addModels(fields));
-            case MClass(_, fields):
-                Option.Some(addModels(fields));
-        }
-    }
-
-    function addModels(_models : Array<Model>)
+    public function createScope(_locals : LocalStore)
     {
         final id = index++;
 
-        cache[id] = _models;
+        scopes[id] = _locals;
 
-        return id;
+        return new VariableReference(ReferenceType.Scope, id);
     }
 
-    function addModelDatas(_data : Array<ModelData>)
+    public function fetch(_id : VariableReference, _start : Null<Int>, _count : Null<Int>) : Result<Array<Variable>, Exception>
     {
-        return addModels(_data.mapi((i, d) -> new Model(MInt(i), d)));
-    }
-
-    static function localToModel(_local : LocalVariable)
-    {
-        return switch _local
+        return switch _id.type
         {
-            case Native(_model):
-                _model;
-            case Haxe(_model):
-                _model;
+            case Scope:
+                switch scopes[_id.number]
+                {
+                    case null:
+                        Result.Error(new Exception('No scope with ID ${ _id.number }'));
+                    case store:
+                        switch store.count()
+                        {
+                            case Success(length):
+                                final output = new Array<Variable>();
+                                final start  = if (_start == null) 0 else _start;
+                                final count  = if (_count == null) length else _count;
+        
+                                if (start > length || start + count > length)
+                                {
+                                    return Result.Error(new Exception('Request out of range'));
+                                }
+                                
+                                for (i in start...(start + count))
+                                {
+                                    switch store.at(i)
+                                    {
+                                        case Success(field):
+                                            output.push({
+                                                variablesReference: addModel(field.data),
+                                                name  : field.name,
+                                                type  : field.data.printType(),
+                                                value : field.data.printModelData()
+                                            });
+                
+                                            switch field.data
+                                            {
+                                                case MArray(model), MEnum(_, _, model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MMap(model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MAnon(model), MClass(_, model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case _:
+                                                    //
+                                            }
+                                        case Error(exn):
+                                            // return Result.Error(new Exception('Failed to get variable $i', exn));
+                                    }
+                                }
+                                
+                                Result.Success(output);
+                            case Error(exn):
+                                Result.Error(new Exception('Failed to get number of variables in the scope', exn));
+                        }
+                }
+            case Model:
+                switch models[_id.number]
+                {
+                    case null:
+                        Result.Error(new Exception('No model with ID ${ _id.number }'));
+                    case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_), MDynamic(_):
+                        Result.Error(new Exception('Model does not have children'));
+                    case MArray(store), MEnum(_, _, store):
+                        switch store.count()
+                        {
+                            case Success(length):
+                                final start  = if (_start == null) 0 else _start;
+                                final count  = if (_count == null) length else _count;
+                                final output = new Array<Variable>();
+        
+                                if (start >= length || start + count > length)
+                                {
+                                    return Result.Error(new Exception('request out of range of child count'));
+                                }
+
+                                for (i in start...(start + count))
+                                {
+                                    switch store.at(i)
+                                    {
+                                        case Success(model):
+                                            output.push({
+                                                variablesReference: addModel(model),
+                                                name  : Std.string(i),
+                                                type  : model.printType(),
+                                                value : model.printModelData()
+                                            });
+                
+                                            switch model
+                                            {
+                                                case MArray(model), MEnum(_, _, model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MMap(model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MAnon(model), MClass(_, model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case _:
+                                                    //
+                                            }
+                                        case Error(exn):
+                                            // return Result.Error(new Exception('Failed to get child at index $i', exn));
+                                    }
+                                }
+                                
+                                Result.Success(output);
+                            case Error(exn):
+                                Result.Error(exn);
+                        }
+                    case MMap(store):
+                        switch store.count()
+                        {
+                            case Success(length):
+                                final start  = if (_start == null) 0 else _start;
+                                final count  = if (_count == null) length else _count;
+                                final output = new Array<Variable>();
+
+                                if (start >= length || start + count > length)
+                                {
+                                    return Result.Error(new Exception('request out of range of child count'));
+                                }
+
+                                for (i in start...(start + count))
+                                {
+                                    switch store.at(i)
+                                    {
+                                        case Success(model):
+                                            output.push({
+                                                variablesReference : addKeyValuePair(model),
+                                                name               : Std.string(i),
+                                                value              : 'key value pair',
+                                                namedVariables     : 2
+                                            });
+                                        case Error(exn):
+                                            // return Result.Error(new Exception('Failed to get child at index $i', exn));
+                                    }
+                                }
+
+                                Result.Success(output);
+                            case Error(exn):
+                                Result.Error(exn);
+                        }
+                    case MAnon(store), MClass(_, store):
+                        switch store.count()
+                        {
+                            case Success(length):
+                                final start  = if (_start == null) 0 else _start;
+                                final count  = if (_count == null) length else _count;
+                                final output = new Array<Variable>();
+
+                                if (start >= length || start + count > length)
+                                {
+                                    return Result.Error(new Exception('request out of range of child count'));
+                                }
+
+                                for (i in start...(start + count))
+                                {
+                                    switch store.at(i)
+                                    {
+                                        case Success(field):
+                                            output.push({
+                                                variablesReference: addModel(field.data),
+                                                name  : field.name,
+                                                type  : field.data.printType(),
+                                                value : field.data.printModelData()
+                                            });
+                
+                                            switch field.data
+                                            {
+                                                case MArray(model), MEnum(_, _, model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MMap(model):
+                                                    output[output.length - 1].indexedVariables = switch model.count() {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    };
+                                                case MAnon(model), MClass(_, model):
+                                                    output[output.length - 1].namedVariables = switch model.count()
+                                                    {
+                                                        case Success(v):
+                                                            v;
+                                                        case Error(_):
+                                                            0;
+                                                    }
+                                                case _:
+                                                    //
+                                            }
+                                        case Error(exn):
+                                            // return Result.Error(new Exception('Failed to get child at index $i', exn));
+                                    }
+                                }
+
+                                Result.Success(output);
+                            case Error(exn):
+                                Result.Error(exn);
+                        }
+                }
+            case KeyValue:
+                switch mapRoots[_id.number]
+                {
+                    case null:
+                        Result.Error(new Exception('Failed to find model in storage'));
+                    case root:
+                        Result.Success([
+                            {
+                                variablesReference: addModel(root.key),
+                                name  : 'Key',
+                                type  : root.key.printType(),
+                                value : root.key.printModelData()
+                            },
+                            {
+                                variablesReference: addModel(root.value),
+                                name  : 'Value',
+                                type  : root.value.printType(),
+                                value : root.value.printModelData()
+                            }
+                        ]);
+                }
         }
     }
 
-    function modelToVariable(_model : Model) : Variable
+    public function addModel(_model : ModelData)
     {
-        final children = switch process(_model.data)
+        return switch _model
         {
-            case Some(id):
-                id;
-            case None:
+            case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_):
                 0;
-        }
-
-        return {
-            name               : keyAsName(_model.key),
-            variablesReference : children,
-            value              : dataAsValue(_model.data),
-            type               : dataType(_model.data)
-        }
-    }
-
-    static function keyAsName(_data : ModelData)
-    {
-        return switch _data
-        {
-            case MInt(v):
-                Std.string(v);
-            case MFloat(v):
-                Std.string(v);
-            case MBool(v):
-                Std.string(v);
-            case MString(s):
-                s;
-            case _:
-                'invalid_key';
-        }
-    }
-
-    static function dataAsValue(_data : ModelData)
-    {
-        return switch _data
-        {
-            case MNull:
-                'null';
-            case MInt(v):
-                Std.string(v);
-            case MFloat(v):
-                Std.string(v);
-            case MBool(v):
-                Std.string(v);
-            case MString(s):
-                s;
-            case MArray(_), MMap(_):
-                '[]';
-            case MEnum(type, constructor, arguments):
-                '${ printType(type) }.$constructor';
             case MDynamic(inner):
-                dataAsValue(inner);
-            case MAnon(fields):
-                '{}';
-            case MClass(type, fields):
-                printType(type);
-            case MUnknown(type):
-                'unknown';
+                addModel(inner);
+            case MArray(_), MMap(_), MEnum(_, _, _), MAnon(_), MClass(_, _):
+                final id = index++;
+
+                models[id] = _model;
+        
+                new VariableReference(ReferenceType.Model, id);
         }
     }
 
-    static function dataType(_data : ModelData)
+    function addKeyValuePair(_pair : KeyValuePair)
     {
-        return switch _data
-        {
-            case MNull:
-                'Null';
-            case MInt(_):
-                'Int';
-            case MFloat(_):
-                'Float';
-            case MBool(_):
-                'Bool';
-            case MString(_):
-                'String';
-            case MArray(_):
-                'Array<?>';
-            case MMap(_):
-                'Map<?, ?>';
-            case MEnum(type, _, _):
-                printType(type);
-            case MDynamic(inner):
-                'Dynamic';
-            case MAnon(fields):
-                '{}';
-            case MClass(type, _):
-                printType(type);
-            case MUnknown(type):
-                type;
-        }
-    }
+        final id = index++;
 
-    static function printType(_type : GeneratedType)
-    {
-        return if (_type.module != _type.name)
-        {
-            '${ _type.pack.join('.') }.${ _type.module }.${ _type.name }';
-        }
-        else
-        {
-            '${ _type.pack.join('.') }.${ _type.name }';
-        }
+        mapRoots[id] = _pair;
+
+        return new VariableReference(ReferenceType.KeyValue, id);
     }
 }

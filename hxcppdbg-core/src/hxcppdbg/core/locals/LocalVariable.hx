@@ -1,11 +1,11 @@
 package hxcppdbg.core.locals;
 
-import hxcppdbg.core.model.Model;
+import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.locals.NativeLocal;
 import hxcppdbg.core.sourcemap.Sourcemap.NameMap;
 
 enum LocalVariable
 {
-    Native(_model : Model);
-    Haxe(_model : Model);
+    Native(_name : String, _model : ModelData);
+    Haxe(_name : String, _model : ModelData);
 }

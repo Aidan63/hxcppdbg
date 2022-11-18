@@ -3,8 +3,6 @@
 
 #include <comdef.h>
 #include "DbgEngContext.hpp"
-#include "models/extensions/HxcppdbgModelFactory.hpp"
-#include "models/extensions/HxcppdbgModelDataFactory.hpp"
 #include "models/extensions/Utils.hpp"
 #include "models/ModelObjectPtr.hpp"
 #include "models/basic/ModelString.hpp"
@@ -13,9 +11,13 @@
 #include "models/dynamic/ModelReferenceDynamic.hpp"
 #include "models/array/ModelArrayObj.hpp"
 #include "models/array/ModelVirtualArrayObj.hpp"
-#include "models/map/ModelHash.hpp"
-#include "models/map/ModelHashElement.hpp"
 #include "models/map/ModelMapObj.hpp"
+#include "models/map/hashes/ModelIntHash.hpp"
+#include "models/map/hashes/ModelStringHash.hpp"
+#include "models/map/hashes/ModelDynamicHash.hpp"
+#include "models/map/elements/ModelIntElement.hpp"
+#include "models/map/elements/ModelStringElement.hpp"
+#include "models/map/elements/ModelDynamicElement.hpp"
 #include "models/enums/ModelEnumObj.hpp"
 #include "models/enums/ModelVariant.hpp"
 #include "models/anon/ModelAnonObj.hpp"
@@ -49,14 +51,6 @@
 
 #ifndef INCLUDED_hxcppdbg_core_locals_NativeVariable
 #include <hxcppdbg/core/locals/NativeLocal.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_ModelData
-#include <hxcppdbg/core/model/ModelData.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_Model
-#include <hxcppdbg/core/model/Model.h>
 #endif
 
 #ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
@@ -161,9 +155,6 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createF
 
 	models = std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>();
 
-	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelFactory();
-	hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory::instance = new hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgModelDataFactory();
-
 	// enums
 	models->push_back(std::make_unique<models::enums::ModelVariant>());
 
@@ -199,14 +190,15 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createF
 	models->push_back(std::make_unique<models::array::ModelVirtualArrayObj>());
 
 	// map visualisers
-	models->push_back(std::make_unique<models::map::ModelHash>());
-	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TIntElement<*>")));
-	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TInt64Element<*>")));
-	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TStringElement<*>")));
-	models->push_back(std::make_unique<models::map::ModelHashElement>(std::wstring(L"hx::TDynamicElement<*>")));
-	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Int")));
-	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"String")));
-	models->push_back(std::make_unique<models::map::ModelMapObj>(std::wstring(L"Object")));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(L"Int"));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(L"String"));
+	models->push_back(std::make_unique<models::map::ModelMapObj>(L"Object"));
+	models->push_back(std::make_unique<models::map::hashes::ModelIntHash>());
+	models->push_back(std::make_unique<models::map::hashes::ModelStringHash>());
+	models->push_back(std::make_unique<models::map::hashes::ModelDynamicHash>());
+	models->push_back(std::make_unique<models::map::elements::ModelIntElement>());
+	models->push_back(std::make_unique<models::map::elements::ModelStringElement>());
+	models->push_back(std::make_unique<models::map::elements::ModelDynamicElement>());
 
 	// anon
 	models->push_back(std::make_unique<models::anon::ModelAnonObj>());
@@ -484,13 +476,13 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContex
 	}
 }
 
-hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getVariables(int _threadIndex, int _frameIndex)
+cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::IDbgEngKeyable<String, Dynamic>> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::getVariables(int _threadIndex, int _frameIndex)
 {
 	auto result = HRESULT{ S_OK };
 	auto sysID  = ULONG{ 0 };
 	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Failed to get thread ID from index"), result));
+		hx::Throw(HX_CSTRING("Failed to get thread ID from index"));
 	}
 
 	try
@@ -500,50 +492,11 @@ hxcppdbg::core::ds::Result hxcppdbg::core::drivers::dbgeng::native::DbgEngContex
 		auto findFrame  = [_frameIndex](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object frame) { return ULONG{ frame.KeyValue(L"Attributes").KeyValue(L"FrameNumber") } == _frameIndex; };
 		auto frame      = thread.KeyValue(L"Stack").KeyValue(L"Frames").CallMethod(L"First", findFrame);
 
-		try
-		{
-			auto locals = frame.KeyValue(L"LocalVariables");
-			auto output = Array<hxcppdbg::core::model::Model>(0, 0);
-
-			for (auto&& local : locals.Keys())
-			{
-				auto object = std::get<1>(local).GetValue();
-				auto key    = hxcppdbg::core::model::ModelData_obj::MString(String::create(std::get<0>(local).c_str()));
-				auto type   = object.Type();
-				auto name   = type.Name();
-
-				try
-				{
-					// We can't seem to create custom model extensions for these intrinsic types, so we just have to check them manually.
-					if (type.IsIntrinsic())
-					{
-						output->Add(hxcppdbg::core::model::Model_obj::__new(key, hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)));
-					}
-					else
-					{
-						output->Add(hxcppdbg::core::model::Model_obj::__new(key, object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>()));
-					}
-				}
-				catch (const std::exception& exn)
-				{
-					// If its not a supported intrinsic and it doesn't have the HxcppdbgModelData property then its not something we really know about, so report it as unknown.
-
-					output->Add(hxcppdbg::core::model::Model_obj::__new(key, hxcppdbg::core::model::ModelData_obj::MUnknown(String::create(name.c_str()))));
-				}		
-			}
-
-			return hxcppdbg::core::ds::Result_obj::Success(output);
-		}
-		catch (const std::exception& exn)
-		{
-			// If getting the local variables throws then there are no locals in this frame.
-
-			return hxcppdbg::core::ds::Result_obj::Success(Array<hxcppdbg::core::locals::NativeLocal>(0, 0));
-		}
+		return new hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore(frame.KeyValue(L"LocalVariables"));
 	}
 	catch (const std::exception& exn)
 	{
-		return hxcppdbg::core::ds::Result_obj::Error(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(exn.what()), 0));
+		hx::Throw(String::create(exn.what()));
 	}
 }
 

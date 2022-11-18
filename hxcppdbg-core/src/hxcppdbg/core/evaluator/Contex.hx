@@ -5,14 +5,15 @@ import hscript.Expr;
 import hscript.Parser;
 import hscript.Printer;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.model.Model;
+import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
+import hxcppdbg.core.model.NamedModelData;
 
 using Lambda;
 
 class Context
 {
-    final locals : Array<Model>;
+    final locals : Keyable<String, NamedModelData>;
 
     final parser : Parser;
 
@@ -52,12 +53,12 @@ class Context
                         ModelData.MString(s);
                 }
             case EIdent(v):
-                return switch locals.find(m -> identity(v, m.key))
+                switch locals.get(v)
                 {
-                    case null:
-                        throw new Exception('no variable with the name "$v"');
-                    case found:
-                        found.data;
+                    case Success(data):
+                        data;
+                    case Error(exn):
+                        throw exn;
                 }
             case EField(e, f):
                 switch eval(e)
@@ -65,20 +66,28 @@ class Context
                     case MDynamic(MString(s)), MString(s) if (f == 'length'):
                         MInt(s.length);
                     case MDynamic(MArray(children)), MArray(children) if (f == 'length'):
-                        MInt(children.length);
-                    case
-                        MMap(children),
-                        MDynamic(MMap(children)),
-                        MAnon(children),
-                        MDynamic(MAnon(children)),
-                        MClass(_, children),
-                        MDynamic(MClass(_, children)):
-                        switch children.find(m -> identity(f, m.key))
+                        switch children.count()
                         {
-                            case null:
-                                throw new Exception('Unable to find "$f" in children');
-                            case found:
-                                found.data;
+                            case Success(v):
+                                MInt(v);
+                            case Error(exn):
+                                throw exn;
+                        }
+                    case MMap(model), MDynamic(MMap(model)) if (f == 'count'):
+                        switch model.count()
+                        {
+                            case Success(v):
+                                MInt(v);
+                            case Error(exn):
+                                throw exn;
+                        }
+                    case MAnon(children), MDynamic(MAnon(children)), MClass(_, children), MDynamic(MClass(_, children)):
+                        switch children.get(f)
+                        {
+                            case Success(v):
+                                v;
+                            case Error(exn):
+                                throw exn;
                         }
                     case other:
                         throw new Exception('Cannot perform field access on ${ other.getName() }');
@@ -92,17 +101,37 @@ class Context
                         switch eval(index)
                         {
                             case MInt(i), MDynamic(MInt(i)):
-                                items[i];
+                                switch items.at(i)
+                                {
+                                    case Success(v):
+                                        v;
+                                    case Error(exn):
+                                        throw exn;
+                                }
                             default:
                                 throw new Exception('Can only index into an array with an integer');
                         }
-                    case MDynamic(MMap(items)), MMap(items):
-                        switch items.find(m -> keysearch(eval(index), m.key))
+                    case MDynamic(MMap(model)), MMap(model):
+                        switch model.get(eval(index))
                         {
-                            case null:
-                                throw new Exception('Unable to key in map');
-                            case found:
-                                found.data;
+                            case Success(v):
+                                v;
+                            case Error(exn):
+                                throw exn;
+                        }
+                    case MDynamic(MEnum(_, _, arguments)), MEnum(_, _, arguments):
+                        switch eval(index)
+                        {
+                            case MInt(i), MDynamic(MInt(i)):
+                                switch arguments.at(i)
+                                {
+                                    case Success(v):
+                                        v;
+                                    case Error(exn):
+                                        throw exn;
+                                }
+                            default:
+                                throw new Exception('Can only index into an enum constructors arguments with an integer');
                         }
                     default:
                         throw new Exception('Can only index on an array or map');
