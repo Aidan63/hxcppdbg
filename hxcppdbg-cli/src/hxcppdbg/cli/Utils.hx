@@ -5,7 +5,6 @@ import haxe.io.Eof;
 import haxe.ds.Option;
 import hxcppdbg.core.Session;
 import hxcppdbg.core.StopReason;
-import hxcppdbg.core.model.Printer;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.stack.StackFrame;
 import hxcppdbg.core.breakpoints.Breakpoint;
@@ -134,7 +133,7 @@ private function printExceptionLocation(_session : Session, _threadIndex : Int, 
                             {
                                 case Some(v):
                                     output.push('\n');
-                                    output.push(printModelData(v));
+                                    output.push(v.printModelData());
                                 case None:
                                     //
                             }

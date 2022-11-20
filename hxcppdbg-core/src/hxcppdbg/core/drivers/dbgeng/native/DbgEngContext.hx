@@ -46,7 +46,7 @@ extern class DbgEngContext
 
     function wait(
         _onBreakpoint : Int->Int->Void,
-        _onException : Int->Int->Option<cpp.Pointer<IDbgEngKeyable<String, { name : String, data : NativeModelData }>>>->Void,
+        _onException : Int->Int->Null<NativeModelData>->Void,
         _onPaused : Void->Void,
         _onExited : Int->Void
     ) : Void;

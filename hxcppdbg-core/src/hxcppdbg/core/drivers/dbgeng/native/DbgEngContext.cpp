@@ -823,13 +823,13 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::end()
 	return haxe::ds::Option_obj::None;
 }
 
-haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::tryFindThrownObject(const int _threadIndex)
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::tryFindThrownObject(const int _threadIndex)
 {
 	auto result = S_OK;
 	auto sysID  = 0ul;
 	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
 	{
-		return haxe::ds::Option_obj::None;
+		return null();
 	}
 
 	try
@@ -842,16 +842,26 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::tryFind
 
 		for (auto&& frame : frames)
 		{
-			if (nativeFrameFromDebugFrame(frame)->frame->func == HX_CSTRING("hx::Throw"))
+			auto converted = nativeFrameFromDebugFrame(frame)->frame->func;
+
+			if (converted == HX_CSTRING("hx::Throw") || converted == HX_CSTRING("hx::Rethrow"))
 			{
-				return haxe::ds::Option_obj::Some(frame.KeyValue(L"Parameters").KeyValue(L"inDynamic").Dereference().GetValue().TryCastToRuntimeType().KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::model::ModelData>());
+				return
+					frame
+						.KeyValue(L"Parameters")
+						.KeyValue(L"inDynamic")
+						.Dereference()
+						.GetValue()
+						.TryCastToRuntimeType()
+						.KeyValue(L"HxcppdbgModelData")
+						.As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 			}
 		}
 
-		return haxe::ds::Option_obj::None;
+		return null();
 	}
-	catch (const std::exception& exn)
+	catch (const std::exception&)
 	{
-		return haxe::ds::Option_obj::None;
+		return null();
 	}
 }

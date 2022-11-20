@@ -39,7 +39,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         ULONG stepOutBreakpointId = DEBUG_ANY_ID;
 
         hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
-        haxe::ds::Option tryFindThrownObject(const int _threadIndex);
+        hxcppdbg::core::drivers::dbgeng::native::NativeModelData tryFindThrownObject(const int _threadIndex);
 
         static String cleanSymbolName(std::wstring _input);
         static int backtickCount(std::wstring _input);
