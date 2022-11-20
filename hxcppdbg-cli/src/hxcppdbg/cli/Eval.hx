@@ -28,11 +28,11 @@ class Eval
                                 switch v
                                 {
                                     case MEnum(type, _):
-                                        _resolve('\t${ printType(type) }\t${ printModelData(v) }');
+                                        _resolve('\t${ v.printType() }\t${ v.printModelData() }');
                                     case MClass(type, _):
-                                        _resolve('\t${ printType(type) }\t${ printModelData(v) }');
+                                        _resolve('\t${ v.printType() }\t${ v.printModelData() }');
                                     case _:
-                                        _resolve('\t${ printModelData(v) }');
+                                        _resolve('\t${ v.printModelData() }');
                                 }
                             case Error(exn):
                                 _reject(new Error('\tError : ${ exn.message }'));

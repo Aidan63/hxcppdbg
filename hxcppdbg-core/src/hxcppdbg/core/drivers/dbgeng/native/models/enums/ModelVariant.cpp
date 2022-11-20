@@ -3,14 +3,6 @@
 #include "models/enums/ModelVariant.hpp"
 #include "models/extensions/Utils.hpp"
 
-#ifndef INCLUDED_hxcppdbg_core_model_ModelData
-#include <hxcppdbg/core/model/ModelData.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_Model
-#include <hxcppdbg/core/model/Model.h>
-#endif
-
 enum VariantType
 {
     typeObject = 0,
@@ -27,7 +19,7 @@ hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelVariant::ModelVaria
     //
 }
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelVariant::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelVariant::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
     switch (object.FieldValue(L"type").As<int>())
     {
@@ -39,8 +31,7 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models
                         .Dereference()
                         .GetValue()
                         .TryCastToRuntimeType()
-                        .KeyValue(L"HxcppdbgModelData")
-                        .As<hxcppdbg::core::model::ModelData>();
+                        .KeyValue(L"HxcppdbgModelData");
             }
 
         case VariantType::typeString:
@@ -56,7 +47,7 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models
                     strPointer++;
                 }
 
-                return hxcppdbg::core::model::ModelData_obj::MString(String::create(string.data(), string.size()));
+                return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::HxString(String::create(string.data(), string.size()));
             }
 
         case VariantType::typeDouble:

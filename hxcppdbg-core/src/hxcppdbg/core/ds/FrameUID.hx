@@ -1,6 +1,9 @@
-package hxcppdbg.dap;
+package hxcppdbg.core.ds;
 
-abstract FrameId(Int) to Int
+/**
+ * Constructs a frame unique ID which can be used to identify a frame across a paused session.
+ */
+abstract FrameUID(Int) to Int
 {
     public var thread (get, never) : Int;
 

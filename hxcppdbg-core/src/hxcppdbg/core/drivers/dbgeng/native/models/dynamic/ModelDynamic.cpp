@@ -2,26 +2,18 @@
 
 #include "models/dynamic/ModelDynamic.hpp"
 
-#ifndef INCLUDED_hxcppdbg_core_model_ModelData
-#include <hxcppdbg/core/model/ModelData.h>
-#endif
-
-#ifndef INCLUDED_hxcppdbg_core_model_Model
-#include <hxcppdbg/core/model/Model.h>
-#endif
-
 hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelDynamic::ModelDynamic()
     : hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(std::wstring(L"Dynamic"))
 {
     //
 }
 
-hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelDynamic::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::models::dynamic::ModelDynamic::getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& _object)
 {
-    auto ptr = object.FieldValue(L"mPtr");
+    auto ptr = _object.FieldValue(L"mPtr");
     if (ptr.As<ULONG64>() == NULL)
     {
-        return hxcppdbg::core::model::ModelData_obj::MNull;
+        return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
     }
     else
     {
@@ -30,7 +22,6 @@ hxcppdbg::core::model::ModelData hxcppdbg::core::drivers::dbgeng::native::models
                 .Dereference()
                 .GetValue()
                 .TryCastToRuntimeType()
-                .KeyValue(L"HxcppdbgModelData")
-                .As<hxcppdbg::core::model::ModelData>();
+                .KeyValue(L"HxcppdbgModelData");
     }
 }

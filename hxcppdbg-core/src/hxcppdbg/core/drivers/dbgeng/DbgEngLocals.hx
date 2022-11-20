@@ -1,14 +1,13 @@
 package hxcppdbg.core.drivers.dbgeng;
 
-import haxe.exceptions.NotImplementedException;
 import cpp.Pointer;
 import sys.thread.Thread;
 import haxe.Exception;
+import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.model.Model;
+import hxcppdbg.core.model.NamedModelData;
 import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
 
-using Lambda;
 using hxcppdbg.core.utils.ResultUtils;
 
 class DbgEngLocals implements ILocals
@@ -26,16 +25,25 @@ class DbgEngLocals implements ILocals
         dbgThread = _dbgThread;
     }
 
-	public function getVariables(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void)
+	public function getVariables(_threadIndex : Int, _frameIndex : Int, _callback : Result<IKeyable<String, NamedModelData>, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = driver.ptr.getVariables(_thread, _frame);
+            final result = try
+            {
+                Result.Success(
+                    (new DbgEngLocalStore(driver.ptr.getVariables(_threadIndex, _frameIndex)) : IKeyable<String, NamedModelData>)
+                );
+            }
+            catch (exn)
+            {
+                Result.Error(exn);
+            }
 
-            cbThread.events.run(() -> _callback(r.asExceptionResult()));
+            cbThread.events.run(() -> _callback(result));
         });
     }
-
-	public function getArguments(_thread : Int, _frame : Int, _callback : Result<Array<Model>, Exception>->Void)
+ 
+	public function getArguments(_thread : Int, _frame : Int, _callback : Result<IKeyable<String, NamedModelData>, Exception>->Void)
     {
         _callback(Result.Error(new NotImplementedException()));
     }

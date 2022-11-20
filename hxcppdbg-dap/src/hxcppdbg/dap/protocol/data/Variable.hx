@@ -1,9 +1,11 @@
 package hxcppdbg.dap.protocol.data;
 
 typedef Variable = {
-    final name : String;
-    final value : String;
-    final ?type : String;
-    final ?presentationHint : VariablePresentationHint;
-    final variablesReference : Int;
+    var name : String;
+    var value : String;
+    var variablesReference : Int;
+    var ?type : String;
+    var ?presentationHint : VariablePresentationHint;
+    var ?namedVariables : Int;
+    var ?indexedVariables : Int;
 }

@@ -1,5 +1,6 @@
 package hxcppdbg.core;
 
+import hxcppdbg.core.cache.Cache;
 import sys.io.File;
 import sys.thread.Thread;
 import haxe.Exception;
@@ -22,6 +23,8 @@ class Session
 {
     final driver : Driver;
 
+    final cache : Cache;
+
     public final sourcemap : Sourcemap;
 
     public final breakpoints : Breakpoints;
@@ -38,10 +41,11 @@ class Session
     {
         driver      = _driver;
         sourcemap   = _sourcemap;
+        cache       = new Cache();
         breakpoints = new Breakpoints(sourcemap, driver.breakpoints);
         stack       = new Stack(sourcemap, driver.stack);
-        locals      = new Locals(sourcemap, driver.locals, stack);
-        eval        = new Evaluator(sourcemap, driver.locals, stack);
+        locals      = new Locals(sourcemap, driver.locals, stack, cache.locals);
+        eval        = new Evaluator(sourcemap, locals, stack);
         threads     = new Threads(driver.threads);
     }
 
@@ -93,6 +97,8 @@ class Session
             switch result
             {
                 case Success(run):
+                    cache.clear();
+
                     _callback(Result.Success(makeRunCallback(run)));
                 case Error(exn):
                     _callback(Result.Error(exn));
@@ -106,6 +112,8 @@ class Session
             switch result
             {
                 case Success(run):
+                    cache.clear();
+
                     _callback(Result.Success(makeRunCallback(run)));
                 case Error(exn):
                     _callback(Result.Error(exn));
