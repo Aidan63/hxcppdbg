@@ -22,9 +22,7 @@
 
 HX_DECLARE_CLASS2(haxe, ds, Option)
 HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
-HX_DECLARE_CLASS3(hxcppdbg, core, drivers, StopReason)
 HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
-HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, WaitResult)
 HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
@@ -41,6 +39,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         ULONG stepOutBreakpointId = DEBUG_ANY_ID;
 
         hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
+        hxcppdbg::core::drivers::dbgeng::native::NativeModelData tryFindThrownObject(const int _threadIndex);
 
         static String cleanSymbolName(std::wstring _input);
         static int backtickCount(std::wstring _input);

@@ -1,6 +1,7 @@
 package hxcppdbg.core.evaluator;
 
 import haxe.Exception;
+import haxe.ds.Option;
 import hscript.Expr;
 import hscript.Parser;
 import hscript.Printer;
@@ -11,19 +12,32 @@ import hxcppdbg.core.model.NamedModelData;
 
 using Lambda;
 
+private class HxcppdbgParser extends Parser
+{
+    public function new()
+    {
+        super();
+
+        identChars += '$';
+    }
+}
+
 class Context
 {
     final locals : Keyable<String, NamedModelData>;
+
+    final currentException : Option<ModelData>;
 
     final parser : Parser;
 
     final printer : Printer;
 
-    public function new(_locals)
+    public function new(_locals, _currentException)
     {
-        locals  = _locals;
-        parser  = new Parser();
-        printer = new Printer();
+        locals           = _locals;
+        currentException = _currentException;
+        parser           = new HxcppdbgParser();
+        printer          = new Printer();
     }
 
     public function interpret(_input)
@@ -51,6 +65,14 @@ class Context
                         ModelData.MFloat(f);
                     case CString(s):
                         ModelData.MString(s);
+                }
+            case EIdent("$exn"):
+                switch currentException
+                {
+                    case Some(exn):
+                        exn;
+                    case None:
+                        throw new Exception('Target has not thrown an exception');
                 }
             case EIdent(v):
                 switch locals.get(v)

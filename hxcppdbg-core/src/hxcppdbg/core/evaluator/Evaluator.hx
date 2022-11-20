@@ -1,6 +1,7 @@
 package hxcppdbg.core.evaluator;
 
 import haxe.Exception;
+import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.Stack;
 import hxcppdbg.core.model.ModelData;
@@ -26,13 +27,21 @@ class Evaluator
         stack     = _stack;
     }
 
-    public function evaluate(_expr : String, _thread, _index, _callback : Result<ModelData, Exception>->Void)
+    public function evaluate(_expr : String, _thread, _index, _stopReason : Result<StopReason, Exception>, _callback : Result<ModelData, Exception>->Void)
     {
         locals.getLocals(_thread, _index, _result -> {
             switch _result
             {
                 case Success(locals):
-                    _callback(new Context(locals).interpret(_expr));
+                    final currentException = switch _stopReason
+                    {
+                        case Result.Success(ExceptionThrown(_, _thrown)):
+                            _thrown;
+                        case _:
+                            Option.None;
+                    }
+
+                    _callback(new Context(locals, currentException).interpret(_expr));
                 case Error(e):
                     _callback(Result.Error(e));
             }

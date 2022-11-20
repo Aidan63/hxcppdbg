@@ -1,5 +1,12 @@
 package hxcppdbg.dap;
 
+import hxcppdbg.core.model.Keyable;
+import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
+import hxcppdbg.core.model.NamedModelData;
+import hxcppdbg.core.drivers.IKeyable;
+import hxcppdbg.core.model.ModelData;
+import hxcppdbg.dap.protocol.responses.ExceptionInfoResponse;
+import hxcppdbg.dap.protocol.requests.ExceptionInfoRequest;
 import cpp.asio.Code;
 import cpp.asio.streams.IReadStream;
 import cpp.asio.streams.IWriteStream;
@@ -82,7 +89,7 @@ class DapSession
 
     function write(_content : String, _callback : Option<Code>->Void)
     {
-        // Sys.println('OUT : $_content');
+        Sys.println('OUT : $_content');
 
         final str  = 'Content-Length: ${ _content.length }\r\n\r\n$_content';
         final data = Bytes.ofString(str);
@@ -150,7 +157,7 @@ class DapSession
         return switch _request.command
         {
             case 'initialize':
-                sendResponse(Outcome.Success({ supportsConfigurationDoneRequest : true, supportsVariableType : true }))
+                sendResponse(Outcome.Success({ supportsConfigurationDoneRequest : true, supportsVariableType : true, supportsExceptionInfoRequest : true }))
                     .flatMap(sendInitialisedEvent);
             case 'setExceptionBreakpoints':
                 sendResponse(Outcome.Success({ filters : [] }));
@@ -198,6 +205,9 @@ class DapSession
                     .flatMap(sendResponse);
             case 'evaluate':
                 onEvaluate(cast _request)
+                    .flatMap(sendResponse);
+            case 'exceptionInfo':
+                onExceptionInfo(cast _request)
                     .flatMap(sendResponse);
             case 'disconnect':
                 onDisconnect()
@@ -719,7 +729,7 @@ class DapSession
                                 case null:
                                     _resolve(Outcome.Failure(new Exception('no frame ID')));
                                 case frame:
-                                    s.eval.evaluate(_request.arguments.expression, frame.thread, frame.number, result -> {
+                                    s.eval.evaluate(_request.arguments.expression, frame.thread, frame.number, s.cache.stopReason, result -> {
                                         switch result
                                         {
                                             case Success(data):
@@ -740,6 +750,108 @@ class DapSession
                                                 _resolve(Outcome.Failure(exn));
                                         }
                                     });
+                            }
+                        case None:
+                            _resolve(Outcome.Failure(noSessionException()));
+                    }
+                });
+    }
+
+    function onExceptionInfo(_request : ExceptionInfoRequest)
+    {
+        return
+            DapPromise
+                .irreversible((_resolve : Outcome<ExceptionInfoResponse, Exception>->Void) -> {
+                    switch session
+                    {
+                        case Some(s):
+                            switch s.cache.stopReason
+                            {
+                                case Success(ExceptionThrown(_, Some(exn))):
+
+                                    function exceptionToDetails(_type : GeneratedType, _model : Keyable<String, NamedModelData>) : Outcome<ExceptionDetails, Exception>
+                                    {
+                                        final message = switch _model.get('_hx___exceptionMessage')
+                                        {
+                                            case Success(MString(s)):
+                                                s;
+                                            case _:
+                                                return Outcome.Failure(new Exception('Unable to get the exception message'));
+                                        }
+                                        final stack = switch _model.get('_hx___nativeStack')
+                                        {
+                                            case Success(MArray(_model)):
+                                                final stack = [];
+
+                                                switch _model.count()
+                                                {
+                                                    case Success(count):
+                                                        for (i in 0...count)
+                                                        {
+                                                            switch _model.at(i)
+                                                            {
+                                                                case Success(MString(s)):
+                                                                    stack.push(s);
+                                                                case _:
+                                                                    return Outcome.Failure(new Exception('Failed to get stack string at index $i'));
+                                                            }
+                                                        }
+                                                    case Error(exn):
+                                                        return Outcome.Failure(exn);
+                                                }
+
+                                                haxe.CallStack.toString(haxe.NativeStackTrace.toHaxe(stack));
+                                            case other:
+                                                return Outcome.Failure(new Exception('Unable to get the exception stack'));
+                                        }
+
+                                        final previous = switch _model.get('_hx___previousException')
+                                        {
+                                            case Result.Success(MClass(type, model)):
+                                                switch exceptionToDetails(type, model)
+                                                {
+                                                    case Outcome.Success(details):
+                                                        [ details ];
+                                                    case _:
+                                                        null;
+                                                }
+                                            case _:
+                                                null;
+                                        }
+
+                                        return Outcome.Success({
+                                            message        : message,
+                                            stackTrace     : stack,
+                                            innerException : previous,
+                                            typeName       : _type.name,
+                                            fullTypeName   : exn.printType(),
+                                        });
+                                    }
+                                    
+                                    switch exn
+                                    {
+                                        case MClass(type, model):
+                                            switch exceptionToDetails(type, model)
+                                            {
+                                                case Success(data):
+                                                    _resolve(Outcome.Success({
+                                                        exceptionId : exn.printType(),
+                                                        description : data.message,
+                                                        breakMode   : 'always',
+                                                        details     : data
+                                                    }));
+                                                case Failure(failure):
+                                                    _resolve(Outcome.Failure(failure));
+                                            }
+                                        case _:
+                                            _resolve(Outcome.Failure(new Exception('Expected exception object to be a class')));
+                                    }
+                                case Success(ExceptionThrown(_, None)):
+                                    _resolve(Outcome.Failure(new Exception('Exception was thrown but no exception object found.')));
+                                case Success(_):
+                                    _resolve(Outcome.Failure(new Exception('Stop reason was not an exception.')));
+                                case Error(exn):
+                                    _resolve(Outcome.Failure(exn));
                             }
                         case None:
                             _resolve(Outcome.Failure(noSessionException()));
@@ -853,7 +965,7 @@ class DapSession
                         preserveFocusHint : false
                     }
                 });
-            case ExceptionThrown(_threadIndex):
+            case ExceptionThrown(_threadIndex, _):
                 event({
                     seq   : nextOutSequence(),
                     type  : 'event',

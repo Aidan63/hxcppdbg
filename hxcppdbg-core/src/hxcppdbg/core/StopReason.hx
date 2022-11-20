@@ -1,6 +1,8 @@
 package hxcppdbg.core;
 
 import haxe.Int64;
+import haxe.ds.Option;
+import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.breakpoints.Breakpoint;
 
 enum StopReason
@@ -20,8 +22,9 @@ enum StopReason
     /**
      * The debug target has thrown an exception and has been paused.
      * @param _threadIndex Thread index which hit the breakpoint.
+     * @param _thrown Object thrown.
      */
-    ExceptionThrown(_threadIndex : Int);
+    ExceptionThrown(_threadIndex : Int, _thrown : Option<ModelData>);
 
     /**
      * The debug target has ended execution and returned an exit code.

@@ -595,7 +595,7 @@ void hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::wait(
 								}
 								else
 								{
-									_onException(threadIdx, event.ExceptionRecord.ExceptionCode);
+									_onException(threadIdx, event.ExceptionRecord.ExceptionCode, tryFindThrownObject(threadIdx));
 								}
 
 							}
@@ -821,4 +821,47 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::end()
 	}
 	
 	return haxe::ds::Option_obj::None;
+}
+
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::tryFindThrownObject(const int _threadIndex)
+{
+	auto result = S_OK;
+	auto sysID  = 0ul;
+	if (!SUCCEEDED(result = system->GetThreadIdsByIndex(_threadIndex, 1, nullptr, &sysID)))
+	{
+		return null();
+	}
+
+	try
+	{
+		auto predicate = [sysID](const Debugger::DataModel::ClientEx::Object&, Debugger::DataModel::ClientEx::Object thread) { return int{ thread.KeyValue(L"Id") } == sysID; };
+		auto thread    = Debugger::DataModel::ClientEx::Object::CurrentProcess().KeyValue(L"Threads").CallMethod(L"First", predicate);
+		auto frames    = thread.KeyValue(L"Stack").KeyValue(L"Frames");
+		auto count     = int { frames.CallMethod(L"Count") };
+		auto output    = Array<hxcppdbg::core::drivers::dbgeng::NativeFrameReturn>(0, count);
+
+		for (auto&& frame : frames)
+		{
+			auto converted = nativeFrameFromDebugFrame(frame)->frame->func;
+
+			if (converted == HX_CSTRING("hx::Throw") || converted == HX_CSTRING("hx::Rethrow"))
+			{
+				return
+					frame
+						.KeyValue(L"Parameters")
+						.KeyValue(L"inDynamic")
+						.Dereference()
+						.GetValue()
+						.TryCastToRuntimeType()
+						.KeyValue(L"HxcppdbgModelData")
+						.As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+			}
+		}
+
+		return null();
+	}
+	catch (const std::exception&)
+	{
+		return null();
+	}
 }
