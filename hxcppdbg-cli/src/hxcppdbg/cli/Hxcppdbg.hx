@@ -34,7 +34,7 @@ class Hxcppdbg
         stack       = new Stack(session.stack);
         step        = new Step(session);
         locals      = new Locals(session.locals);
-        eval        = new Eval(session.eval);
+        eval        = new Eval(session.eval, session.cache.stopReason);
         threads     = new Threads(session.threads);
     }
 

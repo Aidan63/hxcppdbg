@@ -23,7 +23,7 @@ class Session
 {
     final driver : Driver;
 
-    final cache : Cache;
+    public final cache : Cache;
 
     public final sourcemap : Sourcemap;
 

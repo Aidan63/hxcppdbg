@@ -719,7 +719,7 @@ class DapSession
                                 case null:
                                     _resolve(Outcome.Failure(new Exception('no frame ID')));
                                 case frame:
-                                    s.eval.evaluate(_request.arguments.expression, frame.thread, frame.number, result -> {
+                                    s.eval.evaluate(_request.arguments.expression, frame.thread, frame.number, s.cache.stopReason, result -> {
                                         switch result
                                         {
                                             case Success(data):
