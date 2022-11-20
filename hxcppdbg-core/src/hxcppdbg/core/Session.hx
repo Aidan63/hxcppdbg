@@ -218,7 +218,7 @@ class Session
 
     function mapBreakReason(_reason : BreakReason)
     {
-        return switch _reason
+        return cache.stopReason = switch _reason
         {
             case Breakpoint(threadIndex, id):
                 switch breakpoints.list().find(bp -> bp.native.contains(id))
