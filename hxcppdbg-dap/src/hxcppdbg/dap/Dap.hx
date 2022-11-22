@@ -1,5 +1,6 @@
 package hxcppdbg.dap;
 
+import cpp.asio.TTY.Stdio;
 import sys.thread.Thread;
 import tink.CoreApi.Noise;
 import tink.CoreApi.Error;
@@ -28,18 +29,15 @@ class Dap
                 case 'socket':
                     cpp.asio.TcpSocket.bind('127.0.0.1', 7777, onSocketListen.bind(_reject));
                 case 'stdio':
-                    cpp.asio.TTY.open(Stdout, result -> {
+                    cpp.asio.Pipe.open(Stdio.Stdout, result -> {
                         switch result
                         {
                             case Success(stdout):
-                                cpp.asio.TTY.open(Stdin, result -> {
+                                cpp.asio.Pipe.open(Stdio.Stdin, result -> {
                                     switch result
                                     {
                                         case Success(stdin):
                                             new DapSession(stdin.read, stdout.write, () -> {
-                                                stdout.close();
-                                                stdin.close();
-                                                
                                                 _resolve(null);
                                             });
                                         case Error(error):
