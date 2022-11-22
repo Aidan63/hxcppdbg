@@ -69,7 +69,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         bool interrupt();
         void wait(Dynamic, Dynamic, Dynamic, Dynamic);
 
-        static IDataModelManager* manager;
-        static IDebugHost* host;
+        static ComPtr<IDataModelManager> manager;
+        static ComPtr<IDebugHost> host;
     };
 }

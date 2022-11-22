@@ -61,9 +61,9 @@
 #include <haxe/io/Path.h>
 #endif
 
-IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::manager = nullptr;
+ComPtr<IDataModelManager> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::manager = ComPtr<IDataModelManager>();
 
-IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::host = nullptr;
+ComPtr<IDebugHost> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::host = ComPtr<IDebugHost>();
 
 haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes)
 {
@@ -107,7 +107,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::createF
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get data model access"), result));
 	}
 
-	if (!SUCCEEDED(result = hostDataModelAccess->GetDataModel(&manager, &host)))
+	if (!SUCCEEDED(result = hostDataModelAccess->GetDataModel(manager.ReleaseAndGetAddressOf(), host.ReleaseAndGetAddressOf())))
 	{
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(HX_CSTRING("Unable to get data model manager and debug host"), result));
 	}
@@ -812,7 +812,7 @@ haxe::ds::Option hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::end()
 		return haxe::ds::Option_obj::Some(hxcppdbg::core::drivers::dbgeng::utils::HResultException_obj::__new(String::create(msg), result));
 	}
 
-	if (!SUCCEEDED(result = client->EndSession(DEBUG_END_ACTIVE_TERMINATE)))
+	if (!SUCCEEDED(result = client->EndSession(DEBUG_END_PASSIVE)))
 	{
 		auto err = _com_error(result);
 		auto msg = err.ErrorMessage();

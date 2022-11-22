@@ -85,11 +85,11 @@ class DbgEngDriver extends Driver
 			{
 				case Some(exn):
 					cbThread.events.run(() -> _callback(Option.Some(exn)));
-
+				case None:
 					objects.destroy();
 
 					dbgThread.events.cancel(heartbeat);
-				case None:
+
 					cbThread.events.run(() -> _callback(Option.None));
 			}
 		});
