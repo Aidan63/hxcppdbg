@@ -76,13 +76,13 @@ namespace Details
 //
 // Gets the data model manager.
 //
-ComPtr<IDataModelManager> GetManager();
+IDataModelManager* GetManager();
 
 // GetHost():
 //
 // Gets the debug host.
 //
-ComPtr<IDebugHost> GetHost();
+IDebugHost* GetHost();
 
 //**************************************************************************
 // Exception Types:

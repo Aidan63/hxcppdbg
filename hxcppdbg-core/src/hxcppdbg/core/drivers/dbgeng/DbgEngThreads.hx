@@ -4,14 +4,14 @@ import cpp.Pointer;
 import sys.thread.Thread;
 import haxe.Exception;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngSession;
 import hxcppdbg.core.thread.NativeThread;
 
 using Lambda;
 
 class DbgEngThreads implements IThreads
 {
-    final objects : Pointer<DbgEngContext>;
+    final objects : Pointer<DbgEngSession>;
 
     final cbThread : Thread;
 
@@ -27,13 +27,17 @@ class DbgEngThreads implements IThreads
     public function getThreads(_result : Result<Array<NativeThread>, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            switch objects.ptr.getThreads()
-            {
-                case Success(threads):
-                    cbThread.events.run(() -> _result(Result.Success(threads.mapi((idx, _) -> new NativeThread(idx, 'Thread $idx')))));
-                case Error(exn):
-                    cbThread.events.run(() -> _result(Result.Error(exn)));
-            }
+            final result =
+                try
+                {
+                    Result.Success(objects.ptr.getThreads().mapi((idx, id) -> new NativeThread(idx, 'Thread $idx')));
+                }
+                catch (exn : String)
+                {
+                    Result.Error(new Exception(exn));
+                }
+                
+            cbThread.events.run(() -> _result(result));
         });
     }
 }

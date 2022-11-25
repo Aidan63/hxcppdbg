@@ -6,14 +6,14 @@ import haxe.Int64;
 import haxe.Exception;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
-import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngSession;
 
 using hxcppdbg.core.utils.ResultUtils;
 using hxcppdbg.core.utils.OptionUtils;
 
 class DbgEngBreakpoints implements IBreakpoints
 {
-    final objects : Pointer<DbgEngContext>;
+    final objects : Pointer<DbgEngSession>;
 
     final cbThread : Thread;
 

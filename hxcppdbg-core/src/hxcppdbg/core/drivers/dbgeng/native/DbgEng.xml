@@ -15,6 +15,7 @@
         <compilerflag value='/await'/>
 
         <file name='${DbgEngDir}/DbgEngContext.cpp'/>
+        <file name='${DbgEngDir}/DbgEngSession.cpp'/>
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/NativeModelData.cpp'/>

@@ -20,56 +20,41 @@
 #include "models/IDbgEngKeyable.hpp"
 #include "models/LazyLocalStore.hpp"
 
-HX_DECLARE_CLASS2(haxe, ds, Option)
-HX_DECLARE_CLASS3(hxcppdbg, core, ds, Result)
-HX_DECLARE_CLASS4(hxcppdbg, core, drivers, dbgeng, NativeFrameReturn)
 HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
+    class DbgEngSession;
+
     class DbgEngContext
     {
     private:
-        ComPtr<IDebugClient7> client;
-        ComPtr<IDebugControl7> control;
-        ComPtr<IDebugSymbols5> symbols;
-        ComPtr<IDebugSystemObjects4> system;
-        std::unique_ptr<DebugEventCallbacks> events;
-        std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
-        ULONG stepOutBreakpointId = DEBUG_ANY_ID;
-
-        hxcppdbg::core::drivers::dbgeng::NativeFrameReturn nativeFrameFromDebugFrame(const Debugger::DataModel::ClientEx::Object& frame);
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData tryFindThrownObject(const int _threadIndex);
-
-        static String cleanSymbolName(std::wstring _input);
-        static int backtickCount(std::wstring _input);
-        static bool endsWith(std::wstring const &_input, std::wstring const &_ending);
+        static std::optional<cpp::Pointer<DbgEngContext>> cached;
+        
+        DbgEngContext(
+            ComPtr<IDebugClient7>,
+            ComPtr<IDebugControl7>,
+            ComPtr<IDebugSymbols5>,
+            ComPtr<IDebugSystemObjects4>,
+            ComPtr<IHostDataModelAccess>,
+            ComPtr<IDebugEventCallbacksWide>,
+            std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>);
 
     public:
-        DbgEngContext() = default;
-        virtual ~DbgEngContext() = default;
+        virtual ~DbgEngContext();
 
-        haxe::ds::Option createFromFile(String file, Array<hxcppdbg::core::sourcemap::GeneratedType> enums, Array<hxcppdbg::core::sourcemap::GeneratedType> classes);
+        static IDataModelManager* manager;
+        static IDebugHost* host;
+        static cpp::Pointer<DbgEngContext> get();
 
-        int64_t createBreakpoint(String file, int line);
-        void removeBreakpoint(int64_t id);
+        const ComPtr<IDebugClient7> client;
+        const ComPtr<IDebugControl7> control;
+        const ComPtr<IDebugSymbols5> symbols;
+        const ComPtr<IDebugSystemObjects4> system;
+        const ComPtr<IHostDataModelAccess> dataModelAccess;
+        const ComPtr<IDebugEventCallbacksWide> events;
+        const std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
 
-        hxcppdbg::core::ds::Result getThreads();
-
-        hxcppdbg::core::ds::Result getCallStack(int _threadID);
-        hxcppdbg::core::ds::Result getFrame(int _thread, int _index);
-
-        cpp::Pointer<models::IDbgEngKeyable<String, Dynamic>> getVariables(int _thread, int _frame);
-        hxcppdbg::core::ds::Result getArguments(int _thread, int _frame);
-
-        haxe::ds::Option go();
-        haxe::ds::Option step(int thread, int status);
-        haxe::ds::Option end();
-
-        bool interrupt();
-        void wait(Dynamic, Dynamic, Dynamic, Dynamic);
-
-        static ComPtr<IDataModelManager> manager;
-        static ComPtr<IDebugHost> host;
+        cpp::Pointer<DbgEngSession> start(String, Array<hxcppdbg::core::sourcemap::GeneratedType>, Array<hxcppdbg::core::sourcemap::GeneratedType>);
     };
 }

@@ -6,13 +6,13 @@ import haxe.Exception;
 import haxe.exceptions.NotImplementedException;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.NamedModelData;
-import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngSession;
 
 using hxcppdbg.core.utils.ResultUtils;
 
 class DbgEngLocals implements ILocals
 {
-    final driver : Pointer<DbgEngContext>;
+    final driver : Pointer<DbgEngSession>;
 
     final cbThread : Thread;
 
@@ -30,9 +30,7 @@ class DbgEngLocals implements ILocals
         dbgThread.events.run(() -> {
             final result = try
             {
-                Result.Success(
-                    (new DbgEngLocalStore(driver.ptr.getVariables(_threadIndex, _frameIndex)) : IKeyable<String, NamedModelData>)
-                );
+                Result.Success((new DbgEngLocalStore(driver.ptr.getVariables(_threadIndex, _frameIndex)) : IKeyable<String, NamedModelData>));
             }
             catch (exn)
             {

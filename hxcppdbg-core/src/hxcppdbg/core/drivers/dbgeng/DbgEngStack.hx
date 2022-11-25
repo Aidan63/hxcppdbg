@@ -3,9 +3,10 @@ package hxcppdbg.core.drivers.dbgeng;
 import cpp.Pointer;
 import haxe.Exception;
 import sys.thread.Thread;
+import hxcppdbg.core.ds.Path;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.stack.NativeFrame;
-import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngSession;
 
 using Lambda;
 using StringTools;
@@ -13,7 +14,7 @@ using hxcppdbg.core.utils.ResultUtils;
 
 class DbgEngStack implements IStack
 {
-    final objects : Pointer<DbgEngContext>;
+    final objects : Pointer<DbgEngSession>;
 
     final cbThread : Thread;
 
@@ -29,18 +30,32 @@ class DbgEngStack implements IStack
     public function getCallStack(_thread : Int, _result : Result<Array<NativeFrame>, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = objects.ptr.getCallStack(_thread).map(item -> item.frame);
+            final result =
+                try
+                {
+                    Result.Success(objects.ptr.getCallStack(_thread).map(frame -> new NativeFrame(Path.of(frame.file), frame.func, frame.line)));
+                }
+                catch (exn : String)
+                {
+                    Result.Error(new Exception(exn));
+                }
 
-            cbThread.events.run(() -> _result(r.asExceptionResult()));
+            cbThread.events.run(() -> _result(result));
         });
     }
 
     public function getFrame(_thread : Int, _index : Int, _result : Result<NativeFrame, Exception>->Void)
     {
         dbgThread.events.run(() -> {
-            final r = objects.ptr.getFrame(_thread, _index).apply(item -> item.frame);
+            final result =
+                try
+                {
+                    final frame = objects.ptr.getFrame(_thread, _index);
 
-            cbThread.events.run(() -> _result(r.asExceptionResult()));
+                    Result.Success(new NativeFrame(Path.of(frame.file), frame.func, frame.line));
+                }
+
+            cbThread.events.run(() -> _result(result));
         });
     }
 }

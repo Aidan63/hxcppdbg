@@ -1,7 +1,5 @@
 package hxcppdbg.core.drivers.dbgeng;
 
-import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
-import hxcppdbg.core.model.ModelData;
 import cpp.Pointer;
 import sys.thread.Thread;
 import sys.thread.EventLoop.EventHandler;
@@ -9,14 +7,16 @@ import haxe.Exception;
 import haxe.ds.Option;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.drivers.Driver.BreakReason;
+import hxcppdbg.core.drivers.dbgeng.native.DbgEngSession;
 import hxcppdbg.core.drivers.dbgeng.native.DbgEngContext;
+import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 
 using hxcppdbg.core.utils.ResultUtils;
 using hxcppdbg.core.utils.OptionUtils;
 
 class DbgEngDriver extends Driver
 {
-	final objects : Pointer<DbgEngContext>;
+	final objects : Pointer<DbgEngSession>;
 
 	final cbThread : Thread;
 
@@ -40,13 +40,18 @@ class DbgEngDriver extends Driver
 	public function start(_callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			switch objects.ptr.go()
+			final result = try
 			{
-				case Some(exn):
-					cbThread.events.run(() -> _callback(Result.Error(exn)));
-				case None:
-					cbThread.events.run(() -> _callback(Result.Success(run)));
+				objects.ptr.go();
+
+				Result.Success(run);
 			}
+			catch (exn : String)
+			{
+				Result.Error(new Exception(exn));
+			}
+			
+			cbThread.events.run(() -> _callback(result));
 		});
 	}
 
@@ -81,30 +86,40 @@ class DbgEngDriver extends Driver
 	public function stop(_callback : Option<Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			switch objects.ptr.end()
+			final result = try
 			{
-				case Some(exn):
-					cbThread.events.run(() -> _callback(Option.Some(exn)));
-				case None:
-					objects.destroy();
+				objects.ptr.end();
 
-					dbgThread.events.cancel(heartbeat);
+				objects.destroy();
 
-					cbThread.events.run(() -> _callback(Option.None));
+				dbgThread.events.cancel(heartbeat);
+
+				Option.None;
 			}
+			catch (exn : String)
+			{
+				Option.Some(new Exception(exn));
+			}
+
+			cbThread.events.run(() -> _callback(result));
 		});
 	}
 
 	public function step(_thread : Int, _type : StepType, _callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void)
 	{
 		dbgThread.events.run(() -> {
-			switch objects.ptr.step(_thread, _type)
+			final result = try
 			{
-				case Some(exn):
-					cbThread.events.run(() -> _callback(Result.Error(exn)));
-				case None:
-					cbThread.events.run(() -> _callback(Result.Success(run)));
+				objects.ptr.step(_thread, _type);
+
+				Result.Success(run);
 			}
+			catch (exn : String)
+			{
+				Result.Error(new Exception(exn));
+			}
+			
+			cbThread.events.run(() -> _callback(result));
 		});
 	}
 
@@ -148,14 +163,18 @@ class DbgEngDriver extends Driver
 		final cbThread = Thread.current();
 
 		Thread.createWithEventLoop(() -> {
-			final ctx    = DbgEngContext.alloc();
-			final result = switch ctx.ptr.createFromFile(_file, _enums, _classes)
-			{
-				case Some(exn):
-					Result.Error((exn : Exception));
-				case None:
-					Result.Success(new DbgEngDriver(ctx, cbThread));
-			}
+			final result = 
+				try
+				{
+					final ctx     = DbgEngContext.get();
+					final session = ctx.ptr.start(_file, _enums, _classes);
+
+					Result.Success(new DbgEngDriver(session, cbThread));
+				}
+				catch (exn : String)
+				{
+					Result.Error(new Exception(exn));
+				}
 
 			cbThread.events.run(() -> _callback(result));
 		});
