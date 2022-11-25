@@ -13,10 +13,10 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models::enums
     class ModelEnumObj : public hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel
     {
     private:
-        hxcppdbg::core::sourcemap::GeneratedType type;
+        Dynamic type;
         
     public:
-        ModelEnumObj(hxcppdbg::core::sourcemap::GeneratedType);
+        ModelEnumObj(String, Dynamic);
 
         Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
     };

@@ -10,8 +10,6 @@
 #include "models/LazyClassFields.hpp"
 #include "models/LazyEnumArguments.hpp"
 
-HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
-
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
     class NativeModelData_obj : public hx::EnumBase_obj
@@ -67,11 +65,11 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Dynamic HxStringMap_dyn();
         static NativeModelData HxDynamicMap(cpp::Pointer<models::LazyDynamicMap>);
         static Dynamic HxDynamicMap_dyn();
-        static NativeModelData HxEnum(hxcppdbg::core::sourcemap::GeneratedType, String, cpp::Pointer<models::LazyEnumArguments>);
+        static NativeModelData HxEnum(Dynamic, String, cpp::Pointer<models::LazyEnumArguments>);
         static Dynamic HxEnum_dyn();
         static NativeModelData HxAnon(cpp::Pointer<models::LazyAnonFields>);
         static Dynamic HxAnon_dyn();
-        static NativeModelData HxClass(hxcppdbg::core::sourcemap::GeneratedType, cpp::Pointer<models::LazyClassFields>);
+        static NativeModelData HxClass(Dynamic, cpp::Pointer<models::LazyClassFields>);
         static Dynamic HxClass_dyn();
     };
 }

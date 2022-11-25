@@ -62,10 +62,21 @@ class Session
                 cbThread.events.runPromised(() -> _callback(Result.Error(new Exception(ErrorUtils.convertErrorArray(parser.errors)))));
             case sourcemap:
 #if HX_WINDOWS
+                final enums =
+                    sourcemap
+                        .enums
+                        .map(e -> { name : e.type.cpp, type : e.type });
+
+                final classes =
+                    sourcemap
+                        .classes
+                        .filter(c -> c.type.cpp != 'haxe::ds::ObjectMap_obj' && c.type.cpp != 'haxe::ds::StringMap_obj' && c.type.cpp != 'haxe::ds::IntMap_obj')
+                        .map(c -> { name : c.type.cpp, type : c.type });
+
                 hxcppdbg.core.drivers.dbgeng.DbgEngDriver.create(
                     _targetPath,
-                    sourcemap.cppEnumNames(),
-                    sourcemap.cppClassNames(),
+                    enums,
+                    classes,
                     result -> {
                         switch result
                         {

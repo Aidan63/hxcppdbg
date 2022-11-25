@@ -6,17 +6,15 @@
 
 #include "models/extensions/HxcppdbgExtensionModel.hpp"
 
-HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
-
 namespace hxcppdbg::core::drivers::dbgeng::native::models::classes
 {
     class ModelClassObj : public hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel
     {
     private:
-        hxcppdbg::core::sourcemap::GeneratedType type;
+        Dynamic type;
 
     public:
-        ModelClassObj(hxcppdbg::core::sourcemap::GeneratedType);
+        ModelClassObj(String, Dynamic);
 
         Debugger::DataModel::ClientEx::Object getHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object&);
         Debugger::DataModel::ClientEx::Object count(const Debugger::DataModel::ClientEx::Object&);

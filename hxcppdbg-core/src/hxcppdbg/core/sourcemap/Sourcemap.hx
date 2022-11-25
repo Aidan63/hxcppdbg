@@ -12,19 +12,6 @@ using Lambda;
     public final classes : Array<GeneratedClass>;
 
     public final enums : Array<GeneratedEnum>;
-
-    public function cppEnumNames()
-    {
-        return enums.map(e -> e.type);
-    }
-
-    public function cppClassNames()
-    {
-        return
-            classes
-                .filter(c -> c.type.cpp != 'haxe::ds::ObjectMap_obj' && c.type.cpp != 'haxe::ds::StringMap_obj' && c.type.cpp != 'haxe::ds::IntMap_obj')
-                .map(c -> c.type);
-    }
 }
 
 @:structInit class GeneratedFile

@@ -173,18 +173,24 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::~DbgEngContext()
 	client->EndSession(DEBUG_END_PASSIVE);
 }
 
-cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::DbgEngSession> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::start(String _file, Array<hxcppdbg::core::sourcemap::GeneratedType> _enums, Array<hxcppdbg::core::sourcemap::GeneratedType> _classes)
+cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::DbgEngSession> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::start(String _file, Array<Dynamic> _enums, Array<Dynamic> _classes)
 {
 	auto sessionModels = std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>();
 
 	for (auto i = 0; i < _enums->length; i++)
 	{
-		sessionModels->push_back(std::make_unique<models::enums::ModelEnumObj>(_enums[i]));
+		auto typeName = _enums[i]->__Field(HX_CSTRING("name"), hx::PropertyAccess::paccDynamic).asString();
+		auto typeData = _enums[i]->__Field(HX_CSTRING("type"), hx::PropertyAccess::paccDynamic).asObject();
+
+		sessionModels->push_back(std::make_unique<models::enums::ModelEnumObj>(typeName, typeData));
 	}
 
 	for (auto i = 0; i < _classes->length; i++)
 	{
-		sessionModels->push_back(std::make_unique<models::classes::ModelClassObj>(_classes[i]));
+		auto typeName = _classes[i]->__Field(HX_CSTRING("name"), hx::PropertyAccess::paccDynamic).asString();
+		auto typeData = _classes[i]->__Field(HX_CSTRING("type"), hx::PropertyAccess::paccDynamic).asObject();
+
+		sessionModels->push_back(std::make_unique<models::classes::ModelClassObj>(typeName, typeData));
 	}
 
 	auto result = S_OK;

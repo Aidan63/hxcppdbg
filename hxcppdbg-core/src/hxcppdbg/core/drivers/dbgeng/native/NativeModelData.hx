@@ -1,6 +1,5 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
-import hxcppdbg.core.drivers.dbgeng.native.models.LazyDynamicMap;
 import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.Indexable;
@@ -9,6 +8,7 @@ import hxcppdbg.core.model.NamedModelData;
 import hxcppdbg.core.drivers.dbgeng.DbgEngArrayModel;
 import hxcppdbg.core.drivers.dbgeng.DbgEngIntMapModel;
 import hxcppdbg.core.drivers.dbgeng.DbgEngStringMapModel;
+import hxcppdbg.core.drivers.dbgeng.native.models.LazyDynamicMap;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngIndexable;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
@@ -32,9 +32,9 @@ extern enum NativeModelData
     HxStringMap(model : cpp.Pointer<IDbgEngKeyable<String, NativeModelDataKeyPair>>);
     HxDynamicMap(model : cpp.Pointer<LazyDynamicMap>);
 
-    HxEnum(type : GeneratedType, tag : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
+    HxEnum(type : Any, tag : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
     HxAnon(model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
-    HxClass(type : GeneratedType, model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
+    HxClass(type : Any, model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
 }
 
 class NativeModelDataTools

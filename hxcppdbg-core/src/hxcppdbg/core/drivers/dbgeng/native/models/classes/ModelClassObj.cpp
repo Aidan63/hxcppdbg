@@ -5,12 +5,8 @@
 #include "models/LazyClassFields.hpp"
 #include "../extensions/AnonBoxer.hpp"
 
-#ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
-#include <hxcppdbg/core/sourcemap/GeneratedType.h>
-#endif
-
-hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::ModelClassObj(hxcppdbg::core::sourcemap::GeneratedType _type)
-    : type(_type), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_type->cpp.wc_str())
+hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::ModelClassObj(String _typeName, Dynamic _typeData)
+    : type(_typeData), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_typeName.wc_str())
 {
     AddMethod(L"Count", this, &ModelClassObj::count);
     AddMethod(L"At", this, &ModelClassObj::at);

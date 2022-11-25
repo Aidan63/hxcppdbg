@@ -55,6 +55,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         const ComPtr<IDebugEventCallbacksWide> events;
         const std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
 
-        cpp::Pointer<DbgEngSession> start(String, Array<hxcppdbg::core::sourcemap::GeneratedType>, Array<hxcppdbg::core::sourcemap::GeneratedType>);
+        cpp::Pointer<DbgEngSession> start(String, Array<Dynamic>, Array<Dynamic>);
     };
 }

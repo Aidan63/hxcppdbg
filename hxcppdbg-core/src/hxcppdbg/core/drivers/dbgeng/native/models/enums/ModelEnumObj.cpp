@@ -9,8 +9,8 @@
 #include <hxcppdbg/core/sourcemap/GeneratedType.h>
 #endif
 
-hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::ModelEnumObj(hxcppdbg::core::sourcemap::GeneratedType _type)
-    : type(_type), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_type->cpp.wc_str())
+hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::ModelEnumObj(String _typeName, Dynamic _typeData)
+    : type(_typeData), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_typeName.wc_str())
 {
     //
 }

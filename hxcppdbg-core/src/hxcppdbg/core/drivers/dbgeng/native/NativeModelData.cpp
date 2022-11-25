@@ -1,10 +1,6 @@
 #include <hxcpp.h>
 #include "NativeModelData.hpp"
 
-#ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
-#include <hxcppdbg/core/sourcemap/GeneratedType.h>
-#endif
-
 using namespace hxcppdbg::core::drivers::dbgeng::native;
 using namespace Debugger::DataModel::ProviderEx;
 
@@ -65,7 +61,7 @@ NativeModelData NativeModelData_obj::HxDynamicMap(cpp::Pointer<hxcppdbg::core::d
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxDynamicMap"), Type::THxDynamicMap, 1)->_hx_init(0, m);
 }
 
-NativeModelData NativeModelData_obj::HxEnum(hxcppdbg::core::sourcemap::GeneratedType _type, String _tag, cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments> _args)
+NativeModelData NativeModelData_obj::HxEnum(Dynamic _type, String _tag, cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments> _args)
 {
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxEnum"), Type::THxEnum, 3)->_hx_init(0, _type)->_hx_init(1, _tag)->_hx_init(2, _args);
 }
@@ -75,7 +71,7 @@ NativeModelData NativeModelData_obj::HxAnon(cpp::Pointer<hxcppdbg::core::drivers
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxEnum"), Type::THxAnon, 1)->_hx_init(0, f);
 }
 
-NativeModelData NativeModelData_obj::HxClass(hxcppdbg::core::sourcemap::GeneratedType _type, cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields> _fields)
+NativeModelData NativeModelData_obj::HxClass(Dynamic _type, cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyClassFields> _fields)
 {
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("HxClass"), Type::THxClass, 2)->_hx_init(0, _type)->_hx_init(1, _fields);
 }
