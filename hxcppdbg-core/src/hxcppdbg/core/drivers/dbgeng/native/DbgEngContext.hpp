@@ -20,8 +20,6 @@
 #include "models/IDbgEngKeyable.hpp"
 #include "models/LazyLocalStore.hpp"
 
-HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
-
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
     class DbgEngSession;

@@ -26,10 +26,6 @@
 #include "models/classes/ModelClassObj.hpp"
 #include "fmt/xchar.h"
 
-#ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
-#include <hxcppdbg/core/sourcemap/GeneratedType.h>
-#endif
-
 IDataModelManager* hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::manager = nullptr;
 
 IDebugHost* hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::host = nullptr;

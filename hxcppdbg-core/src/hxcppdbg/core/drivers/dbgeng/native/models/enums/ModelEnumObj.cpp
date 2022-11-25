@@ -5,10 +5,6 @@
 #include "models/LazyEnumArguments.hpp"
 #include "fmt/xchar.h"
 
-#ifndef INCLUDED_hxcppdbg_core_sourcemap_GeneratedType
-#include <hxcppdbg/core/sourcemap/GeneratedType.h>
-#endif
-
 hxcppdbg::core::drivers::dbgeng::native::models::enums::ModelEnumObj::ModelEnumObj(String _typeName, Dynamic _typeData)
     : type(_typeData), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_typeName.wc_str())
 {

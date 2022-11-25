@@ -6,8 +6,6 @@
 
 #include "models/extensions/HxcppdbgExtensionModel.hpp"
 
-HX_DECLARE_CLASS3(hxcppdbg, core, sourcemap, GeneratedType)
-
 namespace hxcppdbg::core::drivers::dbgeng::native::models::enums
 {
     class ModelEnumObj : public hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel
