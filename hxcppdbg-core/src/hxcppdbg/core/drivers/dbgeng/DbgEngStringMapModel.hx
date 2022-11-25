@@ -33,7 +33,7 @@ class DbgEngStringMapModel implements IKeyable<ModelData, KeyValuePair>
     {
         return switch _key
         {
-            case MString(s), MDynamic(MString(s)):
+            case MString(s):
                 try Result.Success(model.ptr.get(s).toModelData()) catch (exn) Result.Error(exn);
             case other:
                 Result.Error(new Exception('Cannot key into a haxe.ds.StringMap with $other'));

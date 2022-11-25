@@ -17,7 +17,6 @@ enum ModelData
     MMap(type : Keyable<ModelData, KeyValuePair>);
     
     MEnum(type : GeneratedType, constructor : String, arguments : Indexable<ModelData>);
-    MDynamic(inner : ModelData);
     MAnon(model : Keyable<String, NamedModelData>);
     MClass(type : GeneratedType, model : Keyable<String, NamedModelData>);
     MUnknown(type : String);

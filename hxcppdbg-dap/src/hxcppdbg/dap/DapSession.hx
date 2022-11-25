@@ -735,7 +735,7 @@ class DapSession
                                             case Success(data):
                                                 final reference = switch data
                                                 {
-                                                    case MEnum(_, _, _), MArray(_), MMap(_), MDynamic(_), MAnon(_), MClass(_, _):
+                                                    case MEnum(_, _, _), MArray(_), MMap(_), MAnon(_), MClass(_, _):
                                                         variables.addModel(data);
                                                     case _:
                                                         0;

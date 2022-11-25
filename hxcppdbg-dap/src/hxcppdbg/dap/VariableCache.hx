@@ -151,7 +151,7 @@ class VariableCache
                 {
                     case null:
                         Result.Error(new Exception('No model with ID ${ _id.number }'));
-                    case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_), MDynamic(_):
+                    case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_):
                         Result.Error(new Exception('Model does not have children'));
                     case MArray(store), MEnum(_, _, store):
                         switch store.count()
@@ -339,8 +339,6 @@ class VariableCache
         {
             case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_):
                 0;
-            case MDynamic(inner):
-                addModel(inner);
             case MArray(_), MMap(_), MEnum(_, _, _), MAnon(_), MClass(_, _):
                 final id = index++;
 

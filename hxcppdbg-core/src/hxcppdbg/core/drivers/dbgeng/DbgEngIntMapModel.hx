@@ -33,7 +33,7 @@ class DbgEngIntMapModel implements IKeyable<ModelData, KeyValuePair>
     {
         return switch _key
         {
-            case MInt(i), MDynamic(MInt(i)):
+            case MInt(i):
                 try Result.Success(model.ptr.get(i).toModelData()) catch (exn) Result.Error(exn);
             case other:
                 Result.Error(new Exception('Cannot key into a haxe.ds.IntMap with $other'));

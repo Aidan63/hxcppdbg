@@ -42,8 +42,6 @@ class Printer
                     case Error(exn):
                         exn.message;
                 }
-            case MDynamic(inner):
-                printModelData(inner);
             case MAnon(fields):
                 switch fields.count()
                 {
@@ -79,8 +77,6 @@ class Printer
                 'Map<?, ?>';
             case MEnum(type, constructor, arguments):
                 '${ printGeneratedType }.$constructor';
-            case MDynamic(inner):
-                printModelData(inner);
             case MAnon(fields):
                 '{}';
             case MClass(type, _):

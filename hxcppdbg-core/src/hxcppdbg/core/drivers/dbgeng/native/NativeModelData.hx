@@ -11,7 +11,6 @@ import hxcppdbg.core.drivers.dbgeng.DbgEngStringMapModel;
 import hxcppdbg.core.drivers.dbgeng.native.models.LazyDynamicMap;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngIndexable;
-import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
 typedef NamedNativeModelData = { name : String, data : NativeModelData };
 

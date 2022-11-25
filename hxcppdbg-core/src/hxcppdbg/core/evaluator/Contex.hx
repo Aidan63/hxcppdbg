@@ -85,9 +85,9 @@ class Context
             case EField(e, f):
                 switch eval(e)
                 {
-                    case MDynamic(MString(s)), MString(s) if (f == 'length'):
+                    case MString(s) if (f == 'length'):
                         MInt(s.length);
-                    case MDynamic(MArray(children)), MArray(children) if (f == 'length'):
+                    case MArray(children) if (f == 'length'):
                         switch children.count()
                         {
                             case Success(v):
@@ -95,7 +95,7 @@ class Context
                             case Error(exn):
                                 throw exn;
                         }
-                    case MMap(model), MDynamic(MMap(model)) if (f == 'count'):
+                    case MMap(model) if (f == 'count'):
                         switch model.count()
                         {
                             case Success(v):
@@ -103,7 +103,7 @@ class Context
                             case Error(exn):
                                 throw exn;
                         }
-                    case MAnon(children), MDynamic(MAnon(children)), MClass(_, children), MDynamic(MClass(_, children)):
+                    case MAnon(children), MClass(_, children):
                         switch children.get(f)
                         {
                             case Success(v):
@@ -119,10 +119,10 @@ class Context
             case EArray(e, index):
                 switch eval(e)
                 {
-                    case MDynamic(MArray(items)), MArray(items):
+                    case MArray(items):
                         switch eval(index)
                         {
-                            case MInt(i), MDynamic(MInt(i)):
+                            case MInt(i):
                                 switch items.at(i)
                                 {
                                     case Success(v):
@@ -133,7 +133,7 @@ class Context
                             default:
                                 throw new Exception('Can only index into an array with an integer');
                         }
-                    case MDynamic(MMap(model)), MMap(model):
+                    case MMap(model):
                         switch model.get(eval(index))
                         {
                             case Success(v):
@@ -141,10 +141,10 @@ class Context
                             case Error(exn):
                                 throw exn;
                         }
-                    case MDynamic(MEnum(_, _, arguments)), MEnum(_, _, arguments):
+                    case MEnum(_, _, arguments):
                         switch eval(index)
                         {
-                            case MInt(i), MDynamic(MInt(i)):
+                            case MInt(i):
                                 switch arguments.at(i)
                                 {
                                     case Success(v):
@@ -179,8 +179,6 @@ class Context
                                 ModelData.MFloat(i1 + f2);
                             case MString(s2):
                                 ModelData.MString('$i1$s2');
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -193,8 +191,6 @@ class Context
                                 ModelData.MFloat(f1 + f2);
                             case MString(s2):
                                 ModelData.MString('$f1$s2');
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -207,13 +203,9 @@ class Context
                                 ModelData.MString('$s1$f2');
                             case MString(s2):
                                 ModelData.MString('$s1$s2');
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -227,8 +219,6 @@ class Context
                                 ModelData.MInt(i1 - i2);
                             case MFloat(f2):
                                 ModelData.MFloat(i1 - f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -239,13 +229,9 @@ class Context
                                 ModelData.MFloat(f1 - i2);
                             case MFloat(f2):
                                 ModelData.MFloat(f1 - f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -259,8 +245,6 @@ class Context
                                 ModelData.MInt(i1 * i2);
                             case MFloat(f2):
                                 ModelData.MFloat(i1 * f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -271,13 +255,9 @@ class Context
                                 ModelData.MFloat(f1 * i2);
                             case MFloat(f2):
                                 ModelData.MFloat(f1 * f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -291,8 +271,6 @@ class Context
                                 ModelData.MFloat(i1 / i2);
                             case MFloat(f2):
                                 ModelData.MFloat(i1 / f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -303,13 +281,9 @@ class Context
                                 ModelData.MFloat(f1 / i2);
                             case MFloat(f2):
                                 ModelData.MFloat(f1 / f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -323,8 +297,6 @@ class Context
                                 ModelData.MBool(i1 > i2);
                             case MFloat(f2):
                                 ModelData.MBool(i1 > f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -335,13 +307,9 @@ class Context
                                 ModelData.MBool(f1 > i2);
                             case MFloat(f2):
                                 ModelData.MBool(f1 > f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -355,8 +323,6 @@ class Context
                                 ModelData.MBool(i1 < i2);
                             case MFloat(f2):
                                 ModelData.MBool(i1 < f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -367,13 +333,9 @@ class Context
                                 ModelData.MBool(f1 < i2);
                             case MFloat(f2):
                                 ModelData.MBool(f1 < f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -387,8 +349,6 @@ class Context
                                 ModelData.MBool(i1 >= i2);
                             case MFloat(f2):
                                 ModelData.MBool(i1 >= f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -399,13 +359,9 @@ class Context
                                 ModelData.MBool(f1 >= i2);
                             case MFloat(f2):
                                 ModelData.MBool(f1 >= f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -419,8 +375,6 @@ class Context
                                 ModelData.MBool(i1 <= i2);
                             case MFloat(f2):
                                 ModelData.MBool(i1 <= f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -431,13 +385,9 @@ class Context
                                 ModelData.MBool(f1 <= i2);
                             case MFloat(f2):
                                 ModelData.MBool(f1 <= f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -451,8 +401,6 @@ class Context
                                 ModelData.MBool(i1 == i2);
                             case MFloat(f2):
                                 ModelData.MBool(i1 == f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -463,8 +411,6 @@ class Context
                                 ModelData.MBool(f1 == i2);
                             case MFloat(f2):
                                 ModelData.MBool(f1 == f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -473,13 +419,9 @@ class Context
                         {
                             case MString(s2):
                                 ModelData.MBool(s1 == s2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
@@ -493,8 +435,6 @@ class Context
                                 ModelData.MBool(i1 != i2);
                             case MFloat(f2):
                                 ModelData.MBool(i1 != f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -505,8 +445,6 @@ class Context
                                 ModelData.MBool(f1 != i2);
                             case MFloat(f2):
                                 ModelData.MBool(f1 != f2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
@@ -515,13 +453,9 @@ class Context
                         {
                             case MString(s2):
                                 ModelData.MBool(s1 != s2);
-                            case MDynamic(inner):
-                                evalBinop(_op, _e1, inner);
                             case other:
                                 throw new Exception('unable to add ${ other.getName() }');
                         }
-                    case MDynamic(inner):
-                        evalBinop(_op, inner, _e2);
                     case other:
                         throw new Exception('unable to add ${ other.getName() }');
                 }
