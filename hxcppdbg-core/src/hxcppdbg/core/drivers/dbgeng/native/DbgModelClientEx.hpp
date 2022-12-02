@@ -4324,6 +4324,15 @@ public:
         return Details::ObjectKeysRef<Object, Metadata>(*this);
     }
 
+    // HasKey():
+    //
+    // Returns if the object contains a key of the given name.
+    // 
+    bool HasKey(_In_z_ const wchar_t* keyName) const
+    {
+        return SUCCEEDED(m_spObject->GetKeyReference(keyName, nullptr, nullptr));
+    }
+
     // KeyValue():
     //
     // Fetches a key value without the overhead of returning key references.

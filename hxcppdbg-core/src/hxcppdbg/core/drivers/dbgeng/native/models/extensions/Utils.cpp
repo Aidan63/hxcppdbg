@@ -1,10 +1,61 @@
 #include <hxcpp.h>
 
 #include "Utils.hpp"
+#include <vector>
 
-hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object object)
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::extensions::objectToHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
-    auto type    = object.Type();
+	auto type = object.Type();
+
+	switch (type.GetKind())
+	{
+		case TypeKind::TypeUDT:
+			{
+				if (object.HasKey(L"HxcppdbgModelData"))
+				{
+					try
+					{
+						return object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+					}
+					catch (const std::exception&)
+					{
+						return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
+					}
+				}
+				else
+				{
+					return NativeModelData_obj::NType(String::create(type.Name().c_str()), new LazyNativeType(object));
+				}
+			}
+		case TypeKind::TypeArray:
+			{
+				auto name      = type.BaseType().Name();
+				auto dimension = *type.ArrayDimensions().begin();
+
+				return NativeModelData_obj::NArray(new LazyNativeArray(object, name, dimension.Length));
+			}
+			break;
+		case TypeKind::TypePointer:
+			{
+				auto address      = object.As<uint64_t>();
+				auto dereferenced = address == NULL
+					? NativeModelData_obj::NNull()
+					: objectToHxcppdbgModelData(object.Dereference().GetValue().TryCastToRuntimeType());
+
+				return NativeModelData_obj::NPointer(address, dereferenced);
+			}
+		case TypeKind::TypeMemberPointer:
+			return NativeModelData_obj::NNull();
+		case TypeKind::TypeIntrinsic:
+			return intrinsicObjectToHxcppdbgModelData(object);
+		default:
+			return NativeModelData_obj::NNull();
+	}
+}
+
+hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
+{
+	auto type    = object.Type();
 	auto kind    = type.IntrinsicKind();
 	auto carrier = type.IntrinsicCarrier();
 

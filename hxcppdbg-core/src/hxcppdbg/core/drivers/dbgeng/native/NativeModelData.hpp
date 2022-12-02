@@ -9,6 +9,8 @@
 #include "models/LazyAnonFields.hpp"
 #include "models/LazyClassFields.hpp"
 #include "models/LazyEnumArguments.hpp"
+#include "models/LazyNativeArray.hpp"
+#include "models/LazyNativeType.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
@@ -33,7 +35,10 @@ namespace hxcppdbg::core::drivers::dbgeng::native
             THxDynamicMap,
             THxEnum,
             THxAnon,
-            THxClass
+            THxClass,
+            TPointer,
+            TArray,
+            TType
         };
 
         NativeModelData_obj() = default;
@@ -71,6 +76,13 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Dynamic HxAnon_dyn();
         static NativeModelData HxClass(Dynamic, cpp::Pointer<models::LazyClassFields>);
         static Dynamic HxClass_dyn();
+
+        static NativeModelData NPointer(uint64_t, NativeModelData);
+        static Dynamic NPointer_dyn();
+        static NativeModelData NArray(cpp::Pointer<models::LazyNativeArray>);
+        static Dynamic NArray_dyn();
+        static NativeModelData NType(String, cpp::Pointer<models::LazyNativeType>);
+        static Dynamic NType_dyn();
     };
 }
 

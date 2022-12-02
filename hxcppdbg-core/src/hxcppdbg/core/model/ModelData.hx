@@ -19,5 +19,6 @@ enum ModelData
     MEnum(type : GeneratedType, constructor : String, arguments : Indexable<ModelData>);
     MAnon(model : Keyable<String, NamedModelData>);
     MClass(type : GeneratedType, model : Keyable<String, NamedModelData>);
+    MPointer(address : cpp.UInt64, dereferenced : ModelData);
     MUnknown(type : String);
 }
