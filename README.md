@@ -8,7 +8,7 @@ One goal is to support "mixed mode debugging" where you can step into the cpp co
 
 - [x] create breakpoints by file, line, and character
 - [ ] create breakpoints by function
-- [ ] composite breakpoints (multiple native breakpoints under one haxe breakpoint, for optimisations like unrolled loops)
+- [x] composite breakpoints (multiple native breakpoints under one haxe breakpoint, for optimisations like unrolled loops)
 - [ ] hscript conditional breakpoints
 
 ## callstack
@@ -37,10 +37,10 @@ One goal is to support "mixed mode debugging" where you can step into the cpp co
     - [x] array
     - [x] virtual array
     - [x] map
-- [ ] interop types
-    - [ ] pointers
-    - [ ] structs
-    - [ ] references
+- [x] interop types
+    - [x] pointers
+    - [x] structs
+    - [x] references
 - [x] object ptr
 - [x] anon objects
 - [x] dynamic
@@ -54,9 +54,9 @@ One goal is to support "mixed mode debugging" where you can step into the cpp co
 ## drivers
 
 - [x] dbgeng.dll and dbgmodel.dll for windows
-- [ ] lldb for mac and linux work in progress, data model is incomplete
+- [x] lldb for mac and linux work in progress (data model is incomplete)
 
 ## usage
 
 - [x] cli
-- [ ] debug adapter protocol
+- [x] debug adapter protocol
