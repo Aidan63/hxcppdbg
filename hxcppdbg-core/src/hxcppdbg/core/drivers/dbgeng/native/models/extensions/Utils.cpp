@@ -24,7 +24,7 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 				}
 				else
 				{
-					return NativeModelData_obj::NNull();	
+					return NativeModelData_obj::NType(String::create(type.Name().c_str()), new LazyNativeType(object));
 				}
 			}
 		case TypeKind::TypeArray:
@@ -36,7 +36,6 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 			}
 			break;
 		case TypeKind::TypePointer:
-		case TypeKind::TypeMemberPointer:
 			{
 				auto address      = object.As<uint64_t>();
 				auto dereferenced = address == NULL
@@ -45,6 +44,8 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 
 				return NativeModelData_obj::NPointer(address, dereferenced);
 			}
+		case TypeKind::TypeMemberPointer:
+			return NativeModelData_obj::NNull();
 		case TypeKind::TypeIntrinsic:
 			return intrinsicObjectToHxcppdbgModelData(object);
 		default:

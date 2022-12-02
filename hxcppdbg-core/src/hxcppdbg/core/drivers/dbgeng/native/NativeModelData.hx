@@ -37,6 +37,7 @@ extern enum NativeModelData
 
     NPointer(address : cpp.UInt64, dereferenced : NativeModelData);
     NArray(model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
+    NType(type : String, model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
 }
 
 class NativeModelDataTools
@@ -73,6 +74,10 @@ class NativeModelDataTools
                 ModelData.MPointer(address, dereferenced.toModelData());
             case NArray(model):
                 ModelData.MArray(new Indexable(new DbgEngArrayModel(model)));
+            case NType(type, model):
+                ModelData.MClass(
+                    { cpp : type, pack : [], name : type, module : type },
+                    new Keyable<String, NamedModelData>(new DbgEngClassFields(model)));
         }
     }
 }
