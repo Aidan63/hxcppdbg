@@ -174,6 +174,8 @@ cpp::Pointer<models::IDbgEngKeyable<String, Dynamic>> DbgEngSession::getVariable
 cpp::Pointer<models::IDbgEngKeyable<String, Dynamic>> DbgEngSession::getArguments(int _threadIndex, int _frameIndex)
 {
     hx::Throw(HX_CSTRING("Not Implemented"));
+
+	return null();
 }
 
 void DbgEngSession::go()
