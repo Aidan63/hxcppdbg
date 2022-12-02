@@ -64,7 +64,7 @@ class DapSession
     
     final messageQueue : Array<ProtocolMessage>;
 
-    var variables : VariableCache;
+    final variables : VariableCache;
 
     var outSequence : Int;
 
@@ -78,6 +78,7 @@ class DapSession
         output       = _output;
         close        = _close;
         buffer       = new InputBuffer();
+        variables    = new VariableCache();
         messageQueue = [];
 
         outSequence = 1;
@@ -934,8 +935,6 @@ class DapSession
 
     function interruptOptionToEvent(_interrupt : StopReason, _reason : String, _threadId : Null<Int>)
     {
-        variables = new VariableCache();
-
         return switch _interrupt
         {
             case Paused:
