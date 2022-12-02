@@ -25,14 +25,15 @@ class Indexable<TValue>
         return lazyCount.get();
     }
 
-    public function at(_index : Int) : Result<TValue, Exception>
+    public function at(_index : Int, _refresh = false) : Result<TValue, Exception>
     {
-        return switch indexCache[_index]
+        return if (_refresh || !indexCache.exists(_index))
         {
-            case null:
-                indexCache[_index] = indexModel.at(_index);
-            case cached:
-                cached;
+            indexCache[_index] = indexModel.at(_index);
+        }
+        else
+        {
+            indexCache[_index];
         }
     }
 }

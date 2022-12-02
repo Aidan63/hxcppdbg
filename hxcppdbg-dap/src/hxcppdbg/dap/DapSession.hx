@@ -411,8 +411,6 @@ class DapSession
                                 switch result
                                 {
                                     case Success(run):
-                                        variables.clear();
-
                                         run(onRunCallback);
 
                                         _resolve(Outcome.Success(null));
@@ -438,8 +436,6 @@ class DapSession
                                 switch result
                                 {
                                     case Success(opt):
-                                        variables.clear();
-
                                         respond(_request, Outcome.Success(null))
                                             .flatMap(_ -> interruptOptionToEvent(opt, 'step', _request.arguments.threadId))
                                             .handle(_resolve);
@@ -651,6 +647,8 @@ class DapSession
                     switch session
                     {
                         case Some(s):
+                            variables.clear();
+
                             final frameId = (cast _request.arguments.frameId : FrameUID);
 
                             // final getArguments = Future.irreversible((_resolve : Scope->Void) -> {

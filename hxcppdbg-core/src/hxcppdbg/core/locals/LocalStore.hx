@@ -21,14 +21,14 @@ class LocalStore extends Keyable<String, NamedModelData>
         sourcemap = _sourcemap;
     }
 
-	public override function get(_key : String) : Result<ModelData, Exception>
+	public override function get(_key : String, _refresh = false) : Result<ModelData, Exception>
     {
 		return switch sourcemap.find(map -> map.haxe == _key)
         {
             case null:
                 Result.Error(new Exception('Unable to find variable mapping for $_key'));
             case mapping:
-                super.get(mapping.cpp);
+                super.get(mapping.cpp, _refresh);
         }
 	}
 }

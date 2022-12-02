@@ -99,7 +99,7 @@ class VariableCache
                                 
                                 for (i in start...(start + count))
                                 {
-                                    switch store.at(i)
+                                    switch store.at(i, true)
                                     {
                                         case Success(field):
                                             output.push({
@@ -168,7 +168,7 @@ class VariableCache
 
                                 for (i in start...(start + count))
                                 {
-                                    switch store.at(i)
+                                    switch store.at(i, true)
                                     {
                                         case Success(model):
                                             output.push({
@@ -229,7 +229,7 @@ class VariableCache
 
                                 for (i in start...(start + count))
                                 {
-                                    switch store.at(i)
+                                    switch store.at(i, true)
                                     {
                                         case Success(model):
                                             output.push({
@@ -262,7 +262,7 @@ class VariableCache
 
                                 for (i in start...(start + count))
                                 {
-                                    switch store.at(i)
+                                    switch store.at(i, true)
                                     {
                                         case Success(field):
                                             output.push({

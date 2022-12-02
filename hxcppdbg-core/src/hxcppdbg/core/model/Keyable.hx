@@ -19,14 +19,15 @@ class Keyable<TKey, TValue> extends Indexable<TValue>
         keyCache = [];
     }
 
-    public function get(_key : TKey) : Result<ModelData, Exception>
+    public function get(_key : TKey, _refresh = false) : Result<ModelData, Exception>
     {
-        return switch keyCache[_key]
+        return if (_refresh || !keyCache.exists(_key))
         {
-            case null:
-                keyCache[_key] = keyModel.get(_key);
-            case cache:
-                cache;
+            keyCache[_key] = keyModel.get(_key);
+        }
+        else
+        {
+            keyCache[_key];
         }
     }
 }
