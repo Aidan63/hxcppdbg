@@ -9,5 +9,6 @@
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models::extensions
 {
-    NativeModelData intrinsicObjectToHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object object);
+    NativeModelData objectToHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
+    NativeModelData intrinsicObjectToHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object);
 }

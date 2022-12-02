@@ -308,6 +308,45 @@ class VariableCache
                             case Error(exn):
                                 Result.Error(exn);
                         }
+                    case MPointer(address, dereferenced):
+                        final output = new Array<Variable>();
+
+                        output.push({
+                            variablesReference : addModel(dereferenced),
+                            name  : 'pointee',
+                            type  : dereferenced.printType(),
+                            value : dereferenced.printModelData()
+                        });
+
+                        switch dereferenced
+                        {
+                            case MArray(model), MEnum(_, _, model):
+                                output[output.length - 1].indexedVariables = switch model.count() {
+                                    case Success(v):
+                                        v;
+                                    case Error(_):
+                                        0;
+                                };
+                            case MMap(model):
+                                output[output.length - 1].indexedVariables = switch model.count() {
+                                    case Success(v):
+                                        v;
+                                    case Error(_):
+                                        0;
+                                };
+                            case MAnon(model), MClass(_, model):
+                                output[output.length - 1].namedVariables = switch model.count()
+                                {
+                                    case Success(v):
+                                        v;
+                                    case Error(_):
+                                        0;
+                                }
+                            case _:
+                                //
+                        }
+
+                        Result.Success(output);
                 }
             case KeyValue:
                 switch mapRoots[_id.number]
@@ -339,7 +378,7 @@ class VariableCache
         {
             case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_):
                 0;
-            case MArray(_), MMap(_), MEnum(_, _, _), MAnon(_), MClass(_, _):
+            case MArray(_), MMap(_), MEnum(_, _, _), MAnon(_), MClass(_, _), MPointer(_, _):
                 final id = index++;
 
                 models[id] = _model;

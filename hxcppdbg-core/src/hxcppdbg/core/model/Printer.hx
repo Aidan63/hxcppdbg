@@ -2,6 +2,8 @@ package hxcppdbg.core.model;
 
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
+@:cppInclude("sstream")
+@:cppInclude("iomanip")
 class Printer
 {
     public static function printModelData(_data : ModelData)
@@ -50,8 +52,10 @@ class Printer
                     case Error(exn):
                         exn.message;
                 }
-            case MClass(_, fields):
+            case MClass(_, _):
                 '{ }';
+            case MPointer(address, dereferenced):
+                addressToHex(address);
             case MUnknown(type):
                 'unknown ($type)';
         }
@@ -62,7 +66,7 @@ class Printer
         return switch _data
         {
             case MNull:
-                '?';
+                'Null';
             case MInt(i):
                 'Int';
             case MFloat(f):
@@ -81,6 +85,8 @@ class Printer
                 '{}';
             case MClass(type, _):
                 printGeneratedType(type);
+            case MPointer(_, dereferenced):
+                'Pointer<${ printType(dereferenced) }>';
             case MUnknown(type):
                 type;
         }
@@ -111,4 +117,21 @@ class Printer
             }
         }
     }
+
+	private static function addressToHex(n : cpp.UInt64)
+    {
+		untyped __cpp__("
+        std::stringstream stream;
+
+        stream
+            << \"0x\"
+            /*<< std::setFill('0')
+            << std::setw(sizeof(uint64_t) * 2)*/
+            << std::hex
+            << {0};
+            
+        auto str = stream.str().c_str();", n);
+
+		return new String(untyped str);
+	}
 }

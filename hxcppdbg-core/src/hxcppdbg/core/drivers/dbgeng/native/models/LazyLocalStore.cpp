@@ -35,10 +35,7 @@ Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::at(cons
             {
                 auto name    = String::create(std::get<0>(field).c_str());
                 auto dataObj = std::get<1>(field).GetValue();
-                auto type    = dataObj.Type();
-                auto data    = type.IsIntrinsic()
-                    ? extensions::intrinsicObjectToHxcppdbgModelData(dataObj)
-                    : dataObj.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+                auto data    = extensions::objectToHxcppdbgModelData(dataObj);
 
                 auto anon = hx::Anon_obj::Create(2);
 

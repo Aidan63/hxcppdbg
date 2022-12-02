@@ -33,7 +33,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
             THxDynamicMap,
             THxEnum,
             THxAnon,
-            THxClass
+            THxClass,
+            TPointer
         };
 
         NativeModelData_obj() = default;
@@ -71,6 +72,9 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         static Dynamic HxAnon_dyn();
         static NativeModelData HxClass(Dynamic, cpp::Pointer<models::LazyClassFields>);
         static Dynamic HxClass_dyn();
+
+        static NativeModelData NPointer(uint64_t, NativeModelData);
+        static Dynamic NPointer_dyn();
     };
 }
 
