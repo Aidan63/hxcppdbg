@@ -86,7 +86,14 @@ class Breakpoints
                         switch outcome.filter(isSuccess)
                         {
                             case some if (some.length == outcome.length):
-                                _callback(Option.None);
+                                if (active.remove(_id))
+                                {
+                                    _callback(Option.None);
+                                }
+                                else
+                                {
+                                    _callback(Option.Some(new Exception('Breakpoint no longer in active list')));
+                                }
                             default:
                                 _callback(Option.Some(new Exception('Unable to delete breakpoint')));
                         }
