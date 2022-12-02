@@ -27,7 +27,7 @@ int64_t DbgEngSession::createBreakpoint(String _file, int _line)
         hx::Throw(HX_CSTRING("Unable to get source entries"));
     }
 
-    auto breakpoint = ComPtr<IDebugBreakpoint>();
+    auto breakpoint = (IDebugBreakpoint*)nullptr;
     if (!SUCCEEDED(result = (*ctx).control->AddBreakpoint(DEBUG_BREAKPOINT_CODE, DEBUG_ANY_ID, &breakpoint)))
     {
         hx::Throw(HX_CSTRING("Unable to add breakpoint"));
@@ -56,13 +56,13 @@ void DbgEngSession::removeBreakpoint(int64_t _id)
 {
     auto result = 0UL;
 
-    auto breakpoint = ComPtr<IDebugBreakpoint>();
+    auto breakpoint = (IDebugBreakpoint*)nullptr;
     if (!SUCCEEDED(result = (*ctx).control->GetBreakpointById(_id, &breakpoint)))
     {
         hx::Throw(HX_CSTRING("Unable to get breakpoint from Id"));
     }
 
-    if (!SUCCEEDED(result = (*ctx).control->RemoveBreakpoint(breakpoint.Get())))
+    if (!SUCCEEDED(result = (*ctx).control->RemoveBreakpoint(breakpoint)))
     {
         hx::Throw(HX_CSTRING("Unable to remove breakpoint"));
     }
