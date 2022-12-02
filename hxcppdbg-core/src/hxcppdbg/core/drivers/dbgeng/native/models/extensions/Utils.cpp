@@ -1,64 +1,60 @@
 #include <hxcpp.h>
 
 #include "Utils.hpp"
+#include <vector>
 
 hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::extensions::objectToHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
-	switch (object.GetKind())
+	auto type = object.Type();
+
+	switch (type.GetKind())
 	{
 		case TypeKind::TypeUDT:
-		case TypeKind::TypeMemberPointer:
 			{
-				try
+				if (object.HasKey(L"HxcppdbgModelData"))
 				{
-					return object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+					try
+					{
+						return object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
+					}
+					catch (const std::exception&)
+					{
+						return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
+					}
 				}
-				catch (const std::exception&)
+				else
 				{
-					return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
+					return NativeModelData_obj::NNull();	
 				}
+			}
+		case TypeKind::TypeArray:
+			{
+				auto name      = type.BaseType().Name();
+				auto dimension = *type.ArrayDimensions().begin();
+
+				return NativeModelData_obj::NArray(new LazyNativeArray(object, name, dimension.Length));
 			}
 			break;
 		case TypeKind::TypePointer:
+		case TypeKind::TypeMemberPointer:
 			{
-				auto t    = object.Type();
-				auto name = t.Name().c_str();
-				auto ptrT = t.GetPointerKind();
-
 				auto address      = object.As<uint64_t>();
 				auto dereferenced = address == NULL
 					? NativeModelData_obj::NNull()
-					: objectToHxcppdbgModelData(object.Dereference().GetValue());
+					: objectToHxcppdbgModelData(object.Dereference().GetValue().TryCastToRuntimeType());
 
 				return NativeModelData_obj::NPointer(address, dereferenced);
 			}
-		case TypeKind::TypeArray:
-			return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
-		case TypeKind::TypeFunction:
-			return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
-		case TypeKind::TypeEnum:
-			return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
 		case TypeKind::TypeIntrinsic:
 			return intrinsicObjectToHxcppdbgModelData(object);
 		default:
-			return hxcppdbg::core::drivers::dbgeng::native::NativeModelData_obj::NNull();
+			return NativeModelData_obj::NNull();
 	}
 }
 
 hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(const Debugger::DataModel::ClientEx::Object& object)
 {
-    auto type = object.Type();
-
-	if (type.IsPointer())
-	{
-		auto address      = object.As<uint64_t>();
-		auto dereferenced = address == NULL
-			? NativeModelData_obj::NNull()
-			: objectToHxcppdbgModelData(object.Dereference().GetValue().TryCastToRuntimeType());
-
-		return NativeModelData_obj::NPointer(address, dereferenced);
-	}
-	
+	auto type    = object.Type();
 	auto kind    = type.IntrinsicKind();
 	auto carrier = type.IntrinsicCarrier();
 

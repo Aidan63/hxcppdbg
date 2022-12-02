@@ -36,6 +36,7 @@ extern enum NativeModelData
     HxClass(type : Any, model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
 
     NPointer(address : cpp.UInt64, dereferenced : NativeModelData);
+    NArray(model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
 }
 
 class NativeModelDataTools
@@ -70,6 +71,8 @@ class NativeModelDataTools
                 ModelData.MClass(type, new Keyable<String, NamedModelData>(new DbgEngClassFields(model)));
             case NPointer(address, dereferenced):
                 ModelData.MPointer(address, dereferenced.toModelData());
+            case NArray(model):
+                ModelData.MArray(new Indexable(new DbgEngArrayModel(model)));
         }
     }
 }
