@@ -8,7 +8,9 @@
 using namespace hxcppdbg::core::drivers::dbgeng::native;
 using namespace Debugger::DataModel::ClientEx;
 
-DbgEngSession::DbgEngSession(cpp::Pointer<DbgEngContext> _ctx, std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> _models)
+DbgEngSession::DbgEngSession(
+	cpp::Pointer<DbgEngContext> _ctx,
+	std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> _models)
 	: ctx(_ctx)
 	, models(std::move(_models))
 	, stepOutBreakpointId(DEBUG_ANY_ID)
@@ -326,7 +328,13 @@ bool DbgEngSession::interrupt()
 	return true;
 }
 
-void DbgEngSession::wait(Dynamic _onBreakpoint, Dynamic _onException, Dynamic _onPaused, Dynamic _onExited)
+void DbgEngSession::wait(
+	Dynamic _onBreakpoint,
+	Dynamic _onException,
+	Dynamic _onPaused,
+	Dynamic _onExited,
+	Dynamic _onThreadCreated,
+	Dynamic _onThreadExited)
 {
 	hx::EnterGCFreeZone();
 
@@ -353,6 +361,38 @@ void DbgEngSession::wait(Dynamic _onBreakpoint, Dynamic _onException, Dynamic _o
 						case 0:
 							{
 								_onPaused();
+							}
+							break;
+
+						case DEBUG_EVENT_CREATE_PROCESS:
+							{
+								hx::Throw(HX_CSTRING("Unexpected process created event"));
+							}
+							break;
+
+						case DEBUG_EVENT_EXIT_PROCESS:
+							{
+								auto code = 0UL;
+								if (S_OK == (*ctx).client->GetExitCode(&code))
+								{
+									_onExited(code);
+								}
+								else
+								{
+									hx::Throw(HX_CSTRING("Process exited but unable to get exit code"));
+								}
+							}
+							break;
+
+						case DEBUG_EVENT_CREATE_THREAD:
+							{
+								_onThreadCreated();
+							}
+							break;
+
+						case DEBUG_EVENT_EXIT_THREAD:
+							{
+								_onThreadExited();
 							}
 							break;
 
@@ -391,20 +431,6 @@ void DbgEngSession::wait(Dynamic _onBreakpoint, Dynamic _onException, Dynamic _o
 									_onException(threadIdx, event.ExceptionRecord.ExceptionCode, tryFindThrownObject(threadIdx));
 								}
 
-							}
-							break;
-
-						case DEBUG_EVENT_EXIT_PROCESS:
-							{
-								auto code = 0UL;
-								if (S_OK == (*ctx).client->GetExitCode(&code))
-								{
-									_onExited(code);
-								}
-								else
-								{
-									hx::Throw(HX_CSTRING("Process exited but unable to get exit code"));
-								}
 							}
 							break;
 

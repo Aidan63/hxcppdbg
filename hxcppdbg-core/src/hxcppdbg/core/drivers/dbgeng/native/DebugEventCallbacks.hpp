@@ -14,7 +14,22 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         STDMETHOD_(ULONG, Release)();
         STDMETHOD(GetInterestMask)(OUT PULONG mask);
 
-        STDMETHOD(Breakpoint)(_In_ PDEBUG_BREAKPOINT2 bp);
-        STDMETHOD(Exception)(_In_ PEXCEPTION_RECORD64 exception, _In_ ULONG firstChance);
+        STDMETHOD(Breakpoint)(PDEBUG_BREAKPOINT2 bp);
+        STDMETHOD(Exception)(PEXCEPTION_RECORD64 exception, ULONG firstChance);
+        STDMETHOD(CreateThread)(ULONG64 Handle, ULONG64 DataOffset, ULONG64 StartOffset);
+        STDMETHOD(ExitThread)(ULONG ExitCode);
+        STDMETHOD(CreateProcess)(
+            ULONG64 ImageFileHandle,
+            ULONG64 Handle,
+            ULONG64 BaseOffset,
+            ULONG ModuleSize,
+            PCWSTR ModuleName,
+            PCWSTR ImageName,
+            ULONG CheckSum,
+            ULONG TimeDateStamp,
+            ULONG64 InitialThreadHandle,
+            ULONG64 ThreadDataOffset,
+            ULONG64 StartOffset);
+        STDMETHOD(ExitProcess)(ULONG ExitCode);
     };
 }

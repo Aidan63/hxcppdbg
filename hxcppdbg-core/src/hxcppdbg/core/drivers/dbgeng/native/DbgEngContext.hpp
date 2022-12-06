@@ -35,8 +35,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
             ComPtr<IDebugSymbols5>,
             ComPtr<IDebugSystemObjects4>,
             ComPtr<IHostDataModelAccess>,
-            ComPtr<IDebugEventCallbacksWide>,
-            std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>);
+            std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>,
+            std::unique_ptr<DebugEventCallbacks>);
 
     public:
         virtual ~DbgEngContext();
@@ -50,8 +50,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         const ComPtr<IDebugSymbols5> symbols;
         const ComPtr<IDebugSystemObjects4> system;
         const ComPtr<IHostDataModelAccess> dataModelAccess;
-        const ComPtr<IDebugEventCallbacksWide> events;
         const std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> models;
+        const std::unique_ptr<DebugEventCallbacks> events;
 
         cpp::Pointer<DbgEngSession> start(String, Array<Dynamic>, Array<Dynamic>);
     };

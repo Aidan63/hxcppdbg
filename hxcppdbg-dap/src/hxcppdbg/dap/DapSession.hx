@@ -362,33 +362,11 @@ class DapSession
                     switch session
                     {
                         case Some(s):
-                            s.pause(result -> {
+                            s.threads.getThreads(result -> {
                                 switch result
                                 {
-                                    case Success(paused):
-                                        s.threads.getThreads(result -> {
-                                            if (paused)
-                                            {
-                                                s.resume(result -> {
-                                                    switch result
-                                                    {
-                                                        case Success(run):
-                                                            run(onRunCallback);
-                                                        case Error(exn):
-                                                            // Not sure what to do, should we send a "stopped" event?
-                                                            throw exn;
-                                                    }
-                                                });
-                                            }
-
-                                            switch result
-                                            {
-                                                case Success(threads):
-                                                    _resolve(Outcome.Success({ threads : threads.map(toProtocolThread) }));
-                                                case Error(exn):
-                                                    _resolve(Outcome.Failure(exn));
-                                            }
-                                        });
+                                    case Success(threads):
+                                        _resolve(Outcome.Success({ threads : threads.map(toProtocolThread) }));
                                     case Error(exn):
                                         _resolve(Outcome.Failure(exn));
                                 }
