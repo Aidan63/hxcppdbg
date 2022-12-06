@@ -19,12 +19,12 @@ class DbgEngThreads implements IThreads
 
     var activeThreads : Int;
 
-    public function new(_objects, _cbThread, _dbgThread, _activeThreads)
+    public function new(_objects, _cbThread, _dbgThread)
     {
         objects       = _objects;
         cbThread      = _cbThread;
         dbgThread     = _dbgThread;
-        activeThreads = _activeThreads;
+        activeThreads = 1;
     }
 
     public function getThreads(_result : Result<Array<NativeThread>, Exception>->Void)

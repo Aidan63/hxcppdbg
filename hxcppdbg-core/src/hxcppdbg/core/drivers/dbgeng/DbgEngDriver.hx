@@ -24,7 +24,7 @@ class DbgEngDriver extends Driver
 
 	final heartbeat : EventHandler;
 
-	function new(_session, _cbThread, _threadIds)
+	function new(_session, _cbThread)
 	{
 		session   = _session;
 		cbThread  = _cbThread;
@@ -34,7 +34,7 @@ class DbgEngDriver extends Driver
 		breakpoints = new DbgEngBreakpoints(session, cbThread, dbgThread);
 		stack       = new DbgEngStack(session, cbThread, dbgThread);
 		locals      = new DbgEngLocals(session, cbThread, dbgThread);
-		threads     = new DbgEngThreads(session, cbThread, dbgThread, _threadIds);
+		threads     = new DbgEngThreads(session, cbThread, dbgThread);
 	}
 
 	public function start(_callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void)
@@ -207,9 +207,8 @@ class DbgEngDriver extends Driver
 				{
 					final ctx     = DbgEngContext.get();
 					final session = ctx.ptr.start(_file, _enums, _classes);
-					final ids     = session.ptr.getThreads().length;
 
-					Result.Success(new DbgEngDriver(session, cbThread, ids));
+					Result.Success(new DbgEngDriver(session, cbThread));
 				}
 				catch (exn : String)
 				{
