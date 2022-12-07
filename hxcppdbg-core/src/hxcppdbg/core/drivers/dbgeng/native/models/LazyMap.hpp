@@ -139,65 +139,15 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         }
     };
 
-    class LazyDynamicMap : public IDbgEngIndexable<Dynamic>
+    class LazyDynamicMap : public LazyMap<DbgEngBaseModel&>
     {
-    private:
-        std::optional<int> keySize;
-        std::optional<std::wstring> keyName;
-
-        int getKeySize()
-        {
-            if (!keySize.has_value())
-            {
-                keySize.emplace(object.KeyValue(L"KeySize").As<int>());
-            }
-
-            return keySize.value();
-        }
-
-        std::wstring getKeyName()
-        {
-            if (!keyName.has_value())
-            {
-                keyName.emplace(object.KeyValue(L"KeyName").As<std::wstring>());
-            }
-
-            return keyName.value();
-        }
-
     public:
         LazyDynamicMap(const Debugger::DataModel::ClientEx::Object& _object)
-            : IDbgEngIndexable<Dynamic>(_object)
+            : LazyMap<DbgEngBaseModel&>(_object)
         {
             //
         }
-
-        int count()
-        {
-            try
-            {
-                return object.CallMethod(L"Count").As<int>();
-            }
-            catch (const std::exception& exn)
-            {
-                hx::Throw(String::create(exn.what()));
-            }
-        }
-
-        Dynamic at(const int _index)
-        {
-            try
-            {
-                return extensions::AnonBoxer::Unbox(object.CallMethod(L"At", _index, getKeyName(), getKeySize()));
-            }
-            catch (const std::exception& exn)
-            {
-                hx::Throw(String::create(exn.what()));
-            }
-        }
-
-        template<class TDontCare>
-        NativeModelData get(const IDbgEngIndexable<TDontCare>& _key)
+        NativeModelData get(const DbgEngBaseModel& _key)
         {
             try
             {

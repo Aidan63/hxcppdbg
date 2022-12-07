@@ -7,11 +7,12 @@ import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.KeyValuePair;
 import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
-import hxcppdbg.core.drivers.dbgeng.native.models.LazyDynamicMap;
+import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
+import hxcppdbg.core.drivers.dbgeng.native.models.DbgEngBaseModel;
 
 class DbgEngDynamicMapModel implements IKeyable<ModelData, KeyValuePair>
 {
-    final model : cpp.Pointer<LazyDynamicMap>;
+    final model : cpp.Pointer<IDbgEngKeyable<cpp.Reference<DbgEngBaseModel>, NativeModelDataKeyPair>>;
 
     public function new(_model)
     {
