@@ -1,7 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
 import cpp.NativeGc;
-import haxe.Exception;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
@@ -30,8 +29,6 @@ class DbgEngArrayModel implements IIndexable<ModelData>
 
 	public function at(_index : Int)
     {
-        final m : NativeModelData = untyped __cpp__('this->model->ptr->at({0})', _index);
-
-        return try Result.Success(m.toModelData()) catch (exn) Result.Error(exn);
+        return try Result.Success(model.ptr.at(_index).toModelData()) catch (exn) Result.Error(exn);
 	}
 }

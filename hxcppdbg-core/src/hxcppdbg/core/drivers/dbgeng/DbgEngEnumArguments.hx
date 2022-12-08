@@ -29,8 +29,6 @@ class DbgEngEnumArguments implements IIndexable<ModelData>
 
 	public function at(_index : Int)
     {
-		final m : NativeModelData = untyped __cpp__('this->model->ptr->at({0})', _index);
-
-		return try Result.Success(m.toModelData()) catch (exn) Result.Error(exn);
+		return try Result.Success(model.ptr.at(_index).toModelData()) catch (exn) Result.Error(exn);
 	}
 }
