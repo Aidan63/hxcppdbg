@@ -30,7 +30,7 @@ class DbgEngLocals implements ILocals
         dbgThread.events.run(() -> {
             final result = try
             {
-                Result.Success((new DbgEngLocalStore(driver.ptr.getVariables(_threadIndex, _frameIndex)) : IKeyable<String, NamedModelData>));
+                Result.Success((new DbgEngNamedKeyable(driver.ptr.getVariables(_threadIndex, _frameIndex)) : IKeyable<String, NamedModelData>));
             }
             catch (exn)
             {
@@ -40,7 +40,7 @@ class DbgEngLocals implements ILocals
             cbThread.events.run(() -> _callback(result));
         });
     }
- 
+    
 	public function getArguments(_thread : Int, _frame : Int, _callback : Result<IKeyable<String, NamedModelData>, Exception>->Void)
     {
         _callback(Result.Error(new NotImplementedException()));

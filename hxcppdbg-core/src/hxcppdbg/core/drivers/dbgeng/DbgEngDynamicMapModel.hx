@@ -40,43 +40,23 @@ class DbgEngDynamicMapModel implements IKeyable<ModelData, KeyValuePair>
     {
         return switch _key
         {
-            case MArray(store):
-                switch cast(@:privateAccess store.indexModel, DbgEngArrayModel)
+            case MArray(store), MEnum(_, _, store):
+                switch cast(@:privateAccess store.indexModel, DbgEngIndexable)
                 {
                     case null:
-                        Result.Error(new Exception('Array store is not of type "DbgEngArrayModel"'));
+                        Result.Error(new Exception('Is not of type "DbgEngIndexable"'));
                     case array:
                         final ref = @:privateAccess array.model.ref;
 
                         try Result.Success(model.ptr.get(ref).toModelData()) catch (exn) Result.Error(exn);
                 }
-            case MEnum(_, _, store):
-                switch cast(@:privateAccess store.indexModel, DbgEngEnumArguments)
+            case MAnon(store), MClass(_, store):
+                switch cast(@:privateAccess store.keyModel, DbgEngNamedKeyable)
                 {
                     case null:
-                        Result.Error(new Exception('Enum store is not of type "DbgEngEnumArguments"'));
-                    case args:
-                        final ref = @:privateAccess args.model.ref;
-
-                        try Result.Success(model.ptr.get(ref).toModelData()) catch (exn) Result.Error(exn);
-                }
-            case MAnon(store):
-                switch cast(@:privateAccess store.keyModel, DbgEngAnonModel)
-                {
-                    case null:
-                        Result.Error(new Exception('Anon object store is not of type "DbgEngAnonModel"'));
+                        Result.Error(new Exception('Is not of type "DbgEngNamedKeyable"'));
                     case anon:
                         final ref = @:privateAccess anon.model.ref;
-
-                        try Result.Success((model.ptr.get(ref) : NativeModelData).toModelData()) catch (exn) Result.Error(exn);
-                }
-            case MClass(_, store):
-                switch cast(@:privateAccess store.keyModel, DbgEngClassFields)
-                {
-                    case null:
-                        Result.Error(new Exception('Class fields store is not of type "DbgEngClassFields"'));
-                    case cls:
-                        final ref = @:privateAccess cls.model.ref;
 
                         try Result.Success((model.ptr.get(ref) : NativeModelData).toModelData()) catch (exn) Result.Error(exn);
                 }

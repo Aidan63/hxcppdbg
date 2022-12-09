@@ -6,7 +6,7 @@ import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.Indexable;
 import hxcppdbg.core.model.KeyValuePair;
 import hxcppdbg.core.model.NamedModelData;
-import hxcppdbg.core.drivers.dbgeng.DbgEngArrayModel;
+import hxcppdbg.core.drivers.dbgeng.DbgEngIndexable;
 import hxcppdbg.core.drivers.dbgeng.DbgEngIntMapModel;
 import hxcppdbg.core.drivers.dbgeng.DbgEngStringMapModel;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
@@ -57,27 +57,27 @@ class NativeModelDataTools
             case HxString(s):
                 ModelData.MString(s);
             case HxArray(model):
-                ModelData.MArray(new Indexable(new DbgEngArrayModel(model)));
+                ModelData.MArray(new Indexable(new DbgEngIndexable(model)));
             case HxIntMap(model):
-                ModelData.MMap(new Keyable<ModelData, KeyValuePair>(new DbgEngIntMapModel(model)));
+                ModelData.MMap(new Keyable(new DbgEngIntMapModel(model)));
             case HxStringMap(model):
-                ModelData.MMap(new Keyable<ModelData, KeyValuePair>(new DbgEngStringMapModel(model)));
+                ModelData.MMap(new Keyable(new DbgEngStringMapModel(model)));
             case HxDynamicMap(model):
-                ModelData.MMap(new Keyable<ModelData, KeyValuePair>(new DbgEngDynamicMapModel(model)));
+                ModelData.MMap(new Keyable(new DbgEngDynamicMapModel(model)));
             case HxEnum(type, tag, model):
-                ModelData.MEnum(type, tag, new Indexable<ModelData>(new DbgEngEnumArguments(model)));
+                ModelData.MEnum(type, tag, new Indexable(new DbgEngIndexable(model)));
             case HxAnon(model):
-                ModelData.MAnon(new Keyable<String, NamedModelData>(new DbgEngAnonModel(model)));
+                ModelData.MAnon(new Keyable(new DbgEngNamedKeyable(model)));
             case HxClass(type, model):
-                ModelData.MClass(type, new Keyable<String, NamedModelData>(new DbgEngClassFields(model)));
+                ModelData.MClass(type, new Keyable(new DbgEngNamedKeyable(model)));
             case NPointer(address, dereferenced):
                 ModelData.MPointer(address, dereferenced.toModelData());
             case NArray(model):
-                ModelData.MArray(new Indexable(new DbgEngArrayModel(model)));
+                ModelData.MArray(new Indexable(new DbgEngIndexable(model)));
             case NType(type, model):
                 ModelData.MClass(
                     { cpp : type, pack : [], name : type, module : type },
-                    new Keyable<String, NamedModelData>(new DbgEngClassFields(model)));
+                    new Keyable(new DbgEngNamedKeyable(model)));
         }
     }
 }

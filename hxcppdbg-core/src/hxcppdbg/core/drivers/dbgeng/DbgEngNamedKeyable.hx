@@ -6,7 +6,7 @@ import hxcppdbg.core.model.NamedModelData;
 import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
-class DbgEngAnonModel implements IKeyable<String, NamedModelData>
+class DbgEngNamedKeyable implements IKeyable<String, NamedModelData>
 {
     final model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>;
 
