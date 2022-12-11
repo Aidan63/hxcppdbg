@@ -398,13 +398,28 @@ void DbgEngSession::wait(
 
 						case DEBUG_EVENT_EXIT_THREAD:
 							{
-								auto systemId = 0ul;
-								if (!SUCCEEDED(result = (*ctx).system->GetThreadIdsByIndex(threadIdx, 1, nullptr, &systemId)))
+								auto code = 0UL;
+								if (SUCCEEDED((*ctx).client->GetExitCode(&code)))
 								{
-									hx::Throw(HX_CSTRING("Unable to get thread from index"));
-								}
+									if (code == STILL_ACTIVE)
+									{
+										auto systemId = 0ul;
+										if (!SUCCEEDED(result = (*ctx).system->GetThreadIdsByIndex(threadIdx, 1, nullptr, &systemId)))
+										{
+											hx::Throw(HX_CSTRING("Unable to get thread from index"));
+										}
 
-								_onThreadExited(systemId);
+										_onThreadExited(systemId);
+									}
+									else
+									{
+										_onExited(code);
+									}
+								}
+								else
+								{
+									hx::Throw(HX_CSTRING("Unable to get exit code"));
+								}
 							}
 							break;
 
