@@ -90,7 +90,7 @@ class DapSession
 
     function write(_content : String, _callback : Option<Code>->Void)
     {
-        // Sys.println('OUT : $_content');
+        Sys.println('OUT : $_content');
 
         final str  = 'Content-Length: ${ _content.length }\r\n\r\n$_content';
         final data = Bytes.ofString(str);
@@ -153,7 +153,7 @@ class DapSession
             return respond(_request, _outcome);
         }
 
-        // Sys.println('MSG : ${ _request }');
+        Sys.println('MSG : ${ _request }');
 
         return switch _request.command
         {
@@ -229,7 +229,7 @@ class DapSession
     {
         return switch _outcome
         {
-            case Success(data):
+            case Success(_):
                 event({ seq : nextOutSequence(), type : 'event', event : 'initialized' });
             case Failure(_):
                 DapPromise.sync(_outcome);
@@ -315,6 +315,36 @@ class DapSession
                                 session = Option.Some(created);
                                 launch  = Option.Some(_request);
 
+                                created
+                                    .threads
+                                    .created
+                                    .listen(id -> {
+                                        event({
+                                            event : 'thread',
+                                            type  : 'event',
+                                            seq   : nextOutSequence(),
+                                            body  : {
+                                                reason   : 'started',
+                                                threadId : id
+                                            }
+                                        }).handle(_ -> {});
+                                    });
+
+                                created
+                                    .threads
+                                    .exited
+                                    .listen(id -> {
+                                        event({
+                                            event : 'thread',
+                                            type  : 'event',
+                                            seq   : nextOutSequence(),
+                                            body  : {
+                                                reason   : 'exited',
+                                                threadId : id
+                                            }
+                                        }).handle(_ -> {});
+                                    });
+
                                 _resolve(Outcome.Success(null));
                             case Error(exn):
                                 _resolve(Outcome.Failure(exn));
@@ -348,11 +378,11 @@ class DapSession
 
     function onThreads()
     {
-        function toProtocolThread(_thread : NativeThread) : Thread
+        function toProtocolThread(_idx, _thread : NativeThread) : Thread
         {
             return {
                 name : _thread.name,
-                id   : _thread.index
+                id   : _idx
             }
         }
 
@@ -366,7 +396,7 @@ class DapSession
                                 switch result
                                 {
                                     case Success(threads):
-                                        _resolve(Outcome.Success({ threads : threads.map(toProtocolThread) }));
+                                        _resolve(Outcome.Success({ threads : threads.mapi(toProtocolThread) }));
                                     case Error(exn):
                                         _resolve(Outcome.Failure(exn));
                                 }

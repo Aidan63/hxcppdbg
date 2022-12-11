@@ -154,9 +154,9 @@ class DbgEngDriver extends Driver
 				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Exited(_exitCode))));
 			}
 
-			onThreadCreated = function()
+			onThreadCreated = function(_processId : Int)
 			{
-				cbThread.events.run(() -> (cast threads : DbgEngThreads).incrementThreadCount());
+				cbThread.events.run(() -> (cast threads : DbgEngThreads).onThreadCreated(_processId));
 
 				try
 				{
@@ -165,15 +165,13 @@ class DbgEngDriver extends Driver
 				}
 				catch (error : String)
 				{
-					trace('err');
-
 					cbThread.events.run(() -> _callback(Result.Error(new Exception(error))));
 				}
 			}
 
-			onThreadExited = function()
+			onThreadExited = function(_processId : Int)
 			{
-				cbThread.events.run(() -> (cast threads : DbgEngThreads).decrementThreadCount());
+				cbThread.events.run(() -> (cast threads : DbgEngThreads).onThreadExited(_processId));
 
 				try
 				{

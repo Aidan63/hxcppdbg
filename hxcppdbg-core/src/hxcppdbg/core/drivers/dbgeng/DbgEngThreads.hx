@@ -1,5 +1,6 @@
 package hxcppdbg.core.drivers.dbgeng;
 
+import tink.CoreApi.SignalTrigger;
 import cpp.Pointer;
 import sys.thread.Thread;
 import haxe.Exception;
@@ -17,40 +18,56 @@ class DbgEngThreads implements IThreads
 
 	final dbgThread : Thread;
 
-    var activeThreads : Int;
+    final threadCreated : SignalTrigger<Int>;
+
+    final threadExited : SignalTrigger<Int>;
+
+    final activeThreads : Array<Int>;
 
     public function new(_objects, _cbThread, _dbgThread)
     {
         objects       = _objects;
         cbThread      = _cbThread;
         dbgThread     = _dbgThread;
-        activeThreads = 1;
+        threadCreated = new SignalTrigger();
+        threadExited  = new SignalTrigger();
+        activeThreads = [];
     }
 
-    public function getThreads(_result : Result<Array<NativeThread>, Exception>->Void)
+    public function getThreads(_callback : Result<Array<NativeThread>, Exception>->Void)
     {
         cbThread.events.run(() -> {
-            final result =
-                try
-                {
-                    Result.Success([ for (i in 0...activeThreads) new NativeThread(i, 'Thread $i')]);
-                }
-                catch (exn : String)
-                {
-                    Result.Error(new Exception(exn));
-                }
-
-            _result(result);
+            _callback(Result.Success([ for (i in 0...activeThreads.length) new NativeThread('Thread $i') ]));
         });
     }
 
-    public function incrementThreadCount()
+    public function getCreatedSignal()
     {
-        activeThreads++;
+        return threadCreated;
     }
 
-    public function decrementThreadCount()
+    public function getExitedSignal()
     {
-        activeThreads--;
+        return threadExited;
+    }
+
+    public function onThreadCreated(_id)
+    {
+        activeThreads.push(_id);
+
+        threadCreated.trigger(activeThreads.length - 1);
+    }
+
+    public function onThreadExited(_id)
+    {
+        switch activeThreads.findIndex(id -> id == _id)
+        {
+            case -1:
+                //
+            case idx:
+                activeThreads.remove(_id);
+
+                threadCreated.trigger(idx);
+        }
     }
 }

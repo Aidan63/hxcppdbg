@@ -43,7 +43,7 @@ extern class DbgEngSession
         _onException : Int->Int->Null<NativeModelData>->Void,
         _onPaused : Void->Void,
         _onExited : Int->Void,
-        _onThreadCreated : Void->Void,
-        _onThreadExited : Void->Void
+        _onThreadCreated : Int->Void,
+        _onThreadExited : Int->Void
     ) : Void;
 }

@@ -346,11 +346,11 @@ void DbgEngSession::wait(
 			{
 				hx::ExitGCFreeZone();
 
-				auto type       = 0UL;
-				auto processIdx = 0UL;
-				auto threadIdx  = 0UL;
+				auto type      = 0UL;
+				auto processId = 0UL;
+				auto threadIdx = 0UL;
 
-				if (!SUCCEEDED((*ctx).control->GetLastEventInformation(&type, &processIdx, &threadIdx, nullptr, 0, nullptr, nullptr, 0, nullptr)))
+				if (!SUCCEEDED((*ctx).control->GetLastEventInformation(&type, &processId, &threadIdx, nullptr, 0, nullptr, nullptr, 0, nullptr)))
 				{
 					hx::Throw(HX_CSTRING("Unable to get last event information"));
 				}
@@ -386,20 +386,32 @@ void DbgEngSession::wait(
 
 						case DEBUG_EVENT_CREATE_THREAD:
 							{
-								_onThreadCreated();
+								auto systemId = 0ul;
+								if (!SUCCEEDED(result = (*ctx).system->GetThreadIdsByIndex(threadIdx, 1, nullptr, &systemId)))
+								{
+									hx::Throw(HX_CSTRING("Unable to get thread from index"));
+								}
+
+								_onThreadCreated(systemId);
 							}
 							break;
 
 						case DEBUG_EVENT_EXIT_THREAD:
 							{
-								_onThreadExited();
+								auto systemId = 0ul;
+								if (!SUCCEEDED(result = (*ctx).system->GetThreadIdsByIndex(threadIdx, 1, nullptr, &systemId)))
+								{
+									hx::Throw(HX_CSTRING("Unable to get thread from index"));
+								}
+
+								_onThreadExited(systemId);
 							}
 							break;
 
 						case DEBUG_EVENT_BREAKPOINT:
 							{
 								auto event = DEBUG_LAST_EVENT_INFO_BREAKPOINT();
-								if (!SUCCEEDED((*ctx).control->GetLastEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
+								if (!SUCCEEDED((*ctx).control->GetLastEventInformation(&type, &processId, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_BREAKPOINT), nullptr, nullptr, 0, nullptr)))
 								{
 									hx::Throw(HX_CSTRING("Unable to get last event breakpoint information"));
 								}
@@ -422,7 +434,7 @@ void DbgEngSession::wait(
 						case DEBUG_EVENT_EXCEPTION:
 							{
 								auto event = DEBUG_LAST_EVENT_INFO_EXCEPTION();
-								if (!SUCCEEDED((*ctx).control->GetLastEventInformation(&type, &processIdx, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
+								if (!SUCCEEDED((*ctx).control->GetLastEventInformation(&type, &processId, &threadIdx, &event, sizeof(DEBUG_LAST_EVENT_INFO_EXCEPTION), nullptr, nullptr, 0, nullptr)))
 								{
 									hx::Throw(HX_CSTRING("Unable to get last event exception information"));
 								}
