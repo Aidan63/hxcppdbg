@@ -2,10 +2,11 @@ package hxcppdbg.core.drivers.lldb;
 
 import sys.thread.Thread;
 import sys.thread.EventLoop;
-import hxcppdbg.core.drivers.lldb.native.LLDBContext;
+import tink.CoreApi.SignalTrigger;
+import haxe.Exception;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.thread.NativeThread;
-import haxe.Exception;
+import hxcppdbg.core.drivers.lldb.native.LLDBContext;
 
 class LLDBThreads implements IThreads
 {
@@ -27,7 +28,7 @@ class LLDBThreads implements IThreads
         dbgThread.run(() -> {
             final result = try
             {
-                Result.Success(ctx.ptr.getThreads().map(t -> new NativeThread(t.index, t.name)));
+                Result.Success(ctx.ptr.getThreads().map(t -> new NativeThread(t.name)));
             }
             catch (error : String)
             {
@@ -36,5 +37,15 @@ class LLDBThreads implements IThreads
 
             cbThread.run(() -> _callback(result));
         });
+    }
+
+    public function getCreatedSignal()
+    {
+        return new SignalTrigger();
+    }
+
+    public function getExitedSignal()
+    {
+        return new SignalTrigger();
     }
 }

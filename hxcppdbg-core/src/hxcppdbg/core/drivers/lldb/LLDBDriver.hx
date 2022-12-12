@@ -139,7 +139,7 @@ class LLDBDriver extends Driver
         function onException(_threadIndex)
         {
             cbThread.events.run(() -> {
-                _callback(Result.Success(BreakReason.Exception(_threadIndex)));
+                _callback(Result.Success(BreakReason.Exception(_threadIndex, Option.None)));
             });
         }
 
