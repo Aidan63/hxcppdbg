@@ -24,5 +24,8 @@ extern class DbgEngContext
 {
     static function get() : cpp.Pointer<DbgEngContext>;
 
-    function start(_file : String, _classes : Array<NameTypePair>, _enums : Array<NameTypePair>) : cpp.Pointer<DbgEngSession>;
+    function start(
+        _file : String,
+        _classes : Array<NameTypePair>,
+        _enums : Array<NameTypePair>) : cpp.Pointer<DbgEngSession>;
 }

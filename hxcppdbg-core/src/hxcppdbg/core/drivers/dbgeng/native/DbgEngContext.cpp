@@ -73,14 +73,6 @@ cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::DbgEngContext> hxcppdbg::c
 		hx::Throw(HX_CSTRING("Unable to get IHostDataModelAccess interface"));
 	}
 
-	// Create and set the events callback.
-
-	auto events = ComPtr<IDebugEventCallbacksWide>(new DebugEventCallbacks());
-	if (!SUCCEEDED(result = client->SetEventCallbacksWide(events.Get())))
-	{
-		hx::Throw(HX_CSTRING("Unable to set event callback"));
-	}
-
 	// Get the DbgModel interfaces, these are static and used by DbgEng
 
 	if (!SUCCEEDED(result = dataModelAccess->GetDataModel(&manager, &host)))
@@ -88,16 +80,10 @@ cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::DbgEngContext> hxcppdbg::c
 		hx::Throw(HX_CSTRING("Unable to get data model"));
 	}
 
-	// Set some engine options
-
-	if (!SUCCEEDED(result = control->AddEngineOptions(DEBUG_ENGOPT_INITIAL_BREAK)))
+	auto events = std::make_unique<DebugEventCallbacks>();
+	if (!SUCCEEDED(result = client->SetEventCallbacksWide(events.get())))
 	{
-		hx::Throw(HX_CSTRING("Unable to set initial break option"));
-	}
-
-	if (!SUCCEEDED(result = control->AddEngineOptions(DEBUG_ENGOPT_FINAL_BREAK)))
-	{
-		hx::Throw(HX_CSTRING("Unable to set final break option"));
+		hx::Throw(HX_CSTRING("Unable to set event callback"));
 	}
 
 	// Load all of our custom models
@@ -144,7 +130,7 @@ cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::DbgEngContext> hxcppdbg::c
 
 	// Create, store, and return the context.
 
-	auto ctx = new DbgEngContext(client, control, symbols, system, dataModelAccess, events, std::move(models));
+	auto ctx = new DbgEngContext(client, control, symbols, system, dataModelAccess, std::move(models), std::move(events));
 
 	cached.emplace(ctx);
 
@@ -157,9 +143,9 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::DbgEngContext(
 	ComPtr<IDebugSymbols5> _symbols,
 	ComPtr<IDebugSystemObjects4> _system,
 	ComPtr<IHostDataModelAccess> _dataModelAccess,
-	ComPtr<IDebugEventCallbacksWide> _events,
-	std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> _models)
-	: client(_client), control(_control), symbols(_symbols), system(_system), dataModelAccess(_dataModelAccess), events(_events), models(std::move(_models))
+	std::unique_ptr<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>> _models,
+	std::unique_ptr<DebugEventCallbacks> _events)
+	: client(_client), control(_control), symbols(_symbols), system(_system), dataModelAccess(_dataModelAccess), models(std::move(_models)), events(std::move(_events))
 {
 	//
 }
@@ -169,7 +155,10 @@ hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::~DbgEngContext()
 	client->EndSession(DEBUG_END_PASSIVE);
 }
 
-cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::DbgEngSession> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::start(String _file, Array<Dynamic> _enums, Array<Dynamic> _classes)
+cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::DbgEngSession> hxcppdbg::core::drivers::dbgeng::native::DbgEngContext::start(
+	String _file,
+	Array<Dynamic> _enums,
+	Array<Dynamic> _classes)
 {
 	auto sessionModels = std::make_unique<std::vector<std::unique_ptr<Debugger::DataModel::ProviderEx::ExtensionModel>>>();
 

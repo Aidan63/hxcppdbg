@@ -16,7 +16,7 @@ using hxcppdbg.core.utils.OptionUtils;
 
 class DbgEngDriver extends Driver
 {
-	final objects : Pointer<DbgEngSession>;
+	final session : Pointer<DbgEngSession>;
 
 	final cbThread : Thread;
 
@@ -24,17 +24,17 @@ class DbgEngDriver extends Driver
 
 	final heartbeat : EventHandler;
 
-	function new(_objects, _cbThread)
+	function new(_session, _cbThread)
 	{
-		objects   = _objects;
+		session   = _session;
 		cbThread  = _cbThread;
 		dbgThread = Thread.current();
 		heartbeat = Thread.current().events.repeat(noop, 1000);
 
-		breakpoints = new DbgEngBreakpoints(objects, cbThread, dbgThread);
-		stack       = new DbgEngStack(objects, cbThread, dbgThread);
-		locals      = new DbgEngLocals(objects, cbThread, dbgThread);
-		threads     = new DbgEngThreads(objects, cbThread, dbgThread);
+		breakpoints = new DbgEngBreakpoints(session, cbThread, dbgThread);
+		stack       = new DbgEngStack(session, cbThread, dbgThread);
+		locals      = new DbgEngLocals(session, cbThread, dbgThread);
+		threads     = new DbgEngThreads(session, cbThread, dbgThread);
 	}
 
 	public function start(_callback : Result<(Result<BreakReason, Exception>->Void)->Void, Exception>->Void)
@@ -42,7 +42,7 @@ class DbgEngDriver extends Driver
 		dbgThread.events.run(() -> {
 			final result = try
 			{
-				objects.ptr.go();
+				session.ptr.go();
 
 				Result.Success(run);
 			}
@@ -64,7 +64,7 @@ class DbgEngDriver extends Driver
 	{
 		try
 		{
-			if (objects.ptr.interrupt())
+			if (session.ptr.interrupt())
 			{
 				// Interrupt issued, queue up a task on the dbg thread to invoke the callback.
 				// This ensures the callback is not invoked before process has actually been paused.
@@ -88,9 +88,9 @@ class DbgEngDriver extends Driver
 		dbgThread.events.run(() -> {
 			final result = try
 			{
-				objects.ptr.end();
+				session.ptr.end();
 
-				objects.destroy();
+				session.destroy();
 
 				dbgThread.events.cancel(heartbeat);
 
@@ -110,7 +110,7 @@ class DbgEngDriver extends Driver
 		dbgThread.events.run(() -> {
 			final result = try
 			{
-				objects.ptr.step(_thread, _type);
+				session.ptr.step(_thread, _type);
 
 				Result.Success(run);
 			}
@@ -127,29 +127,66 @@ class DbgEngDriver extends Driver
 	{
 		dbgThread.events.run(() -> {
 
-			function onBreakpoint(_threadIdx : Int, _id : Int)
+			var onBreakpoint    = null;
+			var onException     = null;
+			var onPaused        = null;
+			var onExited        = null;
+			var onThreadCreated = null;
+			var onThreadExited  = null;
+
+			onBreakpoint = function(_threadIdx : Int, _id : Int)
 			{
 				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Breakpoint(_threadIdx, _id))));
 			}
 
-			function onException(_threadIdx : Int, _code : Int, _thrown : Null<NativeModelData>)
+			onException = function(_threadIdx : Int, _code : Int, _thrown : Null<NativeModelData>)
 			{
 				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Exception(_threadIdx, if (_thrown != null) Option.Some(_thrown.toModelData()) else Option.None))));
 			}
 
-			function onPaused()
+			onPaused = function()
 			{
 				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Paused)));
 			}
 
-			function onExited(_exitCode : Int)
+			onExited = function(_exitCode : Int)
 			{
 				cbThread.events.run(() -> _callback(Result.Success(BreakReason.Exited(_exitCode))));
 			}
 
+			onThreadCreated = function(_processId : Int)
+			{
+				cbThread.events.run(() -> (cast threads : DbgEngThreads).onThreadCreated(_processId));
+
+				try
+				{
+					session.ptr.go();
+					session.ptr.wait(onBreakpoint, onException, onPaused, onExited, onThreadCreated, onThreadExited);
+				}
+				catch (error : String)
+				{
+					cbThread.events.run(() -> _callback(Result.Error(new Exception(error))));
+				}
+			}
+
+			onThreadExited = function(_processId : Int)
+			{
+				cbThread.events.run(() -> (cast threads : DbgEngThreads).onThreadExited(_processId));
+
+				try
+				{
+					session.ptr.go();
+					session.ptr.wait(onBreakpoint, onException, onPaused, onExited, onThreadCreated, onThreadExited);
+				}
+				catch (error : String)
+				{
+					cbThread.events.run(() -> _callback(Result.Error(new Exception(error))));
+				}
+			}
+
 			try
 			{
-				objects.ptr.wait(onBreakpoint, onException, onPaused, onExited);
+				session.ptr.wait(onBreakpoint, onException, onPaused, onExited, onThreadCreated, onThreadExited);
 			}
 			catch (error : String)
 			{

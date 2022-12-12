@@ -90,14 +90,17 @@ void hxcppdbg::core::drivers::lldb::native::LLDBContext::wait(
 
                                     case ::lldb::StopReason::eStopReasonBreakpoint:
                                         {
-                                            hx::ExitGCFreeZone();
-
                                             auto bp = thread.GetStopReasonDataAtIndex(0);
                                             if (bp == exceptionBreakpoint.GetID())
                                             {
+                                                hx::ExitGCFreeZone();
+
                                                 _onException(i);
                                             }
+                                            else
                                             {
+                                                hx::ExitGCFreeZone();
+                                                
                                                 _onBreakpoint(i, bp);
                                             }
 

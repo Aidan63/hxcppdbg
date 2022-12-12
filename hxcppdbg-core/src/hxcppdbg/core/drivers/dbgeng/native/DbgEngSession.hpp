@@ -6,6 +6,7 @@
 
 #include "models/IDbgEngKeyable.hpp"
 #include "models/LazyLocalStore.hpp"
+#include "DebugEventCallbacks.hpp"
 
 namespace hxcppdbg::core::drivers::dbgeng::native
 {
@@ -44,6 +45,6 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         void end();
 
         bool interrupt();
-        void wait(Dynamic, Dynamic, Dynamic, Dynamic);
+        void wait(Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic);
     };
 }
