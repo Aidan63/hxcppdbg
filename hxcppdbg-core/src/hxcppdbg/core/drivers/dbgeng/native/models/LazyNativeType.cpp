@@ -38,11 +38,11 @@ Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeType::at(cons
             if (count == _index)
             {
                 auto found = std::get<1>(field).GetValue();
-                auto type  = String::create(found.Type().Name().c_str());
+                auto name  = String::create(std::get<0>(field).c_str());
                 auto model = extensions::objectToHxcppdbgModelData(found);
                 auto anon  = hx::Anon_obj::Create(2);
 
-                anon->setFixed(0, HX_CSTRING("name"), type);
+                anon->setFixed(0, HX_CSTRING("name"), name);
                 anon->setFixed(1, HX_CSTRING("data"), model);
 
                 return anon;
