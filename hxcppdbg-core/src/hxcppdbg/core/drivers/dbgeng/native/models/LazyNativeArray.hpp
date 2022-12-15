@@ -17,7 +17,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         const std::wstring type;
         const int size;
     public:
-        LazyNativeArray(const Debugger::DataModel::ClientEx::Object&, const std::wstring&, const int&);
+        LazyNativeArray(const Debugger::DataModel::ClientEx::Object&, const int&);
 
         int count();
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData at(const int);

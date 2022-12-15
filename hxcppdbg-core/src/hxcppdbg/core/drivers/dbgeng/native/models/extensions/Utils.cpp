@@ -32,7 +32,7 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
 				auto name      = type.BaseType().Name();
 				auto dimension = *type.ArrayDimensions().begin();
 
-				return NativeModelData_obj::NArray(new LazyNativeArray(object, name, dimension.Length));
+				return NativeModelData_obj::NArray(String::create(name.c_str()), new LazyNativeArray(object, dimension.Length));
 			}
 			break;
 		case TypeKind::TypePointer:

@@ -54,10 +54,24 @@ class Printer
                 }
             case MClass(_, _):
                 '{ }';
-            case MPointer(address, dereferenced):
-                addressToHex(address);
-            case MUnknown(type):
-                'unknown ($type)';
+            case MNative(native):
+                switch native
+                {
+                    case NPointer(address, _):
+                        addressToHex(address);
+                    case NType(_, model):
+                        '{ }';
+                    case NArray(_, model):
+                        switch model.count()
+                        {
+                            case Success(count):
+                                '[ $count items ]';
+                            case Error(exn):
+                                exn.message;
+                        }
+                    case NUnknown(_):
+                        'Unknown';
+                }
         }
     }
     
@@ -85,10 +99,22 @@ class Printer
                 '{}';
             case MClass(type, _):
                 printGeneratedType(type);
-            case MPointer(_, dereferenced):
-                'Pointer<${ printType(dereferenced) }>';
-            case MUnknown(type):
-                type;
+            case MNative(native):
+                switch native
+                {
+                    case NPointer(_, dereferenced):
+                        '${ printType(dereferenced) }*';
+                    case NArray(type, model):
+                        switch model.count()
+                        {
+                            case Success(count):
+                                '$type[$count]';
+                            case Error(exn):
+                                exn.message;
+                        }
+                    case NType(type, _), NUnknown(type):
+                        type;
+                }
         }
     }
 

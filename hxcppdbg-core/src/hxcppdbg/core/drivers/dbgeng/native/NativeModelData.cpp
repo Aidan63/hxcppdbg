@@ -81,9 +81,9 @@ NativeModelData NativeModelData_obj::NPointer(uint64_t _address, NativeModelData
     return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("NPointer"), Type::TPointer, 2)->_hx_init(0, _address)->_hx_init(1, _dereferenced);
 }
 
-NativeModelData NativeModelData_obj::NArray(cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeArray> _array)
+NativeModelData NativeModelData_obj::NArray(String _type, cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeArray> _array)
 {
-    return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("NArray"), Type::TArray, 1)->_hx_init(0, _array);
+    return hx::CreateEnum<NativeModelData_obj>(HX_CSTRING("NArray"), Type::TArray, 2)->_hx_init(0, _type)->_hx_init(1, _array);
 }
 
 NativeModelData NativeModelData_obj::NType(String _t, cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeType> _model)
@@ -166,7 +166,7 @@ int NativeModelData_obj::__FindArgCount(::String _inName)
     if (_inName == HX_CSTRING("HxAnon")) { return 1; }
     if (_inName == HX_CSTRING("HxClass")) { return 2; }
     if (_inName == HX_CSTRING("NPointer")) { return 2; }
-    if (_inName == HX_CSTRING("NArray")) { return 1; }
+    if (_inName == HX_CSTRING("NArray")) { return 2; }
     if (_inName == HX_CSTRING("NType")) { return 2; }
     return hx::EnumBase_obj::__FindArgCount(_inName);
 }
@@ -199,7 +199,7 @@ STATIC_HX_DEFINE_DYNAMIC_FUNC2(NativeModelData_obj, HxClass, return)
 
 STATIC_HX_DEFINE_DYNAMIC_FUNC2(NativeModelData_obj, NPointer, return)
 
-STATIC_HX_DEFINE_DYNAMIC_FUNC1(NativeModelData_obj, NArray, return)
+STATIC_HX_DEFINE_DYNAMIC_FUNC2(NativeModelData_obj, NArray, return)
 
 STATIC_HX_DEFINE_DYNAMIC_FUNC2(NativeModelData_obj, NType, return)
 

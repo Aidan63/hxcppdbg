@@ -5,9 +5,8 @@
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeArray::LazyNativeArray(
     const Debugger::DataModel::ClientEx::Object& _object,
-    const std::wstring& _type,
     const int& _size)
-    : type(_type), size(_size), IDbgEngIndexable(_object)
+    : size(_size), IDbgEngIndexable(_object)
 {
     //
 }

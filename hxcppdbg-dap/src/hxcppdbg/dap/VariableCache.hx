@@ -151,9 +151,9 @@ class VariableCache
                 {
                     case null:
                         Result.Error(new Exception('No model with ID ${ _id.number }'));
-                    case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_):
+                    case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MNative(NUnknown(_)):
                         Result.Error(new Exception('Model does not have children'));
-                    case MArray(store), MEnum(_, _, store):
+                    case MArray(store), MEnum(_, _, store), MNative(NArray(_, store)):
                         switch store.count()
                         {
                             case Success(length):
@@ -247,7 +247,7 @@ class VariableCache
                             case Error(exn):
                                 Result.Error(exn);
                         }
-                    case MAnon(store), MClass(_, store):
+                    case MAnon(store), MClass(_, store), MNative(NType(_, store)):
                         switch store.count()
                         {
                             case Success(length):
@@ -308,7 +308,7 @@ class VariableCache
                             case Error(exn):
                                 Result.Error(exn);
                         }
-                    case MPointer(address, dereferenced):
+                    case MNative(NPointer(_, dereferenced)):
                         final output = new Array<Variable>();
 
                         output.push({
@@ -376,9 +376,9 @@ class VariableCache
     {
         return switch _model
         {
-            case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MUnknown(_):
+            case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MNative(NUnknown(_)):
                 0;
-            case MArray(_), MMap(_), MEnum(_, _, _), MAnon(_), MClass(_, _), MPointer(_, _):
+            case MArray(_), MMap(_), MEnum(_, _, _), MAnon(_), MClass(_, _), MNative(_):
                 final id = index++;
 
                 models[id] = _model;

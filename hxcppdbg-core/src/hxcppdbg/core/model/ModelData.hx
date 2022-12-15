@@ -12,13 +12,18 @@ enum ModelData
     MFloat(f : Float);
     MBool(b : Bool);
     MString(s : String);
-
     MArray(model : Indexable<ModelData>);
     MMap(type : Keyable<ModelData, KeyValuePair>);
-    
     MEnum(type : GeneratedType, constructor : String, arguments : Indexable<ModelData>);
     MAnon(model : Keyable<String, NamedModelData>);
     MClass(type : GeneratedType, model : Keyable<String, NamedModelData>);
-    MPointer(address : cpp.UInt64, dereferenced : ModelData);
-    MUnknown(type : String);
+    MNative(native : NativeData);
+}
+
+enum NativeData
+{
+    NPointer(address : cpp.UInt64, dereferenced : ModelData);
+    NType(type : String, model : Keyable<String, NamedModelData>);
+    NArray(type : String, model : Indexable<ModelData>);
+    NUnknown(type : String);
 }

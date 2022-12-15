@@ -1,15 +1,13 @@
 package hxcppdbg.core.drivers.dbgeng.native;
 
-import hxcppdbg.core.drivers.dbgeng.native.models.DbgEngBaseModel;
 import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.ModelData;
 import hxcppdbg.core.model.Indexable;
-import hxcppdbg.core.model.KeyValuePair;
-import hxcppdbg.core.model.NamedModelData;
 import hxcppdbg.core.drivers.dbgeng.DbgEngIndexable;
 import hxcppdbg.core.drivers.dbgeng.DbgEngIntMapModel;
 import hxcppdbg.core.drivers.dbgeng.DbgEngStringMapModel;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
+import hxcppdbg.core.drivers.dbgeng.native.models.DbgEngBaseModel;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngIndexable;
 
 typedef NamedNativeModelData = { name : String, data : NativeModelData };
@@ -36,7 +34,7 @@ extern enum NativeModelData
     HxClass(type : Any, model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
 
     NPointer(address : cpp.UInt64, dereferenced : NativeModelData);
-    NArray(model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
+    NArray(type : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
     NType(type : String, model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
 }
 
@@ -71,13 +69,11 @@ class NativeModelDataTools
             case HxClass(type, model):
                 ModelData.MClass(type, new Keyable(new DbgEngNamedKeyable(model)));
             case NPointer(address, dereferenced):
-                ModelData.MPointer(address, dereferenced.toModelData());
-            case NArray(model):
-                ModelData.MArray(new Indexable(new DbgEngIndexable(model)));
+                ModelData.MNative(NativeData.NPointer(address, dereferenced.toModelData()));
+            case NArray(type, model):
+                ModelData.MNative(NativeData.NArray(type, new Indexable(new DbgEngIndexable(model))));
             case NType(type, model):
-                ModelData.MClass(
-                    { cpp : type, pack : [], name : type, module : type },
-                    new Keyable(new DbgEngNamedKeyable(model)));
+                ModelData.MNative(NativeData.NType(type, new Keyable(new DbgEngNamedKeyable(model))));
         }
     }
 }

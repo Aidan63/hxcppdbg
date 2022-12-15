@@ -79,7 +79,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native
 
         static NativeModelData NPointer(uint64_t, NativeModelData);
         static Dynamic NPointer_dyn();
-        static NativeModelData NArray(cpp::Pointer<models::LazyNativeArray>);
+        static NativeModelData NArray(String, cpp::Pointer<models::LazyNativeArray>);
         static Dynamic NArray_dyn();
         static NativeModelData NType(String, cpp::Pointer<models::LazyNativeType>);
         static Dynamic NType_dyn();
