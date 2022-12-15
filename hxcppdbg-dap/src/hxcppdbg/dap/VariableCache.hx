@@ -378,6 +378,12 @@ class VariableCache
         {
             case MNull, MInt(_), MFloat(_), MBool(_), MString(_), MNative(NUnknown(_)):
                 0;
+            case MNative(NPointer(_, model)):
+                final id = index++;
+
+                models[id] = model;
+        
+                new VariableReference(ReferenceType.Model, id);
             case MArray(_), MMap(_), MEnum(_, _, _), MAnon(_), MClass(_, _), MNative(_):
                 final id = index++;
 
