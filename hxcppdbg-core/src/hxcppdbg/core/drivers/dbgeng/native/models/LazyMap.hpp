@@ -139,19 +139,19 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         }
     };
 
-    class LazyDynamicMap : public LazyMap<DbgEngBaseModel&>
+    class LazyDynamicMap : public LazyMap<cpp::Pointer<DbgEngBaseModel>>
     {
     public:
         LazyDynamicMap(const Debugger::DataModel::ClientEx::Object& _object)
-            : LazyMap<DbgEngBaseModel&>(_object)
+            : LazyMap<cpp::Pointer<DbgEngBaseModel>>(_object)
         {
             //
         }
-        NativeModelData get(const DbgEngBaseModel& _key)
+        NativeModelData get(const cpp::Pointer<DbgEngBaseModel> _key)
         {
             try
             {
-                return object.CallMethod(L"Get", _key.object, _key.object.FieldValue(L"__hx_cachedHash")).As<NativeModelData>();
+                return object.CallMethod(L"Get", _key.ptr->object, _key.ptr->object.FieldValue(L"__hx_cachedHash")).As<NativeModelData>();
             }
             catch (const std::exception& exn)
             {

@@ -12,7 +12,7 @@ import hxcppdbg.core.drivers.dbgeng.native.models.DbgEngBaseModel;
 
 class DbgEngDynamicMapModel implements IKeyable<ModelData, KeyValuePair>
 {
-    final model : cpp.Pointer<IDbgEngKeyable<cpp.Reference<DbgEngBaseModel>, NativeModelDataKeyPair>>;
+    final model : cpp.Pointer<IDbgEngKeyable<cpp.Pointer<DbgEngBaseModel>, NativeModelDataKeyPair>>;
 
     public function new(_model)
     {
@@ -46,9 +46,7 @@ class DbgEngDynamicMapModel implements IKeyable<ModelData, KeyValuePair>
                     case null:
                         Result.Error(new Exception('Is not of type "DbgEngIndexable"'));
                     case array:
-                        final ref = @:privateAccess array.model.ref;
-
-                        try Result.Success(model.ptr.get(ref).toModelData()) catch (exn) Result.Error(exn);
+                        try Result.Success(model.ptr.get(@:privateAccess array.model.reinterpret()).toModelData()) catch (exn) Result.Error(exn);
                 }
             case MAnon(store), MClass(_, store):
                 switch cast(@:privateAccess store.keyModel, DbgEngNamedKeyable)
@@ -56,9 +54,7 @@ class DbgEngDynamicMapModel implements IKeyable<ModelData, KeyValuePair>
                     case null:
                         Result.Error(new Exception('Is not of type "DbgEngNamedKeyable"'));
                     case anon:
-                        final ref = @:privateAccess anon.model.ref;
-
-                        try Result.Success((model.ptr.get(ref) : NativeModelData).toModelData()) catch (exn) Result.Error(exn);
+                        try Result.Success(model.ptr.get(@:privateAccess anon.model.reinterpret()).toModelData()) catch (exn) Result.Error(exn);
                 }
             case _:
                 Result.Error(new NotImplementedException());

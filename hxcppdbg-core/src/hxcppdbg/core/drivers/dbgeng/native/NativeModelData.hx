@@ -29,7 +29,7 @@ extern enum NativeModelData
     HxArray(model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
     HxIntMap(model : cpp.Pointer<IDbgEngKeyable<Int, NativeModelDataKeyPair>>);
     HxStringMap(model : cpp.Pointer<IDbgEngKeyable<String, NativeModelDataKeyPair>>);
-    HxDynamicMap(model : cpp.Pointer<IDbgEngKeyable<cpp.Reference<DbgEngBaseModel>, NativeModelDataKeyPair>>);
+    HxDynamicMap(model : cpp.Pointer<IDbgEngKeyable<cpp.Pointer<DbgEngBaseModel>, NativeModelDataKeyPair>>);
 
     HxEnum(type : Any, tag : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
     HxAnon(model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
