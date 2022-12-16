@@ -148,6 +148,8 @@ class Session
             switch result
             {
                 case Success(baseFrame):
+                    cache.clear();
+
                     var current = baseFrame;
 
                     function stepLoop()
