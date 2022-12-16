@@ -1,5 +1,6 @@
 package hxcppdbg.core.model;
 
+import haxe.Int64;
 import hxcppdbg.core.model.Keyable;
 import hxcppdbg.core.model.Indexable;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
@@ -22,7 +23,7 @@ enum ModelData
 
 enum NativeData
 {
-    NPointer(address : cpp.UInt64, dereferenced : ModelData);
+    NPointer(address : Int64, dereferenced : ModelData);
     NType(type : String, model : Keyable<String, NamedModelData>);
     NArray(type : String, model : Indexable<ModelData>);
     NUnknown(type : String);

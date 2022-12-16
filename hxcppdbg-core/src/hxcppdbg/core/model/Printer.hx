@@ -1,9 +1,8 @@
 package hxcppdbg.core.model;
 
+import haxe.Int64;
 import hxcppdbg.core.sourcemap.Sourcemap.GeneratedType;
 
-@:cppInclude("sstream")
-@:cppInclude("iomanip")
 class Printer
 {
     public static function printModelData(_data : ModelData)
@@ -59,7 +58,7 @@ class Printer
                 {
                     case NPointer(address, _):
                         addressToHex(address);
-                    case NType(_, model):
+                    case NType(_, _):
                         '{ }';
                     case NArray(_, model):
                         switch model.count()
@@ -81,21 +80,21 @@ class Printer
         {
             case MNull:
                 'Null';
-            case MInt(i):
+            case MInt(_):
                 'Int';
-            case MFloat(f):
+            case MFloat(_):
                 'Float';
-            case MBool(b):
+            case MBool(_):
                 'Bool';
-            case MString(s):
+            case MString(_):
                 'String';
-            case MArray(items):
+            case MArray(_):
                 'Array<?>';
-            case MMap(items):
+            case MMap(_):
                 'Map<?, ?>';
-            case MEnum(type, constructor, arguments):
+            case MEnum(_, constructor, _):
                 '${ printGeneratedType }.$constructor';
-            case MAnon(fields):
+            case MAnon(_):
                 '{}';
             case MClass(type, _):
                 printGeneratedType(type);
@@ -144,20 +143,23 @@ class Printer
         }
     }
 
-	private static function addressToHex(n : cpp.UInt64)
+	private static function addressToHex(address : Int64)
     {
-		untyped __cpp__("
-        std::stringstream stream;
+        final builder  = [];
+        final hexChars = '0123456789abcdef';
 
-        stream
-            << \"0x\"
-            /*<< std::setFill('0')
-            << std::setw(sizeof(uint64_t) * 2)*/
-            << std::hex
-            << {0};
-            
-        auto str = stream.str().c_str();", n);
+        do
+        {
+            builder.insert(0, hexChars.charAt(Int64.toInt(address & 15)));
+            address >>>= 4;
+        }
+        while (address > 0);
 
-		return new String(untyped str);
+        while (builder.length < 16)
+        {
+            builder.insert(0, 'f');
+        }
+
+        return '0x${ builder.join('') }';
 	}
 }
