@@ -180,7 +180,7 @@ cpp::Pointer<hxcppdbg::core::drivers::dbgeng::native::DbgEngSession> hxcppdbg::c
 
 	auto result = S_OK;
 
-	if (!SUCCEEDED(result = client->CreateProcessAndAttachWide(0, PWSTR(_file.wchar_str()), DEBUG_ONLY_THIS_PROCESS, 0, DEBUG_ATTACH_DEFAULT)))
+	if (!SUCCEEDED(result = client->CreateProcessAndAttachWide(0, PWSTR(_file.wchar_str()), DEBUG_ONLY_THIS_PROCESS | CREATE_NEW_CONSOLE, 0, DEBUG_ATTACH_DEFAULT)))
 	{
 		hx::Throw(HX_CSTRING("Unable to start and attach to process"));
 	}
