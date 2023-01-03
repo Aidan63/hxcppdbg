@@ -2,6 +2,10 @@ Experimental debugger for hxcpp programs utilising LLDB or the  windows debugger
 
 One goal is to support "mixed mode debugging" where you can step into the cpp code invoked by extern functions, similar to how c#, cpp, and python can all be debugged under one session in visual studio. This should make debugging any extern glue code much easier.
 
+![img](https://raw.githubusercontent.com/Aidan63/hxcppdbg/master/img.jpg)
+
+https://blog.aidanlee.uk/hxcppdbg-intro/
+
 # Features
 
 ## breakpoints
