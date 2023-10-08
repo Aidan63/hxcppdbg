@@ -33,13 +33,41 @@ class Locals
                         switch result
                         {
                             case Success(vars):
-                                _resolve([]);
+                                _resolve(vars);
                             case Error(exn):
                                 _reject(new Error('Error : ${ exn.message }'));
                         }
                     });
                 })
-                .next(vars -> vars.join('\n'))
+                .next(vars -> {
+                    return switch vars.count()
+                    {
+                        case Success(count):
+                            final buffer = new StringBuf();
+
+                            for (i in 0...count)
+                            {
+                                switch vars.at(i)
+                                {
+                                    case Success(v):
+                                        buffer.add(v.name);
+                                        buffer.add(' : ');
+                                        buffer.add(v.data.printType());
+                                    case Error(exn):
+                                        return exn.message;
+                                }
+
+                                if (i < count - 1)
+                                {
+                                    buffer.add('\n');
+                                }
+                            }
+
+                            return buffer.toString();
+                        case Error(exn):
+                            exn.message;
+                    }
+                })
                 .next(_prompt.println);
     }
 
