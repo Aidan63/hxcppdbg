@@ -56,12 +56,11 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
 
     if (dynFields.As<uint64_t>() != NULL)
     {
-        return
-            dynFields
-                .Dereference()
-                .GetValue()
-                .TryCastToRuntimeType()
-                .CallMethod(L"Get", _field);
+        dynFields
+            .Dereference()
+            .GetValue()
+            .TryCastToRuntimeType()
+            .CallMethod(L"Get", _field, String::create(_field.c_str()).hash());
     }
     else
     {
@@ -91,12 +90,13 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
 
     if (dynFields.As<uint64_t>() != NULL)
     {
-        return
+        auto hash =
             dynFields
                 .Dereference()
                 .GetValue()
-                .TryCastToRuntimeType()
-                .CallMethod(L"At", _index - fixedCount);
+                .TryCastToRuntimeType();
+
+        return hash.CallMethod(L"At", _index - fixedCount, hash.KeyValue(L"KeySize"));
     }
     else
     {

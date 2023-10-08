@@ -136,10 +136,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
             {
                 auto v = element.FieldValue(L"value");
 
-                return
-                    v.Type().IsIntrinsic()
-                        ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(v)
-                        : v.KeyValue(L"HxcppdbgModelData");
+                return hxcppdbg::core::drivers::dbgeng::native::models::extensions::objectToHxcppdbgModelData(v);
             }
         }
 
