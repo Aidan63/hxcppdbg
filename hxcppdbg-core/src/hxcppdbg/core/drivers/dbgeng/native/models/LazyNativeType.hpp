@@ -8,7 +8,7 @@
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class LazyNativeType : public IDbgEngKeyable<String, Dynamic>
+    class LazyNativeType : public IDbgEngKeyable<String, NativeNamedModelData>
     {
     private:
         std::optional<int> size;
@@ -18,7 +18,7 @@ namespace hxcppdbg::core::drivers::dbgeng::native::models
         LazyNativeType(const Debugger::DataModel::ClientEx::Object&);
 
         int count();
-        Dynamic at(const int);
-        hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const String);
+        NativeNamedModelData at(const int);
+        NativeModelData get(const String);
     };
 }

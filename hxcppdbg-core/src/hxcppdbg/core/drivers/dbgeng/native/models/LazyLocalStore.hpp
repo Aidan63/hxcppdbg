@@ -8,13 +8,13 @@
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class LazyLocalStore : public IDbgEngKeyable<String, Dynamic>
+    class LazyLocalStore : public IDbgEngKeyable<String, NativeNamedModelData>
     {
     public:
         LazyLocalStore(const Debugger::DataModel::ClientEx::Object&);
 
         int count();
-        Dynamic at(const int);
+        NativeNamedModelData at(const int);
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const String);
     };
 }

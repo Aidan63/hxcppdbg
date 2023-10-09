@@ -2,11 +2,11 @@
 #include <iterator>
 #include "LazyLocalStore.hpp"
 #include "NativeModelData.hpp"
+#include "NativeNamedModelData.hpp"
 #include "models/extensions/Utils.hpp"
-#include "extensions/AnonBoxer.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::LazyLocalStore(const Debugger::DataModel::ClientEx::Object& _object)
-    : IDbgEngKeyable<String, Dynamic>(_object)
+    : IDbgEngKeyable<String, NativeNamedModelData>(_object)
 {
     //
 }
@@ -23,7 +23,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::count()
     return count;
 }
 
-Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::at(const int _index)
+hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::at(const int _index)
 {
     try
     {
@@ -37,12 +37,7 @@ Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyLocalStore::at(cons
                 auto dataObj = std::get<1>(field).GetValue();
                 auto data    = extensions::objectToHxcppdbgModelData(dataObj);
 
-                auto anon = hx::Anon_obj::Create(2);
-
-                anon->setFixed(0, HX_CSTRING("name"), name);
-                anon->setFixed(1, HX_CSTRING("data"), data);
-
-                return anon;
+                return new hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData_obj(name, data);
             }
 
             count++;

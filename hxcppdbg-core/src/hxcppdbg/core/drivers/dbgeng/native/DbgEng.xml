@@ -19,6 +19,7 @@
         <file name='${DbgEngDir}/DebugEventCallbacks.cpp'/>
         <file name='${DbgEngDir}/DbgModelClientEx.cpp'/>
         <file name='${DbgEngDir}/NativeModelData.cpp'/>
+        <file name='${DbgEngDir}/NativeNamedModelData.cpp'/>
         <file name='${DbgEngDir}/models/DbgEngBaseModel.cpp'/>
         <file name='${DbgEngDir}/models/LazyArray.cpp'/>
         <file name='${DbgEngDir}/models/LazyEnumArguments.cpp'/>

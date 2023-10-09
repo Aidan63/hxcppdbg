@@ -10,8 +10,6 @@ import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 import hxcppdbg.core.drivers.dbgeng.native.models.DbgEngBaseModel;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngIndexable;
 
-typedef NamedNativeModelData = { name : String, data : NativeModelData };
-
 typedef NativeModelDataKeyPair = { name : NativeModelData, data : NativeModelData };
 
 @:include('NativeModelData.hpp')
@@ -30,12 +28,12 @@ extern enum NativeModelData
     HxDynamicMap(model : cpp.Pointer<IDbgEngKeyable<cpp.Pointer<DbgEngBaseModel>, NativeModelDataKeyPair>>);
 
     HxEnum(type : Any, tag : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
-    HxAnon(model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
-    HxClass(type : Any, model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
+    HxAnon(model : cpp.Pointer<IDbgEngKeyable<String, NativeNamedModelData>>);
+    HxClass(type : Any, model : cpp.Pointer<IDbgEngKeyable<String, NativeNamedModelData>>);
 
     NPointer(address : cpp.UInt64, dereferenced : NativeModelData);
     NArray(type : String, model : cpp.Pointer<IDbgEngIndexable<NativeModelData>>);
-    NType(type : String, model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>);
+    NType(type : String, model : cpp.Pointer<IDbgEngKeyable<String, NativeNamedModelData>>);
 }
 
 class NativeModelDataTools
@@ -69,7 +67,7 @@ class NativeModelDataTools
             case HxClass(type, model):
                 ModelData.MClass(type, new Keyable(new DbgEngNamedKeyable(model)));
             case NPointer(address, dereferenced):
-                ModelData.MNative(NativeData.NPointer(address, dereferenced.toModelData()));
+                ModelData.MNative(NativeData.NPointer(address.toInt(), dereferenced.toModelData()));
             case NArray(type, model):
                 ModelData.MNative(NativeData.NArray(type, new Indexable(new DbgEngIndexable(model))));
             case NType(type, model):

@@ -7,6 +7,7 @@
 #include "models/IDbgEngIndexable.hpp"
 
 HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, NativeModelData)
+HX_DECLARE_CLASS5(hxcppdbg, core, drivers, dbgeng, native, NativeNamedModelData)
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {

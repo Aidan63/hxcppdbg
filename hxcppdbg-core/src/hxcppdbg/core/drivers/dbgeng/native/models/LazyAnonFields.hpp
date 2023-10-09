@@ -8,14 +8,14 @@
 
 namespace hxcppdbg::core::drivers::dbgeng::native::models
 {
-    class LazyAnonFields : public IDbgEngKeyable<String, Dynamic>
+    class LazyAnonFields : public IDbgEngKeyable<String, NativeNamedModelData>
     {
     private:
     public:
         LazyAnonFields(const Debugger::DataModel::ClientEx::Object&);
 
         int count();
-        Dynamic at(const int);
+        NativeNamedModelData at(const int);
         hxcppdbg::core::drivers::dbgeng::native::NativeModelData get(const String);
     };
 }

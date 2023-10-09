@@ -1,6 +1,7 @@
 #include <hxcpp.h>
 #include "LazyEnumArguments.hpp"
 #include "NativeModelData.hpp"
+#include "NativeNamedModelData.hpp"
 #include "fmt/xchar.h"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyEnumArguments::LazyEnumArguments(const Debugger::DataModel::ClientEx::Object& _object)

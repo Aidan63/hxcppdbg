@@ -3,7 +3,7 @@
 #include "models/classes/ModelClassObj.hpp"
 #include "models/extensions/Utils.hpp"
 #include "models/LazyClassFields.hpp"
-#include "../extensions/AnonBoxer.hpp"
+#include "NativeNamedModelData.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::classes::ModelClassObj::ModelClassObj(String _typeName, Dynamic _typeData)
     : type(_typeData), hxcppdbg::core::drivers::dbgeng::native::models::extensions::HxcppdbgExtensionModel(_typeName.wc_str())
@@ -42,12 +42,7 @@ Debugger::DataModel::ClientEx::Object hxcppdbg::core::drivers::dbgeng::native::m
                 ? hxcppdbg::core::drivers::dbgeng::native::models::extensions::intrinsicObjectToHxcppdbgModelData(object)
                 : object.KeyValue(L"HxcppdbgModelData").As<hxcppdbg::core::drivers::dbgeng::native::NativeModelData>();
 
-            auto anon = hx::Anon_obj::Create(2);
-
-            anon->setFixed(0, HX_CSTRING("name"), name);
-            anon->setFixed(1, HX_CSTRING("data"), data);
-
-            return hxcppdbg::core::drivers::dbgeng::native::models::extensions::AnonBoxer::Box(anon);
+            return hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData(new hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData_obj(name, data));
         }
 
         count++;

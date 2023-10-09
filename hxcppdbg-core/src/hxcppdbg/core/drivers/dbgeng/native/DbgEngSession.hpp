@@ -37,8 +37,8 @@ namespace hxcppdbg::core::drivers::dbgeng::native
         Array<Dynamic> getCallStack(int);
         Dynamic getFrame(int, int);
 
-        cpp::Pointer<models::IDbgEngKeyable<String, Dynamic>> getVariables(int, int);
-        cpp::Pointer<models::IDbgEngKeyable<String, Dynamic>> getArguments(int, int);
+        cpp::Pointer<models::IDbgEngKeyable<String, NativeNamedModelData>> getVariables(int, int);
+        cpp::Pointer<models::IDbgEngKeyable<String, NativeNamedModelData>> getArguments(int, int);
 
         void go();
         void step(int, int);

@@ -2,6 +2,7 @@
 #include "DbgEngSession.hpp"
 #include "DbgEngContext.hpp"
 #include "NativeModelData.hpp"
+#include "NativeNamedModelData.hpp"
 
 #include <filesystem>
 
@@ -147,7 +148,7 @@ Array<Dynamic> DbgEngSession::getCallStack(int _threadIndex)
     }
 }
 
-cpp::Pointer<models::IDbgEngKeyable<String, Dynamic>> DbgEngSession::getVariables(int _threadIndex, int _frameIndex)
+cpp::Pointer<models::IDbgEngKeyable<String, NativeNamedModelData>> DbgEngSession::getVariables(int _threadIndex, int _frameIndex)
 {
     auto result = S_OK;
 
@@ -173,7 +174,7 @@ cpp::Pointer<models::IDbgEngKeyable<String, Dynamic>> DbgEngSession::getVariable
     
 }
 
-cpp::Pointer<models::IDbgEngKeyable<String, Dynamic>> DbgEngSession::getArguments(int _threadIndex, int _frameIndex)
+cpp::Pointer<models::IDbgEngKeyable<String, NativeNamedModelData>> DbgEngSession::getArguments(int _threadIndex, int _frameIndex)
 {
     hx::Throw(HX_CSTRING("Not Implemented"));
 

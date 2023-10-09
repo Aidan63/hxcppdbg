@@ -2,7 +2,7 @@ package hxcppdbg.core.drivers.dbgeng.native;
 
 import haxe.Int64;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
-import hxcppdbg.core.drivers.dbgeng.native.NativeModelData.NamedNativeModelData;
+import hxcppdbg.core.drivers.dbgeng.native.NativeNamedModelData;
 
 typedef DbgEngFrame = {
     final file : String;
@@ -26,9 +26,9 @@ extern class DbgEngSession
 
     function getFrame(_thread : Int, _index : Int) : DbgEngFrame;
 
-    function getVariables(_thread : Int, _frame : Int) : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>;
+    function getVariables(_thread : Int, _frame : Int) : cpp.Pointer<IDbgEngKeyable<String, NativeNamedModelData>>;
 
-    function getArguments(_thread : Int, _frame : Int) : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>;
+    function getArguments(_thread : Int, _frame : Int) : cpp.Pointer<IDbgEngKeyable<String, NativeNamedModelData>>;
 
     function go() : Void;
 

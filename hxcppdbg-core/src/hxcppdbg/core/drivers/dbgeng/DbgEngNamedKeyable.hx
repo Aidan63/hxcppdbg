@@ -3,12 +3,12 @@ package hxcppdbg.core.drivers.dbgeng;
 import cpp.NativeGc;
 import hxcppdbg.core.ds.Result;
 import hxcppdbg.core.model.NamedModelData;
-import hxcppdbg.core.drivers.dbgeng.native.NativeModelData;
+import hxcppdbg.core.drivers.dbgeng.native.NativeNamedModelData;
 import hxcppdbg.core.drivers.dbgeng.native.models.IDbgEngKeyable;
 
 class DbgEngNamedKeyable implements IKeyable<String, NamedModelData>
 {
-    final model : cpp.Pointer<IDbgEngKeyable<String, NamedNativeModelData>>;
+    final model : cpp.Pointer<IDbgEngKeyable<String, NativeNamedModelData>>;
 
     public function new(_model)
     {
@@ -37,7 +37,7 @@ class DbgEngNamedKeyable implements IKeyable<String, NamedModelData>
         return try Result.Success(toNamedModelData(model.ptr.at(_index))) catch (exn) Result.Error(exn);
     }
 
-    function toNamedModelData(_result : NamedNativeModelData)
+    function toNamedModelData(_result : NativeNamedModelData)
     {
         return new NamedModelData(_result.name, _result.data.toModelData());
     }

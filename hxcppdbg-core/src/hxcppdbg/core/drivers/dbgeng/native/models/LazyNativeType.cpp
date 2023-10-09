@@ -1,6 +1,7 @@
 #include <hxcpp.h>
 #include "LazyNativeType.hpp"
 #include "NativeModelData.hpp"
+#include "NativeNamedModelData.hpp"
 #include "extensions/Utils.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeType::LazyNativeType(const Debugger::DataModel::ClientEx::Object& _type)
@@ -27,7 +28,7 @@ int hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeType::count()
     return size.value();
 }
 
-Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeType::at(const int _index)
+hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeType::at(const int _index)
 {
     try
     {
@@ -39,13 +40,9 @@ Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyNativeType::at(cons
             {
                 auto found = std::get<1>(field).GetValue();
                 auto name  = String::create(std::get<0>(field).c_str());
-                auto model = extensions::objectToHxcppdbgModelData(found);
-                auto anon  = hx::Anon_obj::Create(2);
+                auto data  = extensions::objectToHxcppdbgModelData(found);
 
-                anon->setFixed(0, HX_CSTRING("name"), name);
-                anon->setFixed(1, HX_CSTRING("data"), model);
-
-                return anon;
+                return hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData(new hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData_obj(name, data));
             }
 
             count++;

@@ -1,10 +1,10 @@
 #include <hxcpp.h>
 #include "LazyAnonFields.hpp"
 #include "NativeModelData.hpp"
-#include "extensions/AnonBoxer.hpp"
+#include "NativeNamedModelData.hpp"
 
 hxcppdbg::core::drivers::dbgeng::native::models::LazyAnonFields::LazyAnonFields(const Debugger::DataModel::ClientEx::Object& _object)
-    : IDbgEngKeyable<String, Dynamic>(_object)
+    : IDbgEngKeyable<String, NativeNamedModelData>(_object)
 {
     //
 }
@@ -34,11 +34,11 @@ hxcppdbg::core::drivers::dbgeng::native::NativeModelData hxcppdbg::core::drivers
     
 }
 
-Dynamic hxcppdbg::core::drivers::dbgeng::native::models::LazyAnonFields::at(const int _index)
+hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData hxcppdbg::core::drivers::dbgeng::native::models::LazyAnonFields::at(const int _index)
 {
     try
     {
-        return extensions::AnonBoxer::Unbox(object.CallMethod(L"At", _index));
+        return object.CallMethod(L"At", _index).As<hxcppdbg::core::drivers::dbgeng::native::NativeNamedModelData>();
     }
     catch (const std::exception& exn)
     {
