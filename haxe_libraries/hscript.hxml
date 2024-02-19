@@ -2,4 +2,4 @@
 # @run: haxelib run-dir hscript "${HAXE_LIBCACHE}/hscript/2.5.0/haxelib"
 -cp ${HAXE_LIBCACHE}/hscript/2.5.0/haxelib/
 -D hscript=2.5.0
---macro keep('IntIterator')
+# --macro keep('IntIterator')
